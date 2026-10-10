@@ -77,11 +77,11 @@ CREATE TABLE `order` (
     INDEX idx_pickup_code (pickup_code)
 );
 
--- 初始化测试账号
+-- 初始化测试账号（三个账号密码统一为：123456）
 INSERT INTO user (username, password, role) VALUES
-('admin', '$2a$10$N.zmdr9k7uOCQb376NoUnuTJ8iAt6Z5EHsM8lE9lBOsl7iAt6Z5EO', 'ADMIN'),
-('leader1', '$2a$10$N.zmdr9k7uOCQb376NoUnuTJ8iAt6Z5EHsM8lE9lBOsl7iAt6Z5EO', 'LEADER'),
-('user1', '$2a$10$N.zmdr9k7uOCQb376NoUnuTJ8iAt6Z5EHsM8lE9lBOsl7iAt6Z5EO', 'USER');
+('admin', '$2a$10$eYBgVzfZ/6nfpPiMGwzpq.LgZo3t3VMFs/5aJGVfJ718FKYswWaDi', 'ADMIN'),
+('leader1', '$2a$10$eYBgVzfZ/6nfpPiMGwzpq.LgZo3t3VMFs/5aJGVfJ718FKYswWaDi', 'LEADER'),
+('user1', '$2a$10$eYBgVzfZ/6nfpPiMGwzpq.LgZo3t3VMFs/5aJGVfJ718FKYswWaDi', 'USER');
 
 UPDATE user SET pickup_point_name='幸福小区便利店', pickup_point_address='幸福小区东门 101 号' WHERE username='leader1';
 
