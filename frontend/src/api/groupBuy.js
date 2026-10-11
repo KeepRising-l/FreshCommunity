@@ -15,3 +15,7 @@ export function getGroupBuyDetail(id) {
 export function createGroupBuy(data) {
   return request.post('/group-buys', data)
 }
+
+export function listGroupBuyOrders(id) {
+  return request.get('/group-buys/' + id + '/orders')
+}

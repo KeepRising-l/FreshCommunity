@@ -52,9 +52,8 @@
 
 <script setup>
 import { ref, onMounted, reactive } from 'vue'
-import { listMyGroupBuys, createGroupBuy } from '../api/groupBuy'
+import { listMyGroupBuys, createGroupBuy, listGroupBuyOrders } from '../api/groupBuy'
 import { listProducts } from '../api/product'
-import { listMyOrders } from '../api/order'
 
 const groups = ref([])
 const products = ref([])
@@ -85,8 +84,8 @@ async function submit() {
 }
 
 async function viewOrders(row) {
-  const res = await listMyOrders()
-  orders.value = res.data.filter(o => o.groupBuyId === row.id)
+  const res = await listGroupBuyOrders(row.id)
+  orders.value = res.data || []
   orderDialogVisible.value = true
 }
 

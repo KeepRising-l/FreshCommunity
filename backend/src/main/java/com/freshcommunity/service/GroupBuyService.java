@@ -4,6 +4,7 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.freshcommunity.dto.GroupBuyCreateRequest;
 import com.freshcommunity.entity.GroupBuy;
 import com.freshcommunity.entity.GroupBuyItem;
+import com.freshcommunity.entity.Order;
 import com.freshcommunity.entity.Product;
 import com.freshcommunity.mapper.GroupBuyItemMapper;
 import com.freshcommunity.mapper.GroupBuyMapper;
@@ -103,5 +104,20 @@ public class GroupBuyService {
                 orderService.tryGroupSuccess(gb.getId());
             }
         }
+    }
+
+    /**
+     * 团长查看自己名下团购的订单列表（group-buying spec：团长 SHALL 能查看自己发起的团购及其订单列表）。
+     * 非本人团购一律拒绝，避免越权查看他人订单。
+     */
+    public List<Order> listOrdersForLeader(Long groupBuyId, Long leaderId) {
+        GroupBuy groupBuy = groupBuyMapper.selectById(groupBuyId);
+        if (groupBuy == null) {
+            throw new IllegalArgumentException("团购不存在");
+        }
+        if (!groupBuy.getLeaderId().equals(leaderId)) {
+            throw new IllegalArgumentException("无权查看该团购的订单");
+        }
+        return orderService.listByGroupBuy(groupBuyId);
     }
 }
