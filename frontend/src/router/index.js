@@ -1,10 +1,12 @@
 import { createRouter, createWebHistory } from 'vue-router'
 import { useUserStore } from '../stores/user'
 import Login from '../views/Login.vue'
+import Register from '../views/Register.vue'
 import Dashboard from '../views/Dashboard.vue'
 
 const routes = [
   { path: '/login', name: 'Login', component: Login },
+  { path: '/register', name: 'Register', component: Register },
   {
     path: '/',
     component: Dashboard,
@@ -26,9 +28,11 @@ const router = createRouter({
   routes
 })
 
+const PUBLIC_PATHS = ['/login', '/register']
+
 router.beforeEach((to, from, next) => {
   const store = useUserStore()
-  if (to.path !== '/login' && !store.token) {
+  if (!PUBLIC_PATHS.includes(to.path) && !store.token) {
     next('/login')
   } else {
     next()

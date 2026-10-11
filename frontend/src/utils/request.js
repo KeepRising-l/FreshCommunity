@@ -25,12 +25,17 @@ request.interceptors.response.use(
     return data
   },
   err => {
+    const status = err.response?.status
     const msg = err.response?.data?.msg || '网络错误'
     ElMessage.error(msg)
-    if (err.response?.status === 401) {
+    if (status === 401) {
       const store = useUserStore()
       store.clearUser()
-      window.location.href = '/login'
+      const path = window.location.pathname
+      // 登录/注册页本身返回 401 时不再跳转，避免丢失已填内容
+      if (path !== '/login' && path !== '/register') {
+        window.location.href = '/login'
+      }
     }
     return Promise.reject(err)
   }

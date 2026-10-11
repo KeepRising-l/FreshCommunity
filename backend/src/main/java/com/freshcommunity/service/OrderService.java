@@ -13,12 +13,15 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
+import java.security.SecureRandom;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Random;
 
 @Service
 public class OrderService {
+
+    private static final SecureRandom SECURE_RANDOM = new SecureRandom();
 
     private final OrderMapper orderMapper;
     private final GroupBuyMapper groupBuyMapper;
@@ -115,14 +118,19 @@ public class OrderService {
         if (order == null || !order.getUserId().equals(userId)) {
             throw new IllegalArgumentException("订单不存在");
         }
-        if (!"PENDING_PAYMENT".equals(order.getStatus()) && !"PENDING_GROUP".equals(order.getStatus())) {
+        String originStatus = order.getStatus();
+        if (!"PENDING_PAYMENT".equals(originStatus) && !"PENDING_GROUP".equals(originStatus)) {
             throw new IllegalArgumentException("当前订单不可取消");
         }
-        int updated = orderMapper.updateStatus(orderId, "CANCELLED", order.getStatus());
+        int updated = orderMapper.updateStatus(orderId, "CANCELLED", originStatus);
         if (updated == 0) {
             throw new IllegalStateException("取消失败");
         }
         productMapper.restoreStock(order.getProductId(), order.getQuantity());
+        // 待成团订单已计入人数，取消后必须回退，否则会造成"虚假成团"
+        if ("PENDING_GROUP".equals(originStatus)) {
+            groupBuyMapper.decrementMemberCount(order.getGroupBuyId());
+        }
     }
 
     @Transactional
@@ -147,12 +155,21 @@ public class OrderService {
         if (order == null) {
             throw new IllegalArgumentException("订单不存在");
         }
-        String next = "REFUNDED";
-        int updated = orderMapper.updateStatus(orderId, next, order.getStatus());
+        String currentStatus = order.getStatus();
+        // 状态守卫：终态订单不可退款，避免重复退款反复回补库存
+        if ("REFUNDED".equals(currentStatus) || "CANCELLED".equals(currentStatus)
+                || "COMPLETED".equals(currentStatus)) {
+            throw new IllegalArgumentException("当前订单状态不可退款");
+        }
+        int updated = orderMapper.updateStatus(orderId, "REFUNDED", currentStatus);
         if (updated == 0) {
             throw new IllegalStateException("退款状态更新失败");
         }
         productMapper.restoreStock(order.getProductId(), order.getQuantity());
+        // 待成团订单已计入人数，退款后同步回退
+        if ("PENDING_GROUP".equals(currentStatus)) {
+            groupBuyMapper.decrementMemberCount(order.getGroupBuyId());
+        }
     }
 
     public List<Order> getPendingGroupOrders(Long groupBuyId) {
@@ -178,11 +195,13 @@ public class OrderService {
     }
 
     private String generatePickupCode() {
-        Random rand = new Random();
-        StringBuilder sb = new StringBuilder();
-        for (int i = 0; i < 6; i++) {
-            sb.append(rand.nextInt(10));
+        // 生成唯一的 6 位数字取货码，避免碰撞导致 findByPickupCode 抛 TooManyResultsException
+        for (int attempt = 0; attempt < 20; attempt++) {
+            String code = String.format("%06d", SECURE_RANDOM.nextInt(1_000_000));
+            if (orderMapper.countByPickupCode(code) == 0) {
+                return code;
+            }
         }
-        return sb.toString();
+        throw new IllegalStateException("取货码生成失败，请重试");
     }
 }

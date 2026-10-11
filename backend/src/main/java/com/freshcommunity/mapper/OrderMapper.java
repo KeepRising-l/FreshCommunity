@@ -24,6 +24,9 @@ public interface OrderMapper extends BaseMapper<Order> {
     @Select("SELECT * FROM `order` WHERE pickup_code = #{code}")
     Order findByPickupCode(@Param("code") String code);
 
+    @Select("SELECT COUNT(*) FROM `order` WHERE pickup_code = #{code}")
+    long countByPickupCode(@Param("code") String code);
+
     @Select("SELECT COUNT(*) FROM `order` WHERE DATE(created_at) = CURDATE()")
     Long countTodayOrders();
 }

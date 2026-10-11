@@ -2,6 +2,7 @@ package com.freshcommunity.controller;
 
 import com.freshcommunity.common.Result;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -22,6 +23,7 @@ public class FileController {
     private String uploadPath;
 
     @PostMapping
+    @PreAuthorize("hasRole('ADMIN')")
     public Result<String> upload(@RequestParam("file") MultipartFile file) throws IOException {
         Path dir = Paths.get(uploadPath);
         if (!Files.exists(dir)) {

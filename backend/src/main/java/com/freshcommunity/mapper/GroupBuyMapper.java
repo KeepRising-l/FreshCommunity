@@ -13,6 +13,9 @@ public interface GroupBuyMapper extends BaseMapper<GroupBuy> {
     @Update("UPDATE group_buy SET member_count = member_count + 1 WHERE id = #{id} AND status = 'ONGOING'")
     int incrementMemberCount(@Param("id") Long id);
 
+    @Update("UPDATE group_buy SET member_count = member_count - 1 WHERE id = #{id} AND member_count > 0")
+    int decrementMemberCount(@Param("id") Long id);
+
     @Update("UPDATE group_buy SET status = 'SUCCESS' WHERE id = #{id} AND status = 'ONGOING' AND member_count >= target_count")
     int trySuccess(@Param("id") Long id);
 

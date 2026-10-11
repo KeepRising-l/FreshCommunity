@@ -81,3 +81,23 @@
 3. 用三个测试账号（密码 `123456`）按上述场景发请求；定时任务相关用例需等待最多 60 秒的任务周期，或直接改库把 `deadline` / `created_at` 回拨后再等一轮。
 
 > 验证过程中产生的数据已清理，数据库已还原为 `schema.sql` + `seed.sql` 的干净演示状态。
+
+---
+
+## 五、修复记录（2026-10-11）
+
+针对上述问题已完成修复，并对修复项做真实运行验证（后端 8080 + MySQL，12 项断言全通过）。
+
+| 原问题 | 修复内容 | 涉及文件 | 运行验证 |
+| --- | --- | --- | --- |
+| 注册功能未实现 | 新增 `POST /api/auth/register`：用户名唯一校验、BCrypt、默认 USER（可选 LEADER 需提货点）、拒绝 ADMIN 自助注册、注册即发 JWT | `AuthController`、`RegisterRequest`（新增） | 注册 200、重复名 400、注册 ADMIN 400、团长缺提货点 400 |
+| 取消订单不回退人数 | `cancelOrder` 对 `PENDING_GROUP` 订单递减 `member_count` | `OrderService`、`GroupBuyMapper` | A 支付→A 取消→B 支付，团购仍 ONGOING（不再虚假成团） |
+| 管理员退款无状态守卫 | 终态订单拒绝退款，`restoreStock` 仅首次执行；退款 `PENDING_GROUP` 订单同步回退人数 | `OrderService` | 首次退款 200 且回补库存，重复退款 400 且库存不再增长 |
+| 登录失败返回 HTTP 200+body 401 | 抛出 `UnauthorizedException`，由全局处理器返回 HTTP 401 | `AuthController`、`UnauthorizedException`（新增）、`GlobalExceptionHandler` | 错误密码返回 HTTP 401 |
+| 未知路径返回 500 | 新增 `NoResourceFoundException`/`NoHandlerFoundException` 处理器返回 404，方法不支持返回 405 | `GlobalExceptionHandler` | `/api/auth/nope`→404；GET 登录接口→405 |
+| 取货码无唯一性保证 | 生成时查重（最多重试 20 次），改用 `SecureRandom` | `OrderService`、`OrderMapper` | 批量成团取货码互不重复 |
+| 上传接口无角色限制 | `upload` 加 `@PreAuthorize("hasRole('ADMIN')")` | `FileController` | 普通用户 403、管理员 200 |
+
+前端同步：新增 `Register.vue`、`/register` 路由与守卫放行、登录页注册入口、`api/auth.js` 的 `register`、401 跳转时排除登录/注册页。
+
+> 本次修复后数据库再次还原为 `schema.sql` + `seed.sql` 的干净演示状态。变更归档（archive）仍待执行。
