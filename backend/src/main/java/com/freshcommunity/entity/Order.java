@@ -1,6 +1,7 @@
 package com.freshcommunity.entity;
 
 import com.baomidou.mybatisplus.annotation.IdType;
+import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableId;
 import com.baomidou.mybatisplus.annotation.TableLogic;
 import com.baomidou.mybatisplus.annotation.TableName;
@@ -27,4 +28,8 @@ public class Order {
     private LocalDateTime updatedAt;
     @TableLogic
     private Integer deleted;
+
+    /** 是否已评价，非数据库字段，仅"我的订单"接口填充 */
+    @TableField(exist = false)
+    private Boolean reviewed;
 }

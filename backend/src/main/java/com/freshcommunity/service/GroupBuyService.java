@@ -21,13 +21,16 @@ public class GroupBuyService {
     private final GroupBuyItemMapper groupBuyItemMapper;
     private final ProductMapper productMapper;
     private final OrderService orderService;
+    private final NotificationService notificationService;
 
     public GroupBuyService(GroupBuyMapper groupBuyMapper, GroupBuyItemMapper groupBuyItemMapper,
-                           ProductMapper productMapper, OrderService orderService) {
+                           ProductMapper productMapper, OrderService orderService,
+                           NotificationService notificationService) {
         this.groupBuyMapper = groupBuyMapper;
         this.groupBuyItemMapper = groupBuyItemMapper;
         this.productMapper = productMapper;
         this.orderService = orderService;
+        this.notificationService = notificationService;
     }
 
     @Transactional
@@ -91,6 +94,10 @@ public class GroupBuyService {
                     o.setStatus("REFUNDED");
                     orderService.updateOrderStatus(o);
                     productMapper.restoreStock(o.getProductId(), o.getQuantity());
+                    notificationService.notify(o.getUserId(), NotificationService.TYPE_GROUP_FAILED,
+                            "团购未成团",
+                            "你参与的团购到点未成团，已自动解散并全额退款。",
+                            o.getId());
                 }
             } else {
                 orderService.tryGroupSuccess(gb.getId());

@@ -3,11 +3,13 @@ package com.freshcommunity.controller;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.freshcommunity.common.Result;
 import com.freshcommunity.dto.GroupBuyCreateRequest;
+import com.freshcommunity.dto.RatingVO;
 import com.freshcommunity.dto.UserVO;
 import com.freshcommunity.entity.GroupBuy;
 import com.freshcommunity.entity.User;
 import com.freshcommunity.mapper.UserMapper;
 import com.freshcommunity.service.GroupBuyService;
+import com.freshcommunity.service.ReviewService;
 import jakarta.validation.Valid;
 import lombok.Data;
 import org.springframework.beans.BeanUtils;
@@ -22,10 +24,13 @@ public class GroupBuyController {
 
     private final GroupBuyService groupBuyService;
     private final UserMapper userMapper;
+    private final ReviewService reviewService;
 
-    public GroupBuyController(GroupBuyService groupBuyService, UserMapper userMapper) {
+    public GroupBuyController(GroupBuyService groupBuyService, UserMapper userMapper,
+                              ReviewService reviewService) {
         this.groupBuyService = groupBuyService;
         this.userMapper = userMapper;
+        this.reviewService = reviewService;
     }
 
     @GetMapping
@@ -52,6 +57,9 @@ public class GroupBuyController {
             vo.setLeaderName(leader.getUsername());
             vo.setPickupPointName(leader.getPickupPointName());
             vo.setPickupPointAddress(leader.getPickupPointAddress());
+            RatingVO rating = reviewService.leaderRating(gb.getLeaderId());
+            vo.setLeaderAvgScore(rating.getAvgScore());
+            vo.setLeaderReviewCount(rating.getCount());
         }
         return Result.success(vo);
     }
@@ -77,5 +85,8 @@ public class GroupBuyController {
         private String pickupPointName;
         private String pickupPointAddress;
         private java.time.LocalDateTime createdAt;
+        /** 团长评分汇总（来自已核销订单的评价） */
+        private Double leaderAvgScore;
+        private Long leaderReviewCount;
     }
 }

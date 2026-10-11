@@ -28,15 +28,17 @@ public class OrderService {
     private final GroupBuyItemMapper groupBuyItemMapper;
     private final ProductMapper productMapper;
     private final PayService payService;
+    private final NotificationService notificationService;
 
     public OrderService(OrderMapper orderMapper, GroupBuyMapper groupBuyMapper,
                         GroupBuyItemMapper groupBuyItemMapper, ProductMapper productMapper,
-                        PayService payService) {
+                        PayService payService, NotificationService notificationService) {
         this.orderMapper = orderMapper;
         this.groupBuyMapper = groupBuyMapper;
         this.groupBuyItemMapper = groupBuyItemMapper;
         this.productMapper = productMapper;
         this.payService = payService;
+        this.notificationService = notificationService;
     }
 
     @Transactional
@@ -108,6 +110,10 @@ public class OrderService {
                 o.setStatus("SUCCESS");
                 o.setPickupCode(generatePickupCode());
                 orderMapper.updateById(o);
+                notificationService.notify(o.getUserId(), NotificationService.TYPE_GROUP_SUCCESS,
+                        "团购已成团",
+                        "你参与的团购已成团，请留意提货通知。取货码：" + o.getPickupCode(),
+                        o.getId());
             }
         }
     }
@@ -147,6 +153,8 @@ public class OrderService {
             throw new IllegalArgumentException("订单状态不允许核销");
         }
         orderMapper.updateStatus(order.getId(), "COMPLETED", order.getStatus());
+        notificationService.notify(order.getUserId(), NotificationService.TYPE_PICKUP_DONE,
+                "提货完成", "你的订单已核销完成，感谢参与。", order.getId());
     }
 
     @Transactional
@@ -170,6 +178,8 @@ public class OrderService {
         if ("PENDING_GROUP".equals(currentStatus)) {
             groupBuyMapper.decrementMemberCount(order.getGroupBuyId());
         }
+        notificationService.notify(order.getUserId(), NotificationService.TYPE_REFUNDED,
+                "订单已退款", "你的订单已被退款，款项将按原路退回。", order.getId());
     }
 
     public List<Order> getPendingGroupOrders(Long groupBuyId) {

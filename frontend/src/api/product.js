@@ -4,6 +4,10 @@ export function listProducts() {
   return request.get('/products')
 }
 
+export function getProduct(id) {
+  return request.get('/products/' + id)
+}
+
 export function createProduct(data) {
   return request.post('/products', data)
 }

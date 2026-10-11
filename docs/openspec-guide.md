@@ -228,38 +228,49 @@ Totals: 1 passed, 0 failed
 
 ---
 
-## 六、⚠️ 你项目现在卡在哪：MVP 还没归档
+## 六、MVP 已归档（2026-10-11）
+
+> 本节原先记录的是"你项目卡在哪：MVP 还没归档"。该问题已解决，结论与经验保留如下。
+
+当前状态：
 
 ```
 openspec/
 ├── changes/
-│   ├── mvp-group-buying/   ← 你的 MVP 还躺在这里
-│   └── archive/            ← 空（只有 .gitkeep）
-└── specs/                  ← 空（只有 .gitkeep）★ 基线还没建立
+│   └── archive/
+│       └── 2026-10-11-mvp-group-buying/   ← MVP 已归档
+└── specs/                                 ★ 基线已建立
+    ├── user-roles/spec.md
+    ├── product-catalog/spec.md
+    ├── group-buying/spec.md
+    ├── inventory/spec.md
+    ├── order-lifecycle/spec.md
+    ├── pickup-verification/spec.md
+    └── admin-dashboard/spec.md
 ```
 
-`specs/` 是空的 —— 意味着 **OpenSpec 里还没有"这个系统现在长什么样"的记录**。基线没建立，之后的每个功能就不是"对基线的增量"，而是各写各的。
+7 个 capability、共 23 条 requirement 已成为正式基线，`openspec validate --specs` 通过。此后每个新功能都是**对这条基线的增量**，delta 才有东西可比对。
 
-### 归档前建议先处理一件事
+### 归档前先修规格与实现的偏差（本次按此执行）
 
-归档会把规格**原样固化成基线**。但我们已经验证过：`specs/user-roles/spec.md` 写着「角色**注册**与登录」，而代码里**根本没有注册功能**（详见 `docs/verification-report.md`）。
+原计划归档时，`specs/user-roles/spec.md` 写着「角色注册与登录」，而代码里没有注册功能（见 `docs/verification-report.md`）。当时二选一：
 
-**现在归档 = 把一条与实现不符的要求焊进正式基线。** 以后所有变更都建立在这个假前提上，答辩被追问"规格说支持注册，代码呢"会很被动。
+| 选项 | 做法 |
+| --- | --- |
+| A. 实现注册 | 后端加 `/api/auth/register` + 前端注册页 |
+| B. 改规格 | 把注册移进「明确不做」清单 |
 
-归档**之前**二选一：
+最终选了 **A**，并顺带修掉验证报告里的两个真实缺陷（取消订单不回退人数、管理员退款无状态守卫）。
 
-| 选项 | 成本 | 做法 |
-| --- | --- | --- |
-| A. 实现注册 | 几小时 | 后端加 `/api/auth/register` + 前端注册页 |
-| B. 改规格 | 几分钟 | 把注册移进 `proposal.md` 已有的「明确不做」清单 |
+教训：**归档会把规格原样焊进基线，所以归档前必须让规格与实现对齐** —— 否则以后所有变更都建立在假前提上。
 
-同理，退款无守卫那个 bug，也可以在规格里把边界钉死（"退款仅限非终态订单"），这样以后就是有据可依的需求而非模糊地带。
-
-**定了之后归档**：
+### 归档命令
 
 ```bash
-npx openspec archive mvp-group-buying
+openspec archive mvp-group-buying   # CLI 自带：归档 + 更新主规格
 ```
+
+本次实际走的是 agent 驱动的 sync 工作流：先按 delta 生成 7 个主规格并校验，再把变更目录移入 `archive/`。
 
 ---
 

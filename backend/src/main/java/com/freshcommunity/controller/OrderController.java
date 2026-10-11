@@ -3,18 +3,23 @@ package com.freshcommunity.controller;
 import com.freshcommunity.common.Result;
 import com.freshcommunity.entity.Order;
 import com.freshcommunity.service.OrderService;
+import com.freshcommunity.service.ReviewService;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 @RestController
 @RequestMapping("/api/orders")
 public class OrderController {
 
     private final OrderService orderService;
+    private final ReviewService reviewService;
 
-    public OrderController(OrderService orderService) {
+    public OrderController(OrderService orderService, ReviewService reviewService) {
         this.orderService = orderService;
+        this.reviewService = reviewService;
     }
 
     @PostMapping
@@ -38,7 +43,12 @@ public class OrderController {
 
     @GetMapping("/mine")
     public Result<List<Order>> mine(@RequestAttribute("userId") Long userId) {
-        return Result.success(orderService.listByUser(userId));
+        List<Order> orders = orderService.listByUser(userId);
+        Set<Long> reviewedOrderIds = new HashSet<>(reviewService.reviewedOrderIds(userId));
+        for (Order o : orders) {
+            o.setReviewed(reviewedOrderIds.contains(o.getId()));
+        }
+        return Result.success(orders);
     }
 
     @PostMapping("/verify")

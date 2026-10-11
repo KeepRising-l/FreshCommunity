@@ -18,7 +18,10 @@ const routes = [
       { path: '/leader/groups', component: () => import('../views/LeaderGroups.vue') },
       { path: '/leader/verify', component: () => import('../views/LeaderVerify.vue') },
       { path: '/user/groups', component: () => import('../views/UserGroups.vue') },
-      { path: '/user/orders', component: () => import('../views/UserOrders.vue') }
+      { path: '/user/orders', component: () => import('../views/UserOrders.vue') },
+      { path: '/user/products', component: () => import('../views/ProductList.vue') },
+      { path: '/user/products/:id', component: () => import('../views/ProductDetail.vue') },
+      { path: '/notifications', component: () => import('../views/MyNotifications.vue') }
     ]
   }
 ]

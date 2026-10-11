@@ -10,12 +10,13 @@
 
 | 角色 | 能做什么 |
 | --- | --- |
-| 用户 | 浏览商品、参加团购下单、模拟支付、取消未成团订单、查看我的订单与取货码 |
+| 用户 | 自助注册/登录、浏览商品与评分、参加团购下单、模拟支付、取消未成团订单、查看订单与取货码、评价已完成订单、查看站内消息 |
 | 团长 | 发起团购（设成团人数 + 截止时间）、查看自己开的团、输入取货码核销 |
 | 管理员 | 商品增删改查（名称/价格/库存/图片）、数据看板、订单退款兜底 |
 
 **核心机制**
 
+- **自助注册与登录**：用户/团长可自助注册（用户名唯一校验、BCrypt 存储、注册即签发 JWT）；管理员账号由初始化 SQL 预置，不开放自助注册
 - **团购生命周期**：团长设成团人数与截止时间 → 用户下单（模拟支付）→ 人数达标**提前成团**；到点未达标**自动解散并退款**
 - **库存防超卖**：下单时用 `UPDATE product SET stock = stock - #{qty} WHERE id = ? AND stock >= #{qty}` 原子扣减，受影响行数为 0 即库存不足；取消/解散时回补
 - **订单状态机**：待支付 → 待成团 → 已成团 → 待取货 → 已完成／已取消／已退款
@@ -23,8 +24,10 @@
 - **定时任务**（每 60 秒）：
   - 处理到期团购（达标成团 / 未达标解散退款）
   - 关闭超过 30 分钟未支付的订单并回补库存
+- **评价**：已完成（已核销）订单可对**商品**与**团长**分别打分（1–5 星）+ 文字评论，一单一评（`review.order_id` 唯一索引防重复）；商品与团长各自汇总平均分与评价数，实时聚合
+- **站内消息**：五类订单事件自动发站内信 —— 成团、解散退款、待支付超时关单、核销成功、管理员退款；与状态变更同事务写入，含未读计数与标记已读
 
-**明确不做**（MVP 边界）：商家入驻、配送骑手、佣金结算、真实支付、限购/优惠券/秒杀、评价、消息推送、App/小程序。支付为 `MockPayServiceImpl` 模拟实现，通过 `PayService` 接口预留了接真实支付的扩展点。
+**明确不做**：商家入驻、配送骑手、佣金结算、真实支付、限购/优惠券/秒杀、评价审核/敏感词、团长回复评价、外部推送通道（短信/App 推送）、App/小程序。支付为 `MockPayServiceImpl` 模拟实现，通过 `PayService` 接口预留了接真实支付的扩展点。
 
 ---
 
@@ -146,13 +149,14 @@ npm run dev
 | 方法 | 路径 | 说明 | 权限 |
 | --- | --- | --- | --- |
 | GET | `/api/health` | 健康检查 | 公开 |
+| POST | `/api/auth/register` | 自助注册（用户/团长），返回 JWT | 公开 |
 | POST | `/api/auth/login` | 登录，返回 JWT | 公开 |
 | GET | `/api/auth/me` | 当前用户信息 | 登录 |
-| GET | `/api/products` · `/api/products/{id}` | 商品列表 / 详情 | 登录 |
+| GET | `/api/products` · `/api/products/{id}` | 商品列表 / 详情（详情含评分汇总） | 登录 |
 | POST/PUT/DELETE | `/api/products/**` | 商品增删改 | 管理员 |
 | GET | `/api/group-buys` | 团购列表 | 登录 |
 | GET | `/api/group-buys/mine` | 我发起的团购 | 团长 |
-| GET | `/api/group-buys/{id}` | 团购详情（含团长提货点） | 登录 |
+| GET | `/api/group-buys/{id}` | 团购详情（含团长提货点与团长评分） | 登录 |
 | POST | `/api/group-buys` | 发起团购 | 团长 |
 | POST | `/api/orders?groupBuyId=&quantity=` | 下单（原子扣库存） | 登录 |
 | POST | `/api/orders/{id}/pay` | 模拟支付 | 登录 |
@@ -160,8 +164,15 @@ npm run dev
 | GET | `/api/orders/mine` | 我的订单 | 登录 |
 | POST | `/api/orders/verify?pickupCode=` | 取货码核销 | 团长 |
 | POST | `/api/orders/{id}/refund` | 退款兜底 | 管理员 |
+| POST | `/api/reviews` | 提交评价（仅已完成订单，一单一评） | 登录 |
+| GET | `/api/reviews/mine` | 我的评价 | 登录 |
+| GET | `/api/reviews/product/{id}` | 商品评价列表与评分汇总 | 登录 |
+| GET | `/api/notifications` | 我的消息列表 | 登录 |
+| GET | `/api/notifications/unread-count` | 未读消息数 | 登录 |
+| POST | `/api/notifications/{id}/read` | 标记单条消息已读 | 登录 |
+| POST | `/api/notifications/read-all` | 全部消息标记已读 | 登录 |
 | GET | `/api/admin/dashboard` | 看板（今日订单数/成团数） | 管理员 |
-| POST | `/api/upload` | 上传商品图片（≤5MB） | 登录 |
+| POST | `/api/upload` | 上传商品图片（≤5MB） | 管理员 |
 
 ---
 

@@ -4,6 +4,8 @@ CREATE DATABASE IF NOT EXISTS freshcommunity
 
 USE freshcommunity;
 
+DROP TABLE IF EXISTS review;
+DROP TABLE IF EXISTS notification;
 DROP TABLE IF EXISTS `order`;
 DROP TABLE IF EXISTS group_buy_item;
 DROP TABLE IF EXISTS group_buy;
@@ -75,6 +77,36 @@ CREATE TABLE `order` (
     INDEX idx_user_id (user_id),
     INDEX idx_group_buy_id (group_buy_id),
     INDEX idx_pickup_code (pickup_code)
+);
+
+CREATE TABLE review (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    order_id BIGINT NOT NULL COMMENT '被评价的订单',
+    user_id BIGINT NOT NULL COMMENT '评价人',
+    product_id BIGINT NOT NULL COMMENT '被评商品',
+    leader_id BIGINT NOT NULL COMMENT '被评团长',
+    product_score TINYINT NOT NULL COMMENT '商品评分 1-5',
+    leader_score TINYINT NOT NULL COMMENT '团长评分 1-5',
+    content VARCHAR(500) COMMENT '文字评论',
+    created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    deleted TINYINT NOT NULL DEFAULT 0,
+    UNIQUE KEY uk_order_id (order_id),
+    INDEX idx_product_id (product_id),
+    INDEX idx_leader_id (leader_id)
+);
+
+CREATE TABLE notification (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    user_id BIGINT NOT NULL COMMENT '接收人',
+    type VARCHAR(32) NOT NULL COMMENT 'GROUP_SUCCESS/GROUP_FAILED/ORDER_TIMEOUT/PICKUP_DONE/REFUNDED',
+    title VARCHAR(128) NOT NULL,
+    content VARCHAR(500),
+    ref_order_id BIGINT COMMENT '关联订单',
+    is_read TINYINT NOT NULL DEFAULT 0,
+    created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    deleted TINYINT NOT NULL DEFAULT 0,
+    INDEX idx_user_read (user_id, is_read)
 );
 
 -- 初始化测试账号（三个账号密码统一为：123456）

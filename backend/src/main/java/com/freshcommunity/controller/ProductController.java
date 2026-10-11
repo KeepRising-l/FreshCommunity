@@ -2,8 +2,10 @@ package com.freshcommunity.controller;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.freshcommunity.common.Result;
+import com.freshcommunity.dto.RatingVO;
 import com.freshcommunity.entity.Product;
 import com.freshcommunity.mapper.ProductMapper;
+import com.freshcommunity.service.ReviewService;
 import jakarta.validation.Valid;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
@@ -15,9 +17,11 @@ import java.util.List;
 public class ProductController {
 
     private final ProductMapper productMapper;
+    private final ReviewService reviewService;
 
-    public ProductController(ProductMapper productMapper) {
+    public ProductController(ProductMapper productMapper, ReviewService reviewService) {
         this.productMapper = productMapper;
+        this.reviewService = reviewService;
     }
 
     @GetMapping
@@ -34,6 +38,9 @@ public class ProductController {
         if (p == null) {
             throw new IllegalArgumentException("商品不存在");
         }
+        RatingVO rating = reviewService.productRating(id);
+        p.setAvgScore(rating.getAvgScore());
+        p.setReviewCount(rating.getCount());
         return Result.success(p);
     }
 

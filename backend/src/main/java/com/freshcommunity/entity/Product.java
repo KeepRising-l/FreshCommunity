@@ -1,6 +1,7 @@
 package com.freshcommunity.entity;
 
 import com.baomidou.mybatisplus.annotation.IdType;
+import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableId;
 import com.baomidou.mybatisplus.annotation.TableLogic;
 import com.baomidou.mybatisplus.annotation.TableName;
@@ -34,4 +35,10 @@ public class Product {
     private LocalDateTime updatedAt;
     @TableLogic
     private Integer deleted;
+
+    /** 评分汇总，非数据库字段，仅详情接口填充 */
+    @TableField(exist = false)
+    private Double avgScore;
+    @TableField(exist = false)
+    private Long reviewCount;
 }
