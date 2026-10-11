@@ -158,6 +158,7 @@ npm run dev
 | GET | `/api/group-buys/mine` | 我发起的团购 | 团长 |
 | GET | `/api/group-buys/{id}` | 团购详情（含团长提货点与团长评分） | 登录 |
 | POST | `/api/group-buys` | 发起团购 | 团长 |
+| GET | `/api/group-buys/{id}/orders` | 该团购的订单列表（仅限本人发起的团购） | 团长 |
 | POST | `/api/orders?groupBuyId=&quantity=` | 下单（原子扣库存） | 登录 |
 | POST | `/api/orders/{id}/pay` | 模拟支付 | 登录 |
 | POST | `/api/orders/{id}/cancel` | 取消（仅未成团） | 登录 |
@@ -173,6 +174,22 @@ npm run dev
 | POST | `/api/notifications/read-all` | 全部消息标记已读 | 登录 |
 | GET | `/api/admin/dashboard` | 看板（今日订单数/成团数） | 管理员 |
 | POST | `/api/upload` | 上传商品图片（≤5MB） | 管理员 |
+
+---
+
+## 测试
+
+后端集成测试：真实 Spring 上下文 + MockMvc + 独立测试库 `freshcommunity_test`。
+
+```bash
+cd backend
+DB_PASSWORD=<你的MySQL密码> mvn test
+```
+
+- 测试库由 `db/schema.sql` 自动初始化（库名替换为 `freshcommunity_test`），**不会动开发库 `freshcommunity`**
+- 每个测试方法带事务，结束自动回滚，用例之间互不污染
+- 数据库账号可用 `DB_USER` / `DB_PASSWORD` 环境变量覆盖，默认 `root` / `1234`
+- 共 **26 个用例**，覆盖：认证与错误处理（401/404/405）、团购生命周期与库存、取消回退人数、退款状态守卫、超时关单、评价体系、站内消息与权限隔离
 
 ---
 
