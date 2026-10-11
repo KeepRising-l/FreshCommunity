@@ -92,11 +92,25 @@ Java 17、Maven 3.8+、Node.js 18+、MySQL 8+
 ### 1. 建库并导入数据
 
 ```bash
-mysql -uroot -p < db/schema.sql
-mysql -uroot -p < db/seed.sql      # 可选：导入一场进行中的演示团购
+mysql -uroot -p --default-character-set=utf8mb4 < db/schema.sql
+mysql -uroot -p --default-character-set=utf8mb4 < db/seed.sql
 ```
 
-`schema.sql` 会创建 `freshcommunity` 库、5 张表，并写入三个测试账号和 3 个商品。
+> Windows 下务必带 `--default-character-set=utf8mb4`，否则中文会因 GBK 解析而报 `ERROR 1366`。
+
+- **`schema.sql`**：建库、建 7 张表，写入三个基础账号和 3 个商品
+- **`seed.sql`**：**丰富的演示数据集**，可重复执行（每次清空业务表重建），时间全部是相对 `NOW()` 的，任何时候执行都能得到"看起来正在发生"的数据：
+
+| 数据 | 规模 |
+| --- | --- |
+| 用户 | 16 个（1 管理员 / 3 团长 / 12 用户，密码统一 `123456`） |
+| 商品 | 16 个生鲜商品 |
+| 团购 | 11 场 —— 进行中（进度 0/N、1/N、2/N）、即将截止、已成团待取货、已全部核销、已解散 |
+| 订单 | 27 笔 —— 待支付 / 待成团 / 已成团 / 已完成 / 已取消 / 已退款 |
+| 评价 | 8 条（覆盖 3 个商品、2 个团长，含一条低分） |
+| 站内消息 | 27 条（成团 / 解散 / 核销 / 超时关单），部分未读 |
+
+导入后管理员看板显示：今日订单 15、今日成团 3。
 
 ### 2. 启动后端
 
