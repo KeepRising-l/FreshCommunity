@@ -1,0 +1,1876 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>FreshCommunity · UI 设计方案（高保真原型）</title>
+<style>
+/* ============================================================
+   FreshCommunity Design System  ·  tokens
+   ============================================================ */
+:root{
+  /* brand */
+  --brand:#1E9E5A;
+  --brand-600:#178A4E;
+  --brand-700:#12713F;
+  --brand-100:#D6F0E1;
+  --brand-50:#EAF7F0;
+  /* accent */
+  --accent:#FF7A1A;
+  --accent-600:#EE6A08;
+  --accent-50:#FFF3E8;
+  /* semantic */
+  --success:#1E9E5A;
+  --warning:#F5A524;
+  --danger:#E5484D;
+  --danger-50:#FDECEC;
+  --info:#3B82F6;
+  --info-50:#EAF2FE;
+  --warning-50:#FEF6E7;
+  /* neutrals (warm-green tinted) */
+  --ink-900:#0F1A14;
+  --ink-800:#1B2A22;
+  --ink-700:#33443B;
+  --ink-500:#5B6B62;
+  --ink-400:#8A9A91;
+  --ink-300:#B7C2BB;
+  --line:#E4EAE6;
+  --line-soft:#EFF3F0;
+  --bg:#F3F7F4;
+  --card:#FFFFFF;
+  --card-2:#FAFCFA;
+  /* radius */
+  --r-xl:20px;
+  --r-lg:16px;
+  --r:12px;
+  --r-sm:9px;
+  --r-pill:999px;
+  /* shadow */
+  --sh-1:0 1px 2px rgba(15,26,20,.05), 0 4px 12px rgba(15,26,20,.05);
+  --sh-2:0 8px 28px rgba(15,26,20,.10);
+  --sh-3:0 16px 48px rgba(15,26,20,.14);
+  /* layout */
+  --side-w:236px;
+  --top-h:64px;
+}
+
+*{margin:0;padding:0;box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{
+  font-family:"PingFang SC","HarmonyOS Sans SC","Microsoft YaHei",system-ui,-apple-system,"Segoe UI",sans-serif;
+  background:#EDF2EE;
+  color:var(--ink-700);
+  font-size:14px;
+  line-height:1.55;
+  -webkit-font-smoothing:antialiased;
+}
+svg{display:block}
+button{font-family:inherit;cursor:pointer;border:none;background:none}
+input,select{font-family:inherit}
+s{text-decoration:line-through}
+
+/* ============================================================
+   Design-board chrome (outside the app)
+   ============================================================ */
+.board-head{
+  position:sticky;top:0;z-index:50;
+  background:rgba(255,255,255,.86);
+  backdrop-filter:saturate(180%) blur(14px);
+  border-bottom:1px solid var(--line);
+}
+.board-head-inner{
+  max-width:1400px;margin:0 auto;padding:14px 24px;
+  display:flex;align-items:center;gap:20px;flex-wrap:wrap;
+}
+.board-brand{display:flex;align-items:center;gap:11px;margin-right:6px}
+.board-logo{
+  width:36px;height:36px;border-radius:11px;flex:none;
+  background:linear-gradient(140deg,#2BB673,#12713F);
+  display:grid;place-items:center;color:#fff;font-size:19px;
+  box-shadow:0 4px 12px rgba(30,158,90,.32);
+}
+.board-brand h1{font-size:15px;font-weight:650;color:var(--ink-900);letter-spacing:.2px;line-height:1.2}
+.board-brand p{font-size:11.5px;color:var(--ink-400);line-height:1.3}
+.board-tabs{display:flex;gap:6px;flex-wrap:wrap;align-items:center}
+.tab-grp{display:flex;align-items:center;gap:4px;padding:4px;border-radius:var(--r-pill);background:var(--bg);border:1px solid var(--line-soft)}
+.tab-grp>span{
+  font-size:11px;font-weight:600;color:var(--ink-400);padding:0 8px 0 10px;letter-spacing:.5px;
+}
+.tab{
+  padding:6px 13px;border-radius:var(--r-pill);font-size:12.5px;font-weight:500;
+  color:var(--ink-500);white-space:nowrap;transition:.16s;
+}
+.tab:hover{background:#fff;color:var(--ink-800);box-shadow:var(--sh-1)}
+.tab.on{background:var(--brand);color:#fff;box-shadow:0 2px 8px rgba(30,158,90,.34)}
+
+.board-stage{
+  max-width:1400px;margin:0 auto;padding:26px 24px 80px;
+}
+.stage-meta{display:flex;align-items:baseline;gap:12px;margin-bottom:14px;padding:0 4px;flex-wrap:wrap}
+.stage-meta h2{font-size:19px;font-weight:650;color:var(--ink-900);letter-spacing:.2px}
+.stage-meta p{font-size:12.5px;color:var(--ink-400)}
+.stage-meta .pill{
+  font-size:11px;font-weight:600;padding:3px 10px;border-radius:var(--r-pill);
+  background:var(--brand-50);color:var(--brand-700);border:1px solid var(--brand-100);
+}
+
+/* browser frame */
+.frame{
+  background:#fff;border-radius:14px;overflow:hidden;
+  box-shadow:var(--sh-3);border:1px solid var(--line);
+}
+.frame-bar{
+  height:38px;background:#F7FAF8;border-bottom:1px solid var(--line-soft);
+  display:flex;align-items:center;gap:8px;padding:0 14px;
+}
+.dot{width:11px;height:11px;border-radius:50%}
+.dot.r{background:#FF6058}.dot.y{background:#FFBD2E}.dot.g{background:#28C840}
+.urlbar{
+  flex:1;max-width:420px;margin-left:10px;height:24px;border-radius:var(--r-pill);
+  background:#fff;border:1px solid var(--line);display:flex;align-items:center;gap:7px;
+  padding:0 12px;font-size:11.5px;color:var(--ink-400);
+}
+.frame-body{height:812px;overflow:hidden;position:relative;background:var(--bg)}
+
+/* ============================================================
+   App shell
+   ============================================================ */
+.app{display:flex;height:100%}
+.app-side{
+  width:var(--side-w);flex:none;background:#fff;border-right:1px solid var(--line);
+  display:flex;flex-direction:column;
+}
+.side-logo{
+  height:var(--top-h);display:flex;align-items:center;gap:10px;
+  padding:0 18px;border-bottom:1px solid var(--line-soft);flex:none;
+}
+.side-logo .mark{
+  width:32px;height:32px;border-radius:10px;flex:none;display:grid;place-items:center;
+  background:linear-gradient(140deg,#2BB673,#12713F);color:#fff;font-size:17px;
+  box-shadow:0 3px 10px rgba(30,158,90,.3);
+}
+.side-logo b{font-size:14.5px;font-weight:650;color:var(--ink-900);letter-spacing:.2px}
+.side-logo small{display:block;font-size:10.5px;color:var(--ink-400);font-weight:400;letter-spacing:.4px}
+.side-nav{flex:1;overflow-y:auto;padding:14px 12px}
+.nav-grp{margin-bottom:16px}
+.nav-grp>label{
+  display:block;font-size:10.5px;font-weight:700;letter-spacing:1px;
+  color:var(--ink-300);padding:0 10px 7px;text-transform:uppercase;
+}
+.nav-item{
+  display:flex;align-items:center;gap:11px;padding:9px 11px;border-radius:10px;
+  font-size:13.5px;color:var(--ink-500);font-weight:500;margin-bottom:2px;
+  transition:.15s;position:relative;cursor:pointer;width:100%;text-align:left;
+}
+.nav-item:hover{background:var(--bg);color:var(--ink-800)}
+.nav-item.on{background:var(--brand-50);color:var(--brand-700);font-weight:600}
+.nav-item.on::before{
+  content:"";position:absolute;left:-12px;top:50%;transform:translateY(-50%);
+  width:3px;height:18px;border-radius:0 3px 3px 0;background:var(--brand);
+}
+.nav-item svg{width:18px;height:18px;flex:none;opacity:.85}
+.nav-item .n-badge{
+  margin-left:auto;min-width:18px;height:18px;padding:0 5px;border-radius:9px;
+  background:var(--danger);color:#fff;font-size:10.5px;font-weight:600;
+  display:grid;place-items:center;
+}
+.side-foot{padding:12px;border-top:1px solid var(--line-soft);flex:none}
+.side-user{
+  display:flex;align-items:center;gap:10px;padding:9px 10px;border-radius:11px;background:var(--card-2);
+  border:1px solid var(--line-soft);
+}
+.avatar{
+  width:32px;height:32px;border-radius:50%;flex:none;display:grid;place-items:center;
+  background:linear-gradient(140deg,#7ED0A4,#1E9E5A);color:#fff;font-size:13px;font-weight:600;
+}
+.side-user b{font-size:12.5px;color:var(--ink-800);font-weight:600;display:block;line-height:1.25}
+.side-user small{font-size:10.5px;color:var(--ink-400)}
+
+.app-main{flex:1;display:flex;flex-direction:column;min-width:0}
+.app-top{
+  height:var(--top-h);flex:none;background:#fff;border-bottom:1px solid var(--line);
+  display:flex;align-items:center;gap:16px;padding:0 24px;
+}
+.crumb{font-size:13px;color:var(--ink-400);display:flex;align-items:center;gap:7px}
+.crumb b{color:var(--ink-900);font-weight:600;font-size:15px}
+.top-search{
+  margin-left:auto;width:280px;height:38px;border-radius:var(--r-pill);
+  background:var(--bg);border:1px solid transparent;display:flex;align-items:center;
+  gap:9px;padding:0 15px;font-size:13px;color:var(--ink-400);transition:.18s;
+}
+.top-search:hover{border-color:var(--line);background:#fff}
+.icon-btn{
+  width:38px;height:38px;border-radius:11px;display:grid;place-items:center;
+  color:var(--ink-500);position:relative;transition:.15s;flex:none;
+}
+.icon-btn:hover{background:var(--bg);color:var(--ink-800)}
+.icon-btn .dot-badge{
+  position:absolute;top:6px;right:6px;min-width:16px;height:16px;padding:0 4px;
+  border-radius:8px;background:var(--danger);color:#fff;font-size:10px;font-weight:600;
+  display:grid;place-items:center;border:2px solid #fff;
+}
+.app-body{flex:1;overflow-y:auto;padding:24px 28px 40px}
+.app-body::-webkit-scrollbar,.side-nav::-webkit-scrollbar{width:8px}
+.app-body::-webkit-scrollbar-thumb,.side-nav::-webkit-scrollbar-thumb{background:#D8E2DA;border-radius:4px}
+
+/* ============================================================
+   Primitives
+   ============================================================ */
+.btn{
+  display:inline-flex;align-items:center;justify-content:center;gap:7px;
+  height:38px;padding:0 17px;border-radius:var(--r-sm);font-size:13.5px;font-weight:600;
+  transition:.16s;white-space:nowrap;
+}
+.btn svg{width:16px;height:16px}
+.btn-primary{background:var(--brand);color:#fff;box-shadow:0 2px 8px rgba(30,158,90,.26)}
+.btn-primary:hover{background:var(--brand-600);box-shadow:0 4px 14px rgba(30,158,90,.34)}
+.btn-accent{background:var(--accent);color:#fff;box-shadow:0 2px 8px rgba(255,122,26,.3)}
+.btn-accent:hover{background:var(--accent-600)}
+.btn-ghost{background:#fff;color:var(--ink-700);border:1px solid var(--line)}
+.btn-ghost:hover{border-color:var(--ink-300);background:var(--card-2)}
+.btn-soft{background:var(--brand-50);color:var(--brand-700)}
+.btn-soft:hover{background:var(--brand-100)}
+.btn-sm{height:32px;padding:0 13px;font-size:12.5px;border-radius:8px}
+.btn-lg{height:46px;padding:0 24px;font-size:15px;border-radius:11px}
+.btn-block{width:100%}
+.btn-danger-soft{background:var(--danger-50);color:var(--danger)}
+.btn[disabled]{opacity:.5;cursor:not-allowed}
+
+.card{
+  background:var(--card);border:1px solid var(--line);border-radius:var(--r-lg);
+  box-shadow:var(--sh-1);
+}
+.card-pad{padding:20px}
+.sec-head{display:flex;align-items:center;gap:12px;margin-bottom:16px}
+.sec-head h3{font-size:15.5px;font-weight:650;color:var(--ink-900);letter-spacing:.2px}
+.sec-head .more{margin-left:auto;font-size:12.5px;color:var(--ink-400);display:flex;align-items:center;gap:4px;cursor:pointer}
+.sec-head .more:hover{color:var(--brand)}
+
+.chip{
+  display:inline-flex;align-items:center;gap:6px;height:32px;padding:0 15px;
+  border-radius:var(--r-pill);background:#fff;border:1px solid var(--line);
+  font-size:13px;color:var(--ink-500);font-weight:500;transition:.15s;cursor:pointer;
+}
+.chip:hover{border-color:var(--brand-100);color:var(--brand-700);background:var(--brand-50)}
+.chip.on{background:var(--brand);border-color:var(--brand);color:#fff;font-weight:600;box-shadow:0 2px 8px rgba(30,158,90,.26)}
+
+.badge{
+  display:inline-flex;align-items:center;gap:5px;height:23px;padding:0 10px;
+  border-radius:7px;font-size:11.5px;font-weight:600;white-space:nowrap;
+}
+.badge .d{width:6px;height:6px;border-radius:50%;background:currentColor}
+.b-green{background:var(--brand-50);color:var(--brand-700)}
+.b-orange{background:var(--accent-50);color:var(--accent-600)}
+.b-blue{background:var(--info-50);color:#2563EB}
+.b-gray{background:#F1F4F2;color:var(--ink-500)}
+.b-red{background:var(--danger-50);color:var(--danger)}
+.b-yellow{background:var(--warning-50);color:#B4740C}
+
+.price{color:var(--accent-600);font-weight:750;font-size:20px;letter-spacing:-.4px;font-variant-numeric:tabular-nums}
+.price i{font-size:12.5px;font-style:normal;font-weight:600;margin-right:1px}
+.price s{color:var(--ink-300);font-size:12.5px;font-weight:400;margin-left:7px}
+
+.progress{height:7px;border-radius:var(--r-pill);background:#EDF1EE;overflow:hidden}
+.progress .bar{height:100%;border-radius:var(--r-pill);background:linear-gradient(90deg,#4CC98A,#1E9E5A);transition:width .4s}
+.progress .bar.hot{background:linear-gradient(90deg,#FFA45C,#FF7A1A)}
+
+.field{display:flex;align-items:center;gap:9px;height:44px;border-radius:var(--r-sm);
+  border:1px solid var(--line);background:#fff;padding:0 14px;transition:.16s}
+.field:focus-within{border-color:var(--brand);box-shadow:0 0 0 3px var(--brand-50)}
+.field input{border:none;outline:none;flex:1;font-size:14px;color:var(--ink-800);background:none;min-width:0}
+.field input::placeholder{color:var(--ink-300)}
+.field svg{width:17px;height:17px;color:var(--ink-400);flex:none}
+.field label{font-size:13px;color:var(--ink-500);font-weight:500}
+
+.muted{color:var(--ink-400);font-size:12.5px;display:flex;align-items:center;gap:5px}
+.muted svg{width:14px;height:14px;flex:none;opacity:.8}
+
+.stat{display:flex;align-items:center;gap:14px;padding:18px 20px;border-radius:var(--r-lg);
+  background:#fff;border:1px solid var(--line);box-shadow:var(--sh-1)}
+.stat .ic{width:44px;height:44px;border-radius:13px;display:grid;place-items:center;flex:none}
+.stat .ic svg{width:21px;height:21px}
+.stat .v{font-size:26px;font-weight:750;color:var(--ink-900);letter-spacing:-.6px;line-height:1.15;font-variant-numeric:tabular-nums}
+.stat .k{font-size:12.5px;color:var(--ink-400);margin-top:1px}
+.stat .trend{margin-left:auto;font-size:11.5px;font-weight:600;padding:3px 8px;border-radius:6px}
+
+.table{width:100%;border-collapse:separate;border-spacing:0}
+.table th{
+  text-align:left;font-size:11.5px;font-weight:700;color:var(--ink-400);letter-spacing:.6px;
+  padding:11px 16px;background:var(--card-2);border-bottom:1px solid var(--line);text-transform:uppercase;
+}
+.table th:first-child{border-radius:var(--r) 0 0 0}
+.table th:last-child{border-radius:0 var(--r) 0 0}
+.table td{padding:13px 16px;border-bottom:1px solid var(--line-soft);font-size:13.5px;color:var(--ink-700);vertical-align:middle}
+.table tbody tr:last-child td{border-bottom:none}
+.table tbody tr{transition:.14s}
+.table tbody tr:hover{background:var(--card-2)}
+
+.thumb{
+  width:44px;height:44px;border-radius:11px;flex:none;display:grid;place-items:center;font-size:21px;
+}
+.thumb.lg{width:64px;height:64px;font-size:30px;border-radius:14px}
+
+.g1{background:linear-gradient(140deg,#FFE9E0,#FFD3C2)}
+.g2{background:linear-gradient(140deg,#FFF6DA,#FFE7A8)}
+.g3{background:linear-gradient(140deg,#E4F6E7,#C4EBCE)}
+.g4{background:linear-gradient(140deg,#E8F1FF,#CFE1FB)}
+.g5{background:linear-gradient(140deg,#FDE9F3,#F9CFE4)}
+.g6{background:linear-gradient(140deg,#EDE9FD,#DCD4FA)}
+
+.grid{display:grid;gap:16px}
+.g-2{grid-template-columns:repeat(2,1fr)}
+.g-3{grid-template-columns:repeat(3,1fr)}
+.g-4{grid-template-columns:repeat(4,1fr)}
+
+/* ============================================================
+   Screen: tokens
+   ============================================================ */
+.tok{max-width:1100px;margin:0 auto;padding:8px 0 20px}
+.tok h2{font-size:22px;font-weight:700;color:var(--ink-900);margin-bottom:6px}
+.tok .lead{font-size:13.5px;color:var(--ink-400);margin-bottom:28px;max-width:720px;line-height:1.7}
+.tok-block{margin-bottom:34px}
+.tok-block>h4{font-size:12px;font-weight:700;letter-spacing:1.2px;color:var(--ink-300);
+  text-transform:uppercase;margin-bottom:14px;display:flex;align-items:center;gap:10px}
+.tok-block>h4::after{content:"";flex:1;height:1px;background:var(--line)}
+.sw-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(148px,1fr));gap:12px}
+.sw{border-radius:var(--r);overflow:hidden;border:1px solid var(--line);background:#fff}
+.sw .fill{height:62px}
+.sw .meta{padding:9px 11px}
+.sw .meta b{display:block;font-size:12.5px;color:var(--ink-800);font-weight:600}
+.sw .meta span{font-size:11px;color:var(--ink-400);font-family:ui-monospace,Menlo,monospace}
+.type-row{display:flex;align-items:baseline;gap:18px;padding:11px 0;border-bottom:1px dashed var(--line-soft)}
+.type-row .lbl{width:110px;flex:none;font-size:11.5px;color:var(--ink-300);font-family:ui-monospace,Menlo,monospace}
+.comp-row{display:flex;flex-wrap:wrap;align-items:center;gap:12px;padding:16px;border-radius:var(--r);
+  background:var(--card-2);border:1px solid var(--line-soft)}
+
+/* ============================================================
+   Screen: auth
+   ============================================================ */
+.auth{display:flex;height:100%;background:#fff}
+.auth-left{
+  flex:1.05;position:relative;overflow:hidden;padding:52px 56px;color:#fff;
+  background:linear-gradient(150deg,#1E9E5A 0%,#12713F 62%,#0C5530 100%);
+  display:flex;flex-direction:column;
+}
+.auth-left::before{
+  content:"";position:absolute;width:520px;height:520px;border-radius:50%;
+  right:-190px;top:-160px;background:radial-gradient(circle,rgba(255,255,255,.16),transparent 68%);
+}
+.auth-left::after{
+  content:"";position:absolute;width:360px;height:360px;border-radius:50%;
+  left:-130px;bottom:-140px;background:radial-gradient(circle,rgba(255,122,26,.30),transparent 66%);
+}
+.auth-logo{display:flex;align-items:center;gap:12px;position:relative;z-index:2}
+.auth-logo .mark{
+  width:42px;height:42px;border-radius:13px;background:rgba(255,255,255,.16);
+  border:1px solid rgba(255,255,255,.28);display:grid;place-items:center;font-size:21px;backdrop-filter:blur(6px);
+}
+.auth-logo b{font-size:17px;font-weight:650;letter-spacing:.3px}
+.auth-logo small{display:block;font-size:11px;opacity:.72;letter-spacing:.6px}
+.auth-copy{position:relative;z-index:2;margin-top:auto;margin-bottom:auto}
+.auth-copy h2{font-size:36px;font-weight:750;line-height:1.28;letter-spacing:-.6px;margin-bottom:16px}
+.auth-copy h2 em{font-style:normal;color:#FFC48A}
+.auth-copy p{font-size:14.5px;opacity:.84;line-height:1.75;max-width:390px}
+.auth-feats{display:flex;gap:26px;margin-top:34px;position:relative;z-index:2}
+.auth-feat b{display:block;font-size:24px;font-weight:750;letter-spacing:-.5px}
+.auth-feat span{font-size:12px;opacity:.75}
+.auth-emoji{position:absolute;right:34px;bottom:34px;font-size:0;z-index:2;opacity:.9}
+.auth-emoji i{font-style:normal;font-size:38px;display:inline-block;filter:drop-shadow(0 6px 12px rgba(0,0,0,.2))}
+.auth-emoji i:nth-child(1){transform:rotate(-8deg)}
+.auth-emoji i:nth-child(2){transform:translateY(-14px) rotate(6deg);margin-left:-10px}
+.auth-emoji i:nth-child(3){transform:rotate(-4deg);margin-left:-8px}
+
+.auth-right{flex:1;display:grid;place-items:center;padding:40px}
+.auth-form{width:100%;max-width:376px}
+.auth-form h3{font-size:23px;font-weight:700;color:var(--ink-900);letter-spacing:-.3px}
+.auth-form .sub{font-size:13.5px;color:var(--ink-400);margin-top:6px;margin-bottom:26px}
+.seg{display:flex;gap:4px;padding:4px;background:var(--bg);border-radius:11px;margin-bottom:24px}
+.seg button{
+  flex:1;height:36px;border-radius:8px;font-size:13.5px;font-weight:600;color:var(--ink-500);transition:.16s;
+}
+.seg button.on{background:#fff;color:var(--brand-700);box-shadow:var(--sh-1)}
+.fld{margin-bottom:15px}
+.fld>label{display:block;font-size:12.5px;font-weight:600;color:var(--ink-700);margin-bottom:7px}
+.fld .field{height:46px}
+.auth-row{display:flex;align-items:center;justify-content:space-between;margin:18px 0 22px;font-size:12.5px}
+.auth-row a{color:var(--brand);font-weight:600;cursor:pointer;text-decoration:none}
+.check{display:flex;align-items:center;gap:7px;color:var(--ink-500);cursor:pointer}
+.check i{width:16px;height:16px;border-radius:5px;border:1.5px solid var(--line);display:grid;place-items:center;font-size:10px;color:#fff;font-style:normal;background:#fff}
+.check.on i{background:var(--brand);border-color:var(--brand)}
+.auth-foot{text-align:center;font-size:13px;color:var(--ink-400);margin-top:22px}
+.auth-foot a{color:var(--brand);font-weight:600;cursor:pointer;text-decoration:none}
+.role-pick{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:4px}
+.role-pick .rp{
+  border:1.5px solid var(--line);border-radius:var(--r);padding:12px;text-align:center;transition:.16s;cursor:pointer;background:#fff;
+}
+.role-pick .rp:hover{border-color:var(--brand-100);background:var(--brand-50)}
+.role-pick .rp.on{border-color:var(--brand);background:var(--brand-50);box-shadow:0 0 0 3px var(--brand-50)}
+.role-pick .rp b{display:block;font-size:13.5px;color:var(--ink-800);font-weight:650}
+.role-pick .rp span{font-size:11.5px;color:var(--ink-400)}
+.role-pick .rp .e{font-size:22px;display:block;margin-bottom:5px}
+.demo-hint{
+  margin-top:22px;padding:12px 14px;border-radius:var(--r);background:var(--card-2);
+  border:1px dashed var(--line);font-size:12px;color:var(--ink-500);line-height:1.75;
+}
+.demo-hint b{color:var(--ink-700)}
+.demo-hint code{background:#fff;border:1px solid var(--line);border-radius:5px;padding:1px 6px;font-size:11.5px;color:var(--brand-700)}
+
+/* ============================================================
+   Screen: user home
+   ============================================================ */
+.hero{
+  border-radius:var(--r-xl);padding:30px 34px;margin-bottom:22px;position:relative;overflow:hidden;
+  background:linear-gradient(120deg,#1E9E5A 0%,#178A4E 55%,#0F6B3C 100%);color:#fff;
+  display:flex;align-items:center;gap:28px;
+}
+.hero::before{
+  content:"";position:absolute;width:440px;height:440px;border-radius:50%;right:-120px;top:-180px;
+  background:radial-gradient(circle,rgba(255,255,255,.14),transparent 68%);
+}
+.hero::after{
+  content:"";position:absolute;width:260px;height:260px;border-radius:50%;right:150px;bottom:-170px;
+  background:radial-gradient(circle,rgba(255,122,26,.34),transparent 66%);
+}
+.hero-l{position:relative;z-index:2;flex:1}
+.hero-tag{
+  display:inline-flex;align-items:center;gap:7px;font-size:12px;font-weight:600;
+  background:rgba(255,255,255,.17);border:1px solid rgba(255,255,255,.26);
+  padding:5px 13px;border-radius:var(--r-pill);margin-bottom:15px;backdrop-filter:blur(6px);
+}
+.hero h2{font-size:27px;font-weight:750;letter-spacing:-.5px;line-height:1.3;margin-bottom:9px}
+.hero h2 em{font-style:normal;color:#FFC48A}
+.hero p{font-size:13.5px;opacity:.84;margin-bottom:20px}
+.hero-btns{display:flex;gap:10px}
+.btn-white{background:#fff;color:var(--brand-700)}
+.btn-white:hover{background:#F2FBF6}
+.btn-outline-w{background:rgba(255,255,255,.12);color:#fff;border:1px solid rgba(255,255,255,.34)}
+.btn-outline-w:hover{background:rgba(255,255,255,.2)}
+.hero-r{position:relative;z-index:2;display:flex;gap:10px;flex:none}
+.hero-stat{
+  background:rgba(255,255,255,.13);border:1px solid rgba(255,255,255,.22);
+  border-radius:var(--r);padding:14px 18px;text-align:center;backdrop-filter:blur(8px);min-width:92px;
+}
+.hero-stat b{display:block;font-size:23px;font-weight:750;letter-spacing:-.5px}
+.hero-stat span{font-size:11.5px;opacity:.8}
+
+.filter-row{display:flex;align-items:center;gap:9px;margin-bottom:18px;flex-wrap:wrap}
+.filter-row .spacer{flex:1}
+.sort{
+  display:flex;align-items:center;gap:6px;font-size:12.5px;color:var(--ink-500);
+  border:1px solid var(--line);background:#fff;border-radius:var(--r-pill);height:32px;padding:0 13px;
+}
+
+.gcard{
+  background:#fff;border:1px solid var(--line);border-radius:var(--r-lg);overflow:hidden;
+  box-shadow:var(--sh-1);transition:.2s;display:flex;flex-direction:column;
+}
+.gcard:hover{transform:translateY(-3px);box-shadow:var(--sh-2);border-color:var(--brand-100)}
+.gcard-media{
+  height:132px;position:relative;display:grid;place-items:center;font-size:52px;
+}
+.gcard-media .flag{
+  position:absolute;left:12px;top:12px;font-size:11px;font-weight:700;padding:4px 10px;
+  border-radius:var(--r-pill);color:#fff;backdrop-filter:blur(4px);
+}
+.flag-hot{background:linear-gradient(90deg,#FF8A3D,#FF5E1A);box-shadow:0 3px 10px rgba(255,94,26,.34)}
+.flag-new{background:linear-gradient(90deg,#38BDF8,#0EA5E9)}
+.flag-done{background:rgba(15,26,20,.62)}
+.gcard-media .fav{
+  position:absolute;right:10px;top:10px;width:30px;height:30px;border-radius:50%;
+  background:rgba(255,255,255,.86);display:grid;place-items:center;font-size:14px;backdrop-filter:blur(4px);
+}
+.gcard-body{padding:15px 16px 16px;display:flex;flex-direction:column;flex:1}
+.gcard-body h4{font-size:14.5px;font-weight:650;color:var(--ink-900);margin-bottom:6px;line-height:1.4}
+.gcard-body .from{margin-bottom:11px}
+.price-line{display:flex;align-items:baseline;gap:8px;margin-bottom:13px}
+.save-tag{
+  font-size:11px;font-weight:700;color:var(--accent-600);background:var(--accent-50);
+  padding:2px 7px;border-radius:5px;
+}
+.prog-meta{display:flex;align-items:center;justify-content:space-between;margin:8px 0 14px;font-size:12px}
+.prog-meta b{color:var(--brand-700);font-weight:700}
+.cd{display:flex;align-items:center;gap:4px;color:var(--accent-600);font-weight:600;font-size:11.5px}
+.cd.urgent{color:var(--danger)}
+.cd svg{width:13px;height:13px}
+.gcard .btn{margin-top:auto}
+
+/* ============================================================
+   Screen: products
+   ============================================================ */
+.split{display:flex;gap:20px;align-items:flex-start}
+.side-filter{width:196px;flex:none;position:sticky;top:0}
+.side-filter .card{padding:8px}
+.cat{
+  display:flex;align-items:center;gap:10px;padding:9px 12px;border-radius:9px;font-size:13.5px;
+  color:var(--ink-500);font-weight:500;cursor:pointer;transition:.15s;
+}
+.cat:hover{background:var(--bg);color:var(--ink-800)}
+.cat.on{background:var(--brand-50);color:var(--brand-700);font-weight:600}
+.cat .cnt{margin-left:auto;font-size:11.5px;color:var(--ink-300)}
+.cat.on .cnt{color:var(--brand)}
+.pcard{
+  background:#fff;border:1px solid var(--line);border-radius:var(--r-lg);overflow:hidden;
+  transition:.2s;box-shadow:var(--sh-1);
+}
+.pcard:hover{transform:translateY(-3px);box-shadow:var(--sh-2);border-color:var(--brand-100)}
+.pcard-media{height:118px;display:grid;place-items:center;font-size:46px;position:relative}
+.pcard-body{padding:13px 14px 15px}
+.pcard-body h4{font-size:13.5px;font-weight:600;color:var(--ink-900);margin-bottom:7px;line-height:1.4}
+.rate{display:flex;align-items:center;gap:5px;font-size:11.5px;color:var(--ink-400);margin-bottom:9px}
+.rate .star{color:#F5A524}
+.rate svg{width:13px;height:13px}
+
+/* product detail */
+.pd{display:grid;grid-template-columns:400px 1fr;gap:26px}
+.pd-gallery{border-radius:var(--r-lg);height:340px;display:grid;place-items:center;font-size:120px;position:relative}
+.pd-thumbs{display:flex;gap:10px;margin-top:12px}
+.pd-thumbs i{
+  width:60px;height:60px;border-radius:11px;display:grid;place-items:center;font-size:26px;font-style:normal;
+  border:1.5px solid transparent;cursor:pointer;
+}
+.pd-thumbs i.on{border-color:var(--brand);box-shadow:0 0 0 3px var(--brand-50)}
+.pd-info h2{font-size:22px;font-weight:700;color:var(--ink-900);letter-spacing:-.3px;margin-bottom:10px}
+.pd-price-bar{
+  display:flex;align-items:baseline;gap:12px;padding:16px 20px;border-radius:var(--r);
+  background:linear-gradient(100deg,#FFF3E8,#FFF9F4);border:1px solid #FFE3CB;margin:16px 0;
+}
+.pd-price-bar .price{font-size:30px}
+.kv{display:flex;gap:10px;padding:8px 0;font-size:13px;border-bottom:1px dashed var(--line-soft)}
+.kv:last-child{border-bottom:none}
+.kv .k{width:76px;flex:none;color:var(--ink-400)}
+.kv .v{color:var(--ink-700);font-weight:500}
+.qty{display:flex;align-items:center;border:1px solid var(--line);border-radius:var(--r-sm);height:38px;overflow:hidden}
+.qty button{width:34px;height:100%;font-size:17px;color:var(--ink-500);background:var(--card-2)}
+.qty button:hover{background:var(--bg);color:var(--brand)}
+.qty span{width:46px;text-align:center;font-size:14px;font-weight:600;color:var(--ink-800)}
+
+/* review */
+.review{padding:15px 0;border-bottom:1px solid var(--line-soft);display:flex;gap:12px}
+.review:last-child{border-bottom:none}
+.review .body{flex:1;min-width:0}
+.review .head{display:flex;align-items:center;gap:9px;margin-bottom:6px}
+.review .head b{font-size:13px;color:var(--ink-800);font-weight:600}
+.review .head span{font-size:11.5px;color:var(--ink-300)}
+.review p{font-size:13px;color:var(--ink-500);line-height:1.65}
+.stars{display:flex;gap:1px;color:#F5A524}
+.stars svg{width:13px;height:13px}
+.stars .off{color:#E2E8E4}
+
+/* ============================================================
+   Screen: orders
+   ============================================================ */
+.tabs{display:flex;gap:6px;border-bottom:1px solid var(--line);margin-bottom:20px}
+.tabs button{
+  padding:11px 4px;margin-right:22px;font-size:14px;font-weight:600;color:var(--ink-400);
+  border-bottom:2px solid transparent;transition:.16s;display:flex;align-items:center;gap:7px;
+}
+.tabs button:hover{color:var(--ink-700)}
+.tabs button.on{color:var(--brand-700);border-bottom-color:var(--brand)}
+.tabs button .n{
+  font-size:11px;font-weight:700;background:#EDF1EE;color:var(--ink-400);
+  padding:1px 7px;border-radius:var(--r-pill);
+}
+.tabs button.on .n{background:var(--brand-50);color:var(--brand-700)}
+
+.ocard{
+  background:#fff;border:1px solid var(--line);border-radius:var(--r-lg);
+  box-shadow:var(--sh-1);margin-bottom:14px;overflow:hidden;
+}
+.ocard-head{
+  display:flex;align-items:center;gap:14px;padding:14px 20px;background:var(--card-2);
+  border-bottom:1px solid var(--line-soft);font-size:12.5px;color:var(--ink-400);
+}
+.ocard-head .no{font-family:ui-monospace,Menlo,monospace;color:var(--ink-500);font-size:12px}
+.ocard-head .st{margin-left:auto}
+.ocard-main{display:flex;align-items:center;gap:16px;padding:17px 20px}
+.ocard-main .info{flex:1;min-width:0}
+.ocard-main .info h4{font-size:14.5px;font-weight:650;color:var(--ink-900);margin-bottom:5px}
+.ocard-main .amt{text-align:right;flex:none}
+.ocard-main .amt b{font-size:17px;font-weight:750;color:var(--ink-900);font-variant-numeric:tabular-nums}
+.ocard-main .amt span{display:block;font-size:11.5px;color:var(--ink-400)}
+.ocard-foot{
+  display:flex;align-items:center;gap:10px;padding:13px 20px;border-top:1px solid var(--line-soft);
+}
+.ocard-foot .hint{font-size:12.5px;color:var(--ink-400);margin-right:auto}
+.ocard-foot .hint b{color:var(--accent-600)}
+
+.pickup{
+  margin:0 20px 16px;border-radius:var(--r);padding:16px 18px;
+  background:linear-gradient(100deg,#EAF7F0,#F6FCF8);border:1.5px dashed #A9DCBE;
+  display:flex;align-items:center;gap:18px;
+}
+.pickup .code{display:flex;gap:7px}
+.pickup .code i{
+  width:38px;height:46px;border-radius:9px;background:#fff;border:1px solid var(--brand-100);
+  display:grid;place-items:center;font-style:normal;font-size:21px;font-weight:750;
+  color:var(--brand-700);font-family:ui-monospace,Menlo,monospace;box-shadow:var(--sh-1);
+}
+.pickup .txt{flex:1}
+.pickup .txt b{display:block;font-size:13.5px;color:var(--ink-800);font-weight:650;margin-bottom:3px}
+.pickup .txt span{font-size:12px;color:var(--ink-400)}
+.pickup .qr{
+  width:58px;height:58px;border-radius:11px;background:#fff;border:1px solid var(--brand-100);
+  display:grid;place-items:center;flex:none;
+}
+
+.track{display:flex;gap:0;padding:6px 20px 18px}
+.track .node{flex:1;position:relative;text-align:center}
+.track .node::before{
+  content:"";position:absolute;top:8px;left:-50%;width:100%;height:2px;background:var(--line);
+}
+.track .node:first-child::before{display:none}
+.track .node.done::before,.track .node.cur::before{background:var(--brand)}
+.track .node .pt{
+  width:17px;height:17px;border-radius:50%;background:#fff;border:2px solid var(--line);
+  margin:0 auto 7px;position:relative;z-index:2;
+}
+.track .node.done .pt{background:var(--brand);border-color:var(--brand)}
+.track .node.cur .pt{border-color:var(--brand);background:#fff;box-shadow:0 0 0 4px var(--brand-50)}
+.track .node span{font-size:11.5px;color:var(--ink-400)}
+.track .node.done span,.track .node.cur span{color:var(--brand-700);font-weight:600}
+
+/* ============================================================
+   Screen: notifications
+   ============================================================ */
+.msg{
+  display:flex;gap:14px;padding:16px 18px;border-radius:var(--r);transition:.15s;
+  border:1px solid transparent;cursor:pointer;
+}
+.msg:hover{background:var(--card-2)}
+.msg.unread{background:#F7FCF9;border-color:var(--brand-50)}
+.msg .ic{width:40px;height:40px;border-radius:12px;display:grid;place-items:center;flex:none;font-size:19px}
+.msg .body{flex:1;min-width:0}
+.msg .body .r1{display:flex;align-items:center;gap:8px;margin-bottom:5px}
+.msg .body h4{font-size:13.5px;font-weight:650;color:var(--ink-900)}
+.msg .body .time{margin-left:auto;font-size:11.5px;color:var(--ink-300);flex:none}
+.msg .body p{font-size:13px;color:var(--ink-500);line-height:1.6}
+.msg .undot{width:7px;height:7px;border-radius:50%;background:var(--accent);flex:none;margin-top:6px}
+
+/* ============================================================
+   Screen: leader
+   ============================================================ */
+.lgroup{
+  background:#fff;border:1px solid var(--line);border-radius:var(--r-lg);padding:18px 20px;
+  box-shadow:var(--sh-1);margin-bottom:13px;transition:.18s;
+}
+.lgroup:hover{border-color:var(--brand-100);box-shadow:var(--sh-2)}
+.lgroup .top{display:flex;align-items:flex-start;gap:14px;margin-bottom:14px}
+.lgroup .top .info{flex:1;min-width:0}
+.lgroup .top h4{font-size:15px;font-weight:650;color:var(--ink-900);margin-bottom:6px}
+.lgroup .metrics{display:flex;gap:26px;padding:13px 0 0;border-top:1px dashed var(--line-soft);margin-top:14px}
+.lgroup .metrics div{font-size:11.5px;color:var(--ink-400)}
+.lgroup .metrics b{display:block;font-size:18px;font-weight:750;color:var(--ink-900);letter-spacing:-.4px;font-variant-numeric:tabular-nums}
+.lgroup .metrics b.g{color:var(--brand-700)}
+.lgroup .metrics b.o{color:var(--accent-600)}
+
+/* verify */
+.verify-wrap{max-width:640px;margin:0 auto}
+.code-box{display:flex;gap:12px;justify-content:center;margin:30px 0 26px}
+.code-box i{
+  width:60px;height:74px;border-radius:14px;background:#fff;border:2px solid var(--line);
+  display:grid;place-items:center;font-style:normal;font-size:32px;font-weight:750;
+  color:var(--ink-900);font-family:ui-monospace,Menlo,monospace;transition:.18s;
+  box-shadow:var(--sh-1);
+}
+.code-box i.filled{border-color:var(--brand);color:var(--brand-700);background:#F7FCF9}
+.code-box i.cur{border-color:var(--brand);box-shadow:0 0 0 4px var(--brand-50)}
+.scan-hint{
+  text-align:center;font-size:12.5px;color:var(--ink-400);display:flex;align-items:center;
+  justify-content:center;gap:7px;margin-bottom:24px;
+}
+.recent-row{
+  display:flex;align-items:center;gap:13px;padding:13px 16px;border-radius:var(--r);
+  transition:.15s;border-bottom:1px solid var(--line-soft);
+}
+.recent-row:last-child{border-bottom:none}
+.recent-row:hover{background:var(--card-2)}
+.recent-row .code-tag{
+  font-family:ui-monospace,Menlo,monospace;font-size:13px;font-weight:700;color:var(--brand-700);
+  background:var(--brand-50);padding:4px 10px;border-radius:7px;letter-spacing:1px;
+}
+.recent-row .info{flex:1;min-width:0;font-size:13px}
+.recent-row .info b{color:var(--ink-800);font-weight:600}
+.recent-row .info span{color:var(--ink-400);font-size:11.5px;display:block}
+
+/* ============================================================
+   Screen: admin dashboard
+   ============================================================ */
+.chart-card{padding:20px 22px}
+.chart-head{display:flex;align-items:center;margin-bottom:20px}
+.chart-head h3{font-size:15.5px;font-weight:650;color:var(--ink-900)}
+.chart-head .legend{margin-left:auto;display:flex;gap:16px;font-size:12px;color:var(--ink-400)}
+.chart-head .legend i{width:9px;height:9px;border-radius:3px;display:inline-block;margin-right:6px}
+.donut-wrap{display:flex;align-items:center;gap:24px}
+.donut-legend{flex:1;display:flex;flex-direction:column;gap:11px}
+.donut-legend .row{display:flex;align-items:center;gap:9px;font-size:12.5px}
+.donut-legend .row i{width:9px;height:9px;border-radius:3px;flex:none}
+.donut-legend .row b{margin-left:auto;font-weight:700;color:var(--ink-900);font-variant-numeric:tabular-nums}
+.donut-legend .row span{color:var(--ink-500)}
+
+/* ============================================================
+   Screen: admin products
+   ============================================================ */
+.toolbar{display:flex;align-items:center;gap:11px;margin-bottom:18px}
+.toolbar .spacer{flex:1}
+.pager{display:flex;align-items:center;gap:8px;justify-content:flex-end;padding:16px 4px 0;font-size:12.5px;color:var(--ink-400)}
+.pager button{
+  min-width:32px;height:32px;border-radius:8px;border:1px solid var(--line);background:#fff;
+  font-size:12.5px;color:var(--ink-500);display:grid;place-items:center;padding:0 9px;
+}
+.pager button:hover{border-color:var(--brand-100);color:var(--brand-700);background:var(--brand-50)}
+.pager button.on{background:var(--brand);border-color:var(--brand);color:#fff;font-weight:600}
+.stock-bar{width:74px;height:6px;border-radius:var(--r-pill);background:#EDF1EE;overflow:hidden;display:inline-block;vertical-align:middle;margin-right:8px}
+.stock-bar .bar{height:100%;border-radius:var(--r-pill)}
+.low{color:var(--danger);font-weight:600;font-size:12px}
+.ok{color:var(--ink-500);font-size:12px}
+</style>
+</head>
+<body>
+
+<header class="board-head">
+  <div class="board-head-inner">
+    <div class="board-brand">
+      <div class="board-logo">🥬</div>
+      <div>
+        <h1>FreshCommunity · UI 设计方案</h1>
+        <p>社区生鲜团购平台 · 高保真原型 v1.0</p>
+      </div>
+    </div>
+    <nav class="board-tabs" id="tabs"></nav>
+  </div>
+</header>
+
+<main class="board-stage">
+  <div class="stage-meta">
+    <h2 id="stageTitle">设计系统</h2>
+    <span class="pill" id="stageRole">通用</span>
+    <p id="stageDesc"></p>
+  </div>
+  <div class="frame">
+    <div class="frame-bar">
+      <span class="dot r"></span><span class="dot y"></span><span class="dot g"></span>
+      <div class="urlbar">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+        <span id="urlText">localhost:5173/dashboard</span>
+      </div>
+    </div>
+    <div class="frame-body" id="stage"></div>
+  </div>
+</main>
+
+<!-- ============================================================
+     ICON DEFS (sprite)
+     ============================================================ -->
+<svg style="display:none">
+  <symbol id="i-home" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10.5 12 3l9 7.5"/><path d="M5 9.5V21h14V9.5"/><path d="M9.5 21v-6h5v6"/></symbol>
+  <symbol id="i-grid" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7.5" height="7.5" rx="2"/><rect x="13.5" y="3" width="7.5" height="7.5" rx="2"/><rect x="3" y="13.5" width="7.5" height="7.5" rx="2"/><rect x="13.5" y="13.5" width="7.5" height="7.5" rx="2"/></symbol>
+  <symbol id="i-receipt" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M5 3h14v18l-2.5-1.6L14 21l-2-1.6L10 21l-2.5-1.6L5 21z"/><path d="M9 8h6M9 12h6"/></symbol>
+  <symbol id="i-bell" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8a6 6 0 1 0-12 0c0 6-2.5 7-2.5 7h17S18 14 18 8"/><path d="M13.7 20a2 2 0 0 1-3.4 0"/></symbol>
+  <symbol id="i-users" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M16 20v-1.5a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4V20"/><circle cx="9" cy="7" r="3.5"/><path d="M22 20v-1.5a4 4 0 0 0-3-3.87"/><path d="M16.5 3.7a4 4 0 0 1 0 7.6"/></symbol>
+  <symbol id="i-qr" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><path d="M14 14h3v3h-3zM20 14h1M14 20h1M18 18h3v3h-3z"/></symbol>
+  <symbol id="i-chart" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M3 20h18"/><rect x="5" y="11" width="3.5" height="9" rx="1.2"/><rect x="10.5" y="6" width="3.5" height="14" rx="1.2"/><rect x="16" y="14" width="3.5" height="6" rx="1.2"/></symbol>
+  <symbol id="i-box" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M21 8.5v7a2 2 0 0 1-1 1.73l-7 4a2 2 0 0 1-2 0l-7-4A2 2 0 0 1 3 15.5v-7a2 2 0 0 1 1-1.73l7-4a2 2 0 0 1 2 0l7 4A2 2 0 0 1 21 8.5z"/><path d="m3.3 7.5 8.7 5 8.7-5"/><path d="M12 22V12.5"/></symbol>
+  <symbol id="i-search" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></symbol>
+  <symbol id="i-clock" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7.5V12l3 2"/></symbol>
+  <symbol id="i-pin" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21s7-5.6 7-11a7 7 0 1 0-14 0c0 5.4 7 11 7 11z"/><circle cx="12" cy="10" r="2.5"/></symbol>
+  <symbol id="i-star" viewBox="0 0 24 24" fill="currentColor"><path d="m12 2.6 2.9 5.9 6.5.95-4.7 4.6 1.1 6.45L12 17.45 6.2 20.5l1.1-6.45-4.7-4.6 6.5-.95z"/></symbol>
+  <symbol id="i-plus" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></symbol>
+  <symbol id="i-check" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M4.5 12.5 9.5 17.5 19.5 7"/></symbol>
+  <symbol id="i-trend" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m3 16 5.5-5.5 4 4L21 6"/><path d="M15 6h6v6"/></symbol>
+  <symbol id="i-cart" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="20" r="1.4"/><circle cx="18" cy="20" r="1.4"/><path d="M2 3h2.2l2.4 12.2a1.6 1.6 0 0 0 1.6 1.3h9.3a1.6 1.6 0 0 0 1.6-1.3L21 7H5"/></symbol>
+  <symbol id="i-edit" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4z"/></symbol>
+  <symbol id="i-trash" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18M8 6V4h8v2M6 6l1 14h10l1-14"/></symbol>
+  <symbol id="i-chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 6 6 6-6 6"/></symbol>
+  <symbol id="i-out" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><path d="m16 17 5-5-5-5M21 12H9"/></symbol>
+  <symbol id="i-shield" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-3.5 8-10V5l-8-3-8 3v7c0 6.5 8 10 8 10z"/><path d="m9 12 2 2 4-4"/></symbol>
+  <symbol id="i-truck" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M1 3h13v13H1zM14 8h4l3 3.5V16h-7"/><circle cx="5.5" cy="18.5" r="1.8"/><circle cx="17.5" cy="18.5" r="1.8"/></symbol>
+</svg>
+
+<!-- ============================================================
+     SCREEN TEMPLATES
+     ============================================================ -->
+
+<!-- ---------- 设计系统 ---------- -->
+<template id="tpl-tokens">
+  <div class="app" style="background:var(--bg)">
+    <div class="app-main">
+      <div class="app-body" style="padding:32px 40px">
+        <div class="tok">
+          <h2>FreshCommunity 设计系统</h2>
+          <p class="lead">以「新鲜 · 邻里 · 可信」为核心气质。主色取自生鲜本身的新叶绿，辅助色用暖橙承载价格与紧迫感；圆角、留白与阴影共同营造亲切、不冰冷的社区感。所有 token 已映射为 CSS 变量，可直接落到 Vue + Element Plus 的主题变量中。</p>
+
+          <div class="tok-block">
+            <h4>品牌色 / Brand</h4>
+            <div class="sw-grid">
+              <div class="sw"><div class="fill" style="background:#1E9E5A"></div><div class="meta"><b>Primary</b><span>#1E9E5A</span></div></div>
+              <div class="sw"><div class="fill" style="background:#178A4E"></div><div class="meta"><b>Primary Hover</b><span>#178A4E</span></div></div>
+              <div class="sw"><div class="fill" style="background:#12713F"></div><div class="meta"><b>Primary Deep</b><span>#12713F</span></div></div>
+              <div class="sw"><div class="fill" style="background:#D6F0E1"></div><div class="meta"><b>Primary Light</b><span>#D6F0E1</span></div></div>
+              <div class="sw"><div class="fill" style="background:#EAF7F0"></div><div class="meta"><b>Primary Soft</b><span>#EAF7F0</span></div></div>
+            </div>
+          </div>
+
+          <div class="tok-block">
+            <h4>强调色 / Accent（价格 · 倒计时 · 促销）</h4>
+            <div class="sw-grid">
+              <div class="sw"><div class="fill" style="background:#FF7A1A"></div><div class="meta"><b>Accent</b><span>#FF7A1A</span></div></div>
+              <div class="sw"><div class="fill" style="background:#EE6A08"></div><div class="meta"><b>Accent Hover</b><span>#EE6A08</span></div></div>
+              <div class="sw"><div class="fill" style="background:#FFF3E8"></div><div class="meta"><b>Accent Soft</b><span>#FFF3E8</span></div></div>
+              <div class="sw"><div class="fill" style="background:#F5A524"></div><div class="meta"><b>Star / Warning</b><span>#F5A524</span></div></div>
+              <div class="sw"><div class="fill" style="background:#E5484D"></div><div class="meta"><b>Danger</b><span>#E5484D</span></div></div>
+              <div class="sw"><div class="fill" style="background:#3B82F6"></div><div class="meta"><b>Info</b><span>#3B82F6</span></div></div>
+            </div>
+          </div>
+
+          <div class="tok-block">
+            <h4>中性色 / Neutral</h4>
+            <div class="sw-grid">
+              <div class="sw"><div class="fill" style="background:#0F1A14"></div><div class="meta"><b>Ink 900 标题</b><span>#0F1A14</span></div></div>
+              <div class="sw"><div class="fill" style="background:#33443B"></div><div class="meta"><b>Ink 700 正文</b><span>#33443B</span></div></div>
+              <div class="sw"><div class="fill" style="background:#5B6B62"></div><div class="meta"><b>Ink 500 次要</b><span>#5B6B62</span></div></div>
+              <div class="sw"><div class="fill" style="background:#8A9A91"></div><div class="meta"><b>Ink 400 辅助</b><span>#8A9A91</span></div></div>
+              <div class="sw"><div class="fill" style="background:#E4EAE6"></div><div class="meta"><b>Line 描边</b><span>#E4EAE6</span></div></div>
+              <div class="sw"><div class="fill" style="background:#F3F7F4"></div><div class="meta"><b>BG 页面底</b><span>#F3F7F4</span></div></div>
+            </div>
+          </div>
+
+          <div class="tok-block">
+            <h4>字阶 / Typography · PingFang SC</h4>
+            <div class="type-row"><span class="lbl">Display 30/750</span><span style="font-size:30px;font-weight:750;color:var(--ink-900);letter-spacing:-.6px">和邻居一起买新鲜</span></div>
+            <div class="type-row"><span class="lbl">H1 22/700</span><span style="font-size:22px;font-weight:700;color:var(--ink-900);letter-spacing:-.3px">团购广场</span></div>
+            <div class="type-row"><span class="lbl">H2 16/650</span><span style="font-size:16px;font-weight:650;color:var(--ink-900)">进行中的团购</span></div>
+            <div class="type-row"><span class="lbl">Body 14/400</span><span style="font-size:14px;color:var(--ink-700)">正文内容，用于订单说明、商品描述等长文本阅读场景。</span></div>
+            <div class="type-row"><span class="lbl">Caption 12.5/400</span><span style="font-size:12.5px;color:var(--ink-400)">辅助说明 / 时间戳 / 提货点信息</span></div>
+            <div class="type-row"><span class="lbl">Num 20/750</span><span class="price"><i>¥</i>12.9<s>¥19.9</s></span></div>
+          </div>
+
+          <div class="tok-block">
+            <h4>按钮 / Buttons</h4>
+            <div class="comp-row">
+              <button class="btn btn-primary"><svg><use href="#i-cart"/></svg>立即参团</button>
+              <button class="btn btn-accent">立即支付</button>
+              <button class="btn btn-ghost">取消订单</button>
+              <button class="btn btn-soft">查看详情</button>
+              <button class="btn btn-danger-soft">申请退款</button>
+              <button class="btn btn-sm btn-primary">小尺寸</button>
+              <button class="btn btn-primary" disabled>已售罄</button>
+            </div>
+          </div>
+
+          <div class="tok-block">
+            <h4>状态徽章 / Badges</h4>
+            <div class="comp-row">
+              <span class="badge b-orange"><i class="d"></i>待支付</span>
+              <span class="badge b-blue"><i class="d"></i>待成团</span>
+              <span class="badge b-green"><i class="d"></i>待取货</span>
+              <span class="badge b-gray"><i class="d"></i>已完成</span>
+              <span class="badge b-gray"><i class="d"></i>已取消</span>
+              <span class="badge b-red"><i class="d"></i>已退款</span>
+              <span class="badge b-yellow"><i class="d"></i>即将截止</span>
+            </div>
+          </div>
+
+          <div class="tok-block">
+            <h4>进度 · 表单 · 筛选 / Progress &amp; Input</h4>
+            <div class="comp-row" style="gap:22px">
+              <div style="width:200px">
+                <div class="prog-meta" style="margin:0 0 8px"><span class="muted">已参团 <b style="color:var(--brand-700)">8</b>/12 人</span></div>
+                <div class="progress"><div class="bar" style="width:66%"></div></div>
+              </div>
+              <div style="width:200px">
+                <div class="prog-meta" style="margin:0 0 8px"><span class="cd urgent"><svg><use href="#i-clock"/></svg>还剩 1 小时 12 分</span></div>
+                <div class="progress"><div class="bar hot" style="width:88%"></div></div>
+              </div>
+              <div class="field" style="width:220px"><svg><use href="#i-search"/></svg><input placeholder="搜索商品 / 团购"></div>
+              <span class="chip on">即将截止</span><span class="chip">马上成团</span><span class="chip">全部</span>
+            </div>
+          </div>
+
+          <div class="tok-block">
+            <h4>圆角 · 阴影 / Radius &amp; Elevation</h4>
+            <div class="comp-row" style="gap:20px">
+              <div style="width:120px;height:74px;border-radius:9px;background:#fff;border:1px solid var(--line);box-shadow:var(--sh-1);display:grid;place-items:center;font-size:12px;color:var(--ink-400)">r-sm 9 · sh-1</div>
+              <div style="width:120px;height:74px;border-radius:12px;background:#fff;border:1px solid var(--line);box-shadow:var(--sh-1);display:grid;place-items:center;font-size:12px;color:var(--ink-400)">r 12 · sh-1</div>
+              <div style="width:120px;height:74px;border-radius:16px;background:#fff;border:1px solid var(--line);box-shadow:var(--sh-2);display:grid;place-items:center;font-size:12px;color:var(--ink-400)">r-lg 16 · sh-2</div>
+              <div style="width:120px;height:74px;border-radius:20px;background:#fff;border:1px solid var(--line);box-shadow:var(--sh-3);display:grid;place-items:center;font-size:12px;color:var(--ink-400)">r-xl 20 · sh-3</div>
+              <div style="width:120px;height:74px;border-radius:999px;background:#fff;border:1px solid var(--line);box-shadow:var(--sh-1);display:grid;place-items:center;font-size:12px;color:var(--ink-400)">pill 999</div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </div>
+  </div>
+</template>
+
+<!-- ---------- 登录 / 注册 ---------- -->
+<template id="tpl-auth">
+  <div class="auth">
+    <div class="auth-left">
+      <div class="auth-logo">
+        <div class="mark">🥬</div>
+        <div><b>FreshCommunity</b><small>社区生鲜团购平台</small></div>
+      </div>
+      <div class="auth-copy">
+        <h2>和邻居一起，<br>把<em>新鲜</em>带回家</h2>
+        <p>团长开团 · 邻居参团 · 达标成团 · 提货点自提核销。<br>一条完整的社区团购闭环，就在你家楼下。</p>
+        <div class="auth-feats">
+          <div class="auth-feat"><b>11</b><span>场团购进行中</span></div>
+          <div class="auth-feat"><b>16</b><span>种新鲜在售</span></div>
+          <div class="auth-feat"><b>3</b><span>个社区提货点</span></div>
+        </div>
+      </div>
+      <div class="auth-emoji"><i>🍅</i><i>🥬</i><i>🥚</i></div>
+    </div>
+    <div class="auth-right">
+      <div class="auth-form">
+        <h3>欢迎回来 👋</h3>
+        <p class="sub">登录后即可参团、查看订单与取货码</p>
+        <div class="seg"><button class="on">登录</button><button>注册</button></div>
+        <div class="fld">
+          <label>账号</label>
+          <div class="field">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"><circle cx="12" cy="8" r="3.6"/><path d="M4.5 20a7.5 7.5 0 0 1 15 0"/></svg>
+            <input value="user1" placeholder="请输入用户名">
+          </div>
+        </div>
+        <div class="fld">
+          <label>密码</label>
+          <div class="field">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"><rect x="4" y="10.5" width="16" height="10" rx="2.2"/><path d="M8 10.5V7.5a4 4 0 0 1 8 0v3"/></svg>
+            <input type="password" value="123456" placeholder="请输入密码">
+          </div>
+        </div>
+        <div class="auth-row">
+          <span class="check on"><i><svg width="10" height="10"><use href="#i-check"/></svg></i>记住我</span>
+          <a>忘记密码？</a>
+        </div>
+        <button class="btn btn-primary btn-lg btn-block">登录</button>
+        <p class="auth-foot">还没有账号？<a>立即注册</a></p>
+        <div class="demo-hint">
+          <b>演示账号</b>（密码均为 <code>123456</code>）：<br>
+          用户 <code>user1</code> · 团长 <code>leader1</code> · 管理员 <code>admin</code>
+        </div>
+      </div>
+    </div>
+  </div>
+</template>
+
+<!-- ---------- 用户 · 团购广场 ---------- -->
+<template id="tpl-user-home">
+  <div class="hero">
+    <div class="hero-l">
+      <span class="hero-tag">🎉 今日新鲜直达 · 满 12 人即享拼团价</span>
+      <h2>和邻居一起拼，<em>省下的都是新鲜的</em></h2>
+      <p>3 个提货点 · 11 场团购进行中 · 拼团价低至 6 折，楼下自提免运费</p>
+      <div class="hero-btns">
+        <button class="btn btn-white"><svg><use href="#i-cart"/></svg>浏览进行中的团购</button>
+        <button class="btn btn-outline-w">查看我的订单</button>
+      </div>
+    </div>
+    <div class="hero-r">
+      <div class="hero-stat"><b>11</b><span>进行中</span></div>
+      <div class="hero-stat"><b>3</b><span>即将成团</span></div>
+      <div class="hero-stat"><b>16</b><span>新鲜在售</span></div>
+    </div>
+  </div>
+
+  <div class="filter-row">
+    <span class="chip on">全部</span>
+    <span class="chip">⏰ 即将截止</span>
+    <span class="chip">🔥 马上成团</span>
+    <span class="chip">🥬 生鲜果蔬</span>
+    <span class="chip">🥚 肉禽蛋奶</span>
+    <span class="chip">🍚 粮油副食</span>
+    <span class="spacer"></span>
+    <span class="sort">按截止时间<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m6 9 6 6 6-6"/></svg></span>
+  </div>
+
+  <div class="grid g-3">
+    <article class="gcard">
+      <div class="gcard-media g1">🍅<span class="flag flag-hot">即将截止</span><span class="fav">♡</span></div>
+      <div class="gcard-body">
+        <h4>有机小番茄 500g · 现摘直发</h4>
+        <div class="muted from"><svg><use href="#i-pin"/></svg>幸福小区便利店 · 团长 阿香</div>
+        <div class="price-line"><span class="price"><i>¥</i>12.9<s>¥19.9</s></span><span class="save-tag">省 7 元</span></div>
+        <div class="progress"><div class="bar hot" style="width:88%"></div></div>
+        <div class="prog-meta">
+          <span>已参团 <b>10</b>/12 人</span>
+          <span class="cd urgent"><svg><use href="#i-clock"/></svg>还剩 1 小时 12 分</span>
+        </div>
+        <button class="btn btn-accent btn-block">立即参团 · 还差 2 人</button>
+      </div>
+    </article>
+
+    <article class="gcard">
+      <div class="gcard-media g2">🥚<span class="flag flag-new">新开团</span><span class="fav">♡</span></div>
+      <div class="gcard-body">
+        <h4>农家散养土鸡蛋 30 枚</h4>
+        <div class="muted from"><svg><use href="#i-pin"/></svg>阳光花园 3 号楼 · 团长 老周</div>
+        <div class="price-line"><span class="price"><i>¥</i>28.0<s>¥42.0</s></span><span class="save-tag">省 14 元</span></div>
+        <div class="progress"><div class="bar" style="width:25%"></div></div>
+        <div class="prog-meta">
+          <span>已参团 <b>3</b>/12 人</span>
+          <span class="cd"><svg><use href="#i-clock"/></svg>还剩 1 天 6 小时</span>
+        </div>
+        <button class="btn btn-primary btn-block">立即参团</button>
+      </div>
+    </article>
+
+    <article class="gcard">
+      <div class="gcard-media g5">🍓<span class="flag flag-hot">即将截止</span><span class="fav">♡</span></div>
+      <div class="gcard-body">
+        <h4>丹东 99 草莓 2 斤装</h4>
+        <div class="muted from"><svg><use href="#i-pin"/></svg>幸福小区便利店 · 团长 阿香</div>
+        <div class="price-line"><span class="price"><i>¥</i>39.9<s>¥58.0</s></span><span class="save-tag">省 18 元</span></div>
+        <div class="progress"><div class="bar hot" style="width:75%"></div></div>
+        <div class="prog-meta">
+          <span>已参团 <b>9</b>/12 人</span>
+          <span class="cd urgent"><svg><use href="#i-clock"/></svg>还剩 3 小时 40 分</span>
+        </div>
+        <button class="btn btn-accent btn-block">立即参团 · 还差 3 人</button>
+      </div>
+    </article>
+
+    <article class="gcard">
+      <div class="gcard-media g3">🥬<span class="fav">♡</span></div>
+      <div class="gcard-body">
+        <h4>高山娃娃菜 3 颗装</h4>
+        <div class="muted from"><svg><use href="#i-pin"/></svg>阳光花园 3 号楼 · 团长 老周</div>
+        <div class="price-line"><span class="price"><i>¥</i>9.9<s>¥15.9</s></span><span class="save-tag">省 6 元</span></div>
+        <div class="progress"><div class="bar" style="width:58%"></div></div>
+        <div class="prog-meta">
+          <span>已参团 <b>7</b>/12 人</span>
+          <span class="cd"><svg><use href="#i-clock"/></svg>还剩 22 小时</span>
+        </div>
+        <button class="btn btn-primary btn-block">立即参团</button>
+      </div>
+    </article>
+
+    <article class="gcard">
+      <div class="gcard-media g4">🐟<span class="fav">♡</span></div>
+      <div class="gcard-body">
+        <h4>冰鲜三文鱼中段 300g</h4>
+        <div class="muted from"><svg><use href="#i-pin"/></svg>幸福小区便利店 · 团长 阿香</div>
+        <div class="price-line"><span class="price"><i>¥</i>49.0<s>¥68.0</s></span><span class="save-tag">省 19 元</span></div>
+        <div class="progress"><div class="bar" style="width:42%"></div></div>
+        <div class="prog-meta">
+          <span>已参团 <b>5</b>/12 人</span>
+          <span class="cd"><svg><use href="#i-clock"/></svg>还剩 1 天 12 小时</span>
+        </div>
+        <button class="btn btn-primary btn-block">立即参团</button>
+      </div>
+    </article>
+
+    <article class="gcard">
+      <div class="gcard-media g6">🍚<span class="fav">♡</span></div>
+      <div class="gcard-body">
+        <h4>五常稻花香大米 5kg</h4>
+        <div class="muted from"><svg><use href="#i-pin"/></svg>阳光花园 3 号楼 · 团长 老周</div>
+        <div class="price-line"><span class="price"><i>¥</i>59.9<s>¥89.0</s></span><span class="save-tag">省 29 元</span></div>
+        <div class="progress"><div class="bar" style="width:100%"></div></div>
+        <div class="prog-meta">
+          <span>已参团 <b>12</b>/12 人</span>
+          <span class="cd" style="color:var(--brand-700)">✓ 已成团，待取货</span>
+        </div>
+        <button class="btn btn-soft btn-block">已成团 · 去提货</button>
+      </div>
+    </article>
+  </div>
+</template>
+
+<!-- ---------- 用户 · 商品浏览 ---------- -->
+<template id="tpl-user-products">
+  <div class="split">
+    <aside class="side-filter">
+      <div class="card">
+        <div class="cat on">🥬 全部商品<span class="cnt">16</span></div>
+        <div class="cat">🍎 生鲜果蔬<span class="cnt">7</span></div>
+        <div class="cat">🥚 肉禽蛋奶<span class="cnt">4</span></div>
+        <div class="cat">🍚 粮油副食<span class="cnt">3</span></div>
+        <div class="cat">🥤 酒水饮料<span class="cnt">2</span></div>
+      </div>
+      <div class="card card-pad" style="margin-top:14px">
+        <div style="font-size:12.5px;font-weight:650;color:var(--ink-800);margin-bottom:11px">价格区间</div>
+        <div class="field" style="height:38px;margin-bottom:9px"><label>¥</label><input placeholder="最低价"></div>
+        <div class="field" style="height:38px"><label>¥</label><input placeholder="最高价"></div>
+        <button class="btn btn-soft btn-sm btn-block" style="margin-top:11px">应用筛选</button>
+      </div>
+    </aside>
+
+    <div style="flex:1;min-width:0">
+      <div class="toolbar">
+        <div class="field" style="width:280px"><svg><use href="#i-search"/></svg><input placeholder="搜索商品名称…"></div>
+        <span class="spacer"></span>
+        <span class="sort">综合排序<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m6 9 6 6 6-6"/></svg></span>
+        <span class="sort">评分最高<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m6 9 6 6 6-6"/></svg></span>
+      </div>
+
+      <div class="grid g-4">
+        <article class="pcard"><div class="pcard-media g1">🍅</div><div class="pcard-body"><h4>有机小番茄 500g</h4><div class="rate"><span class="star">★</span><b style="color:var(--ink-700)">4.8</b>（126）</div><div class="price-line" style="margin:0"><span class="price" style="font-size:17px"><i>¥</i>12.9</span></div></div></article>
+        <article class="pcard"><div class="pcard-media g2">🥚</div><div class="pcard-body"><h4>农家散养土鸡蛋 30 枚</h4><div class="rate"><span class="star">★</span><b style="color:var(--ink-700)">4.9</b>（88）</div><div class="price-line" style="margin:0"><span class="price" style="font-size:17px"><i>¥</i>28.0</span></div></div></article>
+        <article class="pcard"><div class="pcard-media g5">🍓</div><div class="pcard-body"><h4>丹东 99 草莓 2 斤装</h4><div class="rate"><span class="star">★</span><b style="color:var(--ink-700)">4.6</b>（54）</div><div class="price-line" style="margin:0"><span class="price" style="font-size:17px"><i>¥</i>39.9</span></div></div></article>
+        <article class="pcard"><div class="pcard-media g3">🥬</div><div class="pcard-body"><h4>高山娃娃菜 3 颗装</h4><div class="rate"><span class="star">★</span><b style="color:var(--ink-700)">4.5</b>（37）</div><div class="price-line" style="margin:0"><span class="price" style="font-size:17px"><i>¥</i>9.9</span></div></div></article>
+        <article class="pcard"><div class="pcard-media g4">🐟</div><div class="pcard-body"><h4>冰鲜三文鱼中段 300g</h4><div class="rate"><span class="star">★</span><b style="color:var(--ink-700)">4.7</b>（61）</div><div class="price-line" style="margin:0"><span class="price" style="font-size:17px"><i>¥</i>49.0</span></div></div></article>
+        <article class="pcard"><div class="pcard-media g6">🍚</div><div class="pcard-body"><h4>五常稻花香大米 5kg</h4><div class="rate"><span class="star">★</span><b style="color:var(--ink-700)">5.0</b>（203）</div><div class="price-line" style="margin:0"><span class="price" style="font-size:17px"><i>¥</i>59.9</span></div></div></article>
+        <article class="pcard"><div class="pcard-media g3">🥦</div><div class="pcard-body"><h4>有机西兰花 2 颗</h4><div class="rate"><span class="star">★</span><b style="color:var(--ink-700)">4.4</b>（29）</div><div class="price-line" style="margin:0"><span class="price" style="font-size:17px"><i>¥</i>11.5</span></div></div></article>
+        <article class="pcard"><div class="pcard-media g2">🥛</div><div class="pcard-body"><h4>每日鲜牛奶 950ml</h4><div class="rate"><span class="star">★</span><b style="color:var(--ink-700)">4.8</b>（152）</div><div class="price-line" style="margin:0"><span class="price" style="font-size:17px"><i>¥</i>16.8</span></div></div></article>
+      </div>
+    </div>
+  </div>
+</template>
+
+<!-- ---------- 用户 · 商品详情 ---------- -->
+<template id="tpl-user-product-detail">
+  <div class="muted" style="margin-bottom:18px;font-size:12.5px">
+    商品浏览 <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m9 6 6 6-6 6"/></svg>
+    生鲜果蔬 <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m9 6 6 6-6 6"/></svg>
+    <b style="color:var(--ink-700);font-weight:600">有机小番茄 500g</b>
+  </div>
+
+  <div class="pd">
+    <div>
+      <div class="pd-gallery g1">🍅</div>
+      <div class="pd-thumbs"><i class="on g1">🍅</i><i class="g3">🥬</i><i class="g2">🍋</i><i class="g5">🍓</i></div>
+    </div>
+
+    <div class="pd-info">
+      <h2>有机小番茄 500g · 现摘直发</h2>
+      <div class="rate" style="font-size:13px"><span class="star">★</span><b style="color:var(--ink-700)">4.8</b> 分 · 126 条评价 · 已售 842 份</div>
+
+      <div class="pd-price-bar">
+        <span class="price"><i>¥</i>12.9</span>
+        <span style="color:var(--ink-400);font-size:13px">拼团价</span>
+        <s style="color:var(--ink-300);font-size:14px">¥19.9</s>
+        <span class="save-tag" style="margin-left:auto;font-size:12px;padding:4px 10px">立省 7 元</span>
+      </div>
+
+      <div class="kv"><span class="k">提货点</span><span class="v">幸福小区便利店 · 1 号楼底商（团长 阿香）</span></div>
+      <div class="kv"><span class="k">当前团购</span><span class="v" style="color:var(--brand-700)">进行中 · 已参团 10/12 人 · 还剩 1 小时 12 分</span></div>
+      <div class="kv"><span class="k">库存</span><span class="v">剩 36 件</span></div>
+      <div class="kv"><span class="k">规格</span><span class="v">500g / 盒 · 产地直发</span></div>
+
+      <div class="progress" style="margin:18px 0 8px"><div class="bar hot" style="width:88%"></div></div>
+      <div class="prog-meta" style="margin-bottom:20px">
+        <span>已参团 <b>10</b>/12 人</span>
+        <span class="cd urgent"><svg><use href="#i-clock"/></svg>还剩 1 小时 12 分截止</span>
+      </div>
+
+      <div style="display:flex;align-items:center;gap:14px">
+        <div class="qty"><button>−</button><span>1</span><button>+</button></div>
+        <button class="btn btn-accent btn-lg" style="flex:1"><svg><use href="#i-cart"/></svg>立即参团 · 还差 2 人成团</button>
+        <button class="btn btn-ghost btn-lg">♡</button>
+      </div>
+      <p class="muted" style="margin-top:13px"><svg><use href="#i-shield"/></svg>成团后凭取货码到提货点自提；未成团自动全额退款</p>
+    </div>
+  </div>
+
+  <div class="grid g-2" style="margin-top:26px;align-items:start">
+    <div class="card card-pad">
+      <div class="sec-head"><h3>商品评价</h3><span class="more">全部 126 条<svg width="13" height="13"><use href="#i-chev"/></svg></span></div>
+      <div class="review">
+        <div class="avatar" style="width:36px;height:36px">李</div>
+        <div class="body">
+          <div class="head"><b>李**</b><span>2 天前</span></div>
+          <div class="stars" style="margin-bottom:7px"><svg><use href="#i-star"/></svg><svg><use href="#i-star"/></svg><svg><use href="#i-star"/></svg><svg><use href="#i-star"/></svg><svg><use href="#i-star"/></svg></div>
+          <p>番茄特别新鲜，个头均匀，比菜市场便宜一半，团长阿香人也很好，还帮我留了车位。</p>
+        </div>
+      </div>
+      <div class="review">
+        <div class="avatar" style="width:36px;height:36px;background:linear-gradient(140deg,#FFC48A,#FF7A1A)">王</div>
+        <div class="body">
+          <div class="head"><b>王**</b><span>5 天前</span></div>
+          <div class="stars" style="margin-bottom:7px"><svg><use href="#i-star"/></svg><svg><use href="#i-star"/></svg><svg><use href="#i-star"/></svg><svg><use href="#i-star"/></svg><svg class="off"><use href="#i-star"/></svg></div>
+          <p>味道不错，就是有一盒稍微有点软，整体可以接受。</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="card card-pad">
+      <div class="sec-head"><h3>同时进行中的团购</h3></div>
+      <div class="lgroup" style="margin-bottom:11px">
+        <div class="top" style="margin-bottom:11px">
+          <div class="thumb lg g5">🍓</div>
+          <div class="info">
+            <h4 style="font-size:14px;margin-bottom:4px">丹东 99 草莓 2 斤装</h4>
+            <div class="muted"><svg><use href="#i-pin"/></svg>幸福小区便利店 · 阿香</div>
+          </div>
+          <div style="text-align:right"><span class="price" style="font-size:18px"><i>¥</i>39.9</span></div>
+        </div>
+        <div class="progress"><div class="bar hot" style="width:75%"></div></div>
+        <div class="prog-meta" style="margin:8px 0 0"><span>已参团 <b>9</b>/12 人</span><span class="cd urgent"><svg><use href="#i-clock"/></svg>还剩 3 小时 40 分</span></div>
+      </div>
+      <div class="lgroup" style="margin-bottom:0">
+        <div class="top" style="margin-bottom:11px">
+          <div class="thumb lg g4">🐟</div>
+          <div class="info">
+            <h4 style="font-size:14px;margin-bottom:4px">冰鲜三文鱼中段 300g</h4>
+            <div class="muted"><svg><use href="#i-pin"/></svg>幸福小区便利店 · 阿香</div>
+          </div>
+          <div style="text-align:right"><span class="price" style="font-size:18px"><i>¥</i>49.0</span></div>
+        </div>
+        <div class="progress"><div class="bar" style="width:42%"></div></div>
+        <div class="prog-meta" style="margin:8px 0 0"><span>已参团 <b>5</b>/12 人</span><span class="cd"><svg><use href="#i-clock"/></svg>还剩 1 天 12 小时</span></div>
+      </div>
+    </div>
+  </div>
+</template>
+
+<!-- ---------- 用户 · 我的订单 ---------- -->
+<template id="tpl-user-orders">
+  <div class="tabs">
+    <button class="on">全部<span class="n">5</span></button>
+    <button>待支付<span class="n">1</span></button>
+    <button>待成团<span class="n">1</span></button>
+    <button>待取货<span class="n">1</span></button>
+    <button>已完成<span class="n">1</span></button>
+    <button>已取消 / 退款<span class="n">1</span></button>
+  </div>
+
+  <!-- 待取货（含取货码） -->
+  <div class="ocard">
+    <div class="ocard-head">
+      <span class="no">FC20261011-000327</span>
+      <span>2026-10-11 14:22 下单</span>
+      <span class="st badge b-green"><i class="d"></i>待取货</span>
+    </div>
+    <div class="ocard-main">
+      <div class="thumb lg g2">🥚</div>
+      <div class="info">
+        <h4>农家散养土鸡蛋 30 枚</h4>
+        <div class="muted"><svg><use href="#i-pin"/></svg>幸福小区便利店 · 1 号楼底商 · 团长 阿香</div>
+      </div>
+      <div class="amt"><b>¥28.00</b><span>× 1 件</span></div>
+    </div>
+    <div class="pickup">
+      <div>
+        <div style="font-size:11.5px;color:var(--ink-400);margin-bottom:6px;font-weight:600">取货码</div>
+        <div class="code"><i>7</i><i>2</i><i>9</i><i>4</i><i>1</i><i>8</i></div>
+      </div>
+      <div class="txt">
+        <b>请于 10 月 13 日 18:00 前提货</b>
+        <span>到店后向团长出示取货码，或扫描右侧二维码核销</span>
+      </div>
+      <div class="qr">
+        <svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="var(--brand-700)" stroke-width="1.6"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><path d="M14 14h3v3h-3zM20 14h1M14 20h1M18 18h3v3h-3z"/></svg>
+      </div>
+    </div>
+    <div class="track">
+      <div class="node done"><div class="pt"></div><span>已下单</span></div>
+      <div class="node done"><div class="pt"></div><span>已支付</span></div>
+      <div class="node done"><div class="pt"></div><span>已成团</span></div>
+      <div class="node cur"><div class="pt"></div><span>待取货</span></div>
+      <div class="node"><div class="pt"></div><span>已完成</span></div>
+    </div>
+    <div class="ocard-foot">
+      <span class="hint">💡 成团后 <b>2 天</b>内到提货点自提，逾期团长将协助处理</span>
+      <button class="btn btn-sm btn-ghost">联系团长</button>
+      <button class="btn btn-sm btn-primary">查看提货点</button>
+    </div>
+  </div>
+
+  <!-- 待支付 -->
+  <div class="ocard">
+    <div class="ocard-head">
+      <span class="no">FC20261011-000331</span>
+      <span>2026-10-11 16:05 下单</span>
+      <span class="st badge b-orange"><i class="d"></i>待支付</span>
+    </div>
+    <div class="ocard-main">
+      <div class="thumb lg g1">🍅</div>
+      <div class="info">
+        <h4>有机小番茄 500g</h4>
+        <div class="muted"><svg><use href="#i-pin"/></svg>幸福小区便利店 · 团长 阿香</div>
+      </div>
+      <div class="amt"><b>¥25.80</b><span>× 2 件</span></div>
+    </div>
+    <div class="ocard-foot">
+      <span class="hint">⏰ 请在 <b>14 分 32 秒</b> 内完成支付，超时订单将自动关闭</span>
+      <button class="btn btn-sm btn-ghost">取消订单</button>
+      <button class="btn btn-sm btn-accent">立即支付</button>
+    </div>
+  </div>
+
+  <!-- 已完成 · 可评价 -->
+  <div class="ocard">
+    <div class="ocard-head">
+      <span class="no">FC20261008-000281</span>
+      <span>2026-10-08 09:14 下单</span>
+      <span class="st badge b-gray"><i class="d"></i>已完成</span>
+    </div>
+    <div class="ocard-main">
+      <div class="thumb lg g6">🍚</div>
+      <div class="info">
+        <h4>五常稻花香大米 5kg</h4>
+        <div class="muted"><svg><use href="#i-pin"/></svg>阳光花园 3 号楼 · 团长 老周</div>
+      </div>
+      <div class="amt"><b>¥59.90</b><span>× 1 件</span></div>
+    </div>
+    <div class="ocard-foot">
+      <span class="hint">✅ 已于 10-09 18:32 核销完成</span>
+      <button class="btn btn-sm btn-ghost">查看详情</button>
+      <button class="btn btn-sm btn-primary">去评价 · 得积分</button>
+    </div>
+  </div>
+
+  <!-- 已退款 -->
+  <div class="ocard">
+    <div class="ocard-head">
+      <span class="no">FC20261005-000199</span>
+      <span>2026-10-05 20:41 下单</span>
+      <span class="st badge b-red"><i class="d"></i>已退款</span>
+    </div>
+    <div class="ocard-main">
+      <div class="thumb lg g4">🐟</div>
+      <div class="info">
+        <h4>冰鲜三文鱼中段 300g</h4>
+        <div class="muted">未达 12 人成团 · 已自动解散并全额退款</div>
+      </div>
+      <div class="amt"><b>¥49.00</b><span>已退至余额</span></div>
+    </div>
+    <div class="ocard-foot">
+      <span class="hint">💬 退款原因：截止时间前未达 12 人成团人数</span>
+      <button class="btn btn-sm btn-ghost">再拼一次</button>
+    </div>
+  </div>
+</template>
+
+<!-- ---------- 用户 · 消息中心 ---------- -->
+<template id="tpl-user-notifications">
+  <div class="tabs" style="margin-bottom:14px">
+    <button class="on">全部<span class="n">27</span></button>
+    <button>未读<span class="n">6</span></button>
+    <button>成团通知</button>
+    <button>退款 / 关单</button>
+    <button>核销通知</button>
+  </div>
+  <div style="display:flex;justify-content:flex-end;margin-bottom:8px">
+    <button class="btn btn-sm btn-ghost">全部标为已读</button>
+  </div>
+
+  <div class="card" style="padding:6px">
+    <div class="msg unread">
+      <div class="ic" style="background:var(--brand-50)">🎉</div>
+      <div class="body">
+        <div class="r1"><h4>团购已成团</h4><span class="time">12 分钟前</span></div>
+        <p>你参团的「农家散养土鸡蛋 30 枚」已达成 12 人成团条件，取货码 <b style="color:var(--brand-700)">729418</b>，请于 10-13 18:00 前到幸福小区便利店提货。</p>
+      </div>
+      <span class="undot"></span>
+    </div>
+    <div class="msg unread">
+      <div class="ic" style="background:var(--accent-50)">⏰</div>
+      <div class="body">
+        <div class="r1"><h4>订单即将超时关闭</h4><span class="time">1 小时前</span></div>
+        <p>订单 FC20261011-000331 已下单超过 20 分钟仍未支付，系统将在 30 分钟后自动关闭并回补库存。</p>
+      </div>
+      <span class="undot"></span>
+    </div>
+    <div class="msg unread">
+      <div class="ic" style="background:var(--info-50)">✅</div>
+      <div class="body">
+        <div class="r1"><h4>核销成功</h4><span class="time">昨天 18:32</span></div>
+        <p>订单 FC20261008-000281 已由团长「老周」核销完成，感谢你的参与，欢迎评价本次购物体验。</p>
+      </div>
+      <span class="undot"></span>
+    </div>
+    <div class="msg">
+      <div class="ic" style="background:var(--danger-50)">↩️</div>
+      <div class="body">
+        <div class="r1"><h4>团购已解散，款项已退</h4><span class="time">10-06 20:41</span></div>
+        <p>「冰鲜三文鱼中段 300g」未在截止时间前达到成团人数，团购自动解散，¥49.00 已全额退回你的账户余额。</p>
+      </div>
+    </div>
+    <div class="msg">
+      <div class="ic" style="background:var(--warning-50)">⏳</div>
+      <div class="body">
+        <div class="r1"><h4>团购即将截止</h4><span class="time">10-05 19:00</span></div>
+        <p>你关注的「丹东 99 草莓 2 斤装」将在 3 小时后截止，当前 9/12 人，还差 3 人成团，快邀请邻居一起拼！</p>
+      </div>
+    </div>
+  </div>
+</template>
+
+<!-- ---------- 团长 · 我的团购 ---------- -->
+<template id="tpl-leader-groups">
+  <div class="grid g-4" style="margin-bottom:22px">
+    <div class="stat">
+      <div class="ic" style="background:var(--brand-50);color:var(--brand-700)"><svg><use href="#i-box"/></svg></div>
+      <div><div class="v">6</div><div class="k">我发起的团购</div></div>
+      <span class="trend" style="background:var(--brand-50);color:var(--brand-700)">3 进行中</span>
+    </div>
+    <div class="stat">
+      <div class="ic" style="background:var(--accent-50);color:var(--accent-600)"><svg><use href="#i-users"/></svg></div>
+      <div><div class="v">48</div><div class="k">累计参团人次</div></div>
+      <span class="trend" style="background:var(--brand-50);color:var(--brand-700)">↑ 12%</span>
+    </div>
+    <div class="stat">
+      <div class="ic" style="background:var(--info-50);color:var(--info)"><svg><use href="#i-qr"/></svg></div>
+      <div><div class="v">31</div><div class="k">已核销订单</div></div>
+      <span class="trend" style="background:#F1F4F2;color:var(--ink-500)">核销率 86%</span>
+    </div>
+    <div class="stat">
+      <div class="ic" style="background:#EDE9FD;color:#7C5CFA"><svg><use href="#i-star"/></svg></div>
+      <div><div class="v">4.8</div><div class="k">团长评分</div></div>
+      <span class="trend" style="background:var(--brand-50);color:var(--brand-700)">127 条评价</span>
+    </div>
+  </div>
+
+  <div class="sec-head">
+    <h3>我发起的团购</h3>
+    <span class="more" style="color:var(--brand);font-weight:600">＋ 发起新团购</span>
+  </div>
+
+  <div class="lgroup">
+    <div class="top">
+      <div class="thumb lg g1">🍅</div>
+      <div class="info">
+        <h4>有机小番茄 500g · 现摘直发</h4>
+        <div class="muted"><svg><use href="#i-pin"/></svg>幸福小区便利店 · 截止 今天 17:45</div>
+      </div>
+      <span class="badge b-orange"><i class="d"></i>即将截止</span>
+    </div>
+    <div class="progress"><div class="bar hot" style="width:83%"></div></div>
+    <div class="metrics">
+      <div>已参团<b class="g">10<span style="font-size:12px;color:var(--ink-400);font-weight:400"> /12 人</span></b></div>
+      <div>还差<b class="o">2<span style="font-size:12px;color:var(--ink-400);font-weight:400"> 人成团</span></b></div>
+      <div>订单数<b>10</b></div>
+      <div>已核销<b>0</b></div>
+      <div style="margin-left:auto;display:flex;gap:8px;align-items:center">
+        <button class="btn btn-sm btn-ghost">查看订单</button>
+        <button class="btn btn-sm btn-primary">催一催</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="lgroup">
+    <div class="top">
+      <div class="thumb lg g2">🥚</div>
+      <div class="info">
+        <h4>农家散养土鸡蛋 30 枚</h4>
+        <div class="muted"><svg><use href="#i-pin"/></svg>幸福小区便利店 · 截止 明天 12:00</div>
+      </div>
+      <span class="badge b-blue"><i class="d"></i>进行中</span>
+    </div>
+    <div class="progress"><div class="bar" style="width:33%"></div></div>
+    <div class="metrics">
+      <div>已参团<b class="g">4<span style="font-size:12px;color:var(--ink-400);font-weight:400"> /12 人</span></b></div>
+      <div>还差<b class="o">8<span style="font-size:12px;color:var(--ink-400);font-weight:400"> 人成团</span></b></div>
+      <div>订单数<b>4</b></div>
+      <div>已核销<b>0</b></div>
+      <div style="margin-left:auto;display:flex;gap:8px;align-items:center">
+        <button class="btn btn-sm btn-ghost">查看订单</button>
+        <button class="btn btn-sm btn-soft">分享到群</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="lgroup">
+    <div class="top">
+      <div class="thumb lg g5">🍓</div>
+      <div class="info">
+        <h4>丹东 99 草莓 2 斤装</h4>
+        <div class="muted"><svg><use href="#i-pin"/></svg>幸福小区便利店 · 已成团 · 待提货</div>
+      </div>
+      <span class="badge b-green"><i class="d"></i>已成团</span>
+    </div>
+    <div class="progress"><div class="bar" style="width:100%"></div></div>
+    <div class="metrics">
+      <div>已参团<b class="g">12<span style="font-size:12px;color:var(--ink-400);font-weight:400"> /12 人</span></b></div>
+      <div>成团时间<b style="color:var(--brand-700)">昨天 20:10</b></div>
+      <div>订单数<b>12</b></div>
+      <div>已核销<b class="o">8</b></div>
+      <div style="margin-left:auto;display:flex;gap:8px;align-items:center">
+        <button class="btn btn-sm btn-ghost">查看订单</button>
+        <button class="btn btn-sm btn-primary"><svg><use href="#i-qr"/></svg>去核销</button>
+      </div>
+    </div>
+  </div>
+</template>
+
+<!-- ---------- 团长 · 核销台 ---------- -->
+<template id="tpl-leader-verify">
+  <div class="verify-wrap">
+    <div class="card" style="padding:34px 36px;text-align:center">
+      <div style="width:60px;height:60px;border-radius:18px;background:var(--brand-50);display:grid;place-items:center;margin:0 auto 16px;color:var(--brand-700)">
+        <svg width="28" height="28"><use href="#i-qr"/></svg>
+      </div>
+      <h3 style="font-size:19px;font-weight:700;color:var(--ink-900);letter-spacing:-.3px">输入取货码核销</h3>
+      <p style="font-size:13px;color:var(--ink-400);margin-top:7px">请向顾客索取 6 位取货码，输入后即可完成核销</p>
+
+      <div class="code-box">
+        <i class="filled">7</i><i class="filled">2</i><i class="filled">9</i><i class="filled">4</i><i class="cur"></i><i></i>
+      </div>
+
+      <p class="scan-hint"><svg width="14" height="14"><use href="#i-shield"/></svg>仅限你本人发起的团购订单可核销 · 每单只能核销一次</p>
+
+      <div style="display:flex;gap:11px;justify-content:center">
+        <button class="btn btn-ghost btn-lg" style="min-width:112px">清空</button>
+        <button class="btn btn-primary btn-lg" style="min-width:190px" disabled>确认核销</button>
+      </div>
+
+      <div style="margin-top:26px;padding:14px 16px;border-radius:var(--r);background:var(--brand-50);border:1px solid var(--brand-100);display:flex;align-items:center;gap:12px;text-align:left">
+        <span style="font-size:19px">💡</span>
+        <span style="font-size:12.5px;color:var(--brand-700);line-height:1.6">若顾客无法出示取货码，可在「我的团购 → 查看订单」中按手机号或订单号手动定位并核销。</span>
+      </div>
+    </div>
+
+    <div class="card" style="margin-top:18px;overflow:hidden">
+      <div style="padding:16px 20px;border-bottom:1px solid var(--line-soft);display:flex;align-items:center">
+        <h3 style="font-size:15px;font-weight:650;color:var(--ink-900)">最近核销记录</h3>
+        <span class="more" style="margin-left:auto;font-size:12.5px;color:var(--ink-400)">今天 8 笔</span>
+      </div>
+      <div class="recent-row">
+        <span class="code-tag">835102</span>
+        <div class="info"><b>陈** · 农家散养土鸡蛋 30 枚</b><span>10 分钟前 · 核销成功</span></div>
+        <span class="badge b-green"><i class="d"></i>已完成</span>
+      </div>
+      <div class="recent-row">
+        <span class="code-tag">441978</span>
+        <div class="info"><b>刘** · 丹东 99 草莓 2 斤装</b><span>32 分钟前 · 核销成功</span></div>
+        <span class="badge b-green"><i class="d"></i>已完成</span>
+      </div>
+      <div class="recent-row">
+        <span class="code-tag">206745</span>
+        <div class="info"><b>赵** · 五常稻花香大米 5kg</b><span>1 小时前 · 核销成功</span></div>
+        <span class="badge b-green"><i class="d"></i>已完成</span>
+      </div>
+      <div class="recent-row">
+        <span class="code-tag">910384</span>
+        <div class="info"><b>孙** · 有机小番茄 500g</b><span>2 小时前 · 核销成功</span></div>
+        <span class="badge b-green"><i class="d"></i>已完成</span>
+      </div>
+    </div>
+  </div>
+</template>
+
+<!-- ---------- 管理员 · 数据看板 ---------- -->
+<template id="tpl-admin-dashboard">
+  <div class="grid g-4" style="margin-bottom:20px">
+    <div class="stat">
+      <div class="ic" style="background:var(--brand-50);color:var(--brand-700)"><svg><use href="#i-receipt"/></svg></div>
+      <div><div class="v">15</div><div class="k">今日订单数</div></div>
+      <span class="trend" style="background:var(--brand-50);color:var(--brand-700)"><svg width="12" height="12" style="display:inline;vertical-align:-2px"><use href="#i-trend"/></svg> 18%</span>
+    </div>
+    <div class="stat">
+      <div class="ic" style="background:var(--accent-50);color:var(--accent-600)"><svg><use href="#i-box"/></svg></div>
+      <div><div class="v">3</div><div class="k">今日成团数</div></div>
+      <span class="trend" style="background:var(--brand-50);color:var(--brand-700)"><svg width="12" height="12" style="display:inline;vertical-align:-2px"><use href="#i-trend"/></svg> 50%</span>
+    </div>
+    <div class="stat">
+      <div class="ic" style="background:var(--info-50);color:var(--info)"><svg><use href="#i-cart"/></svg></div>
+      <div><div class="v">¥2,486</div><div class="k">今日成交额</div></div>
+      <span class="trend" style="background:var(--danger-50);color:var(--danger)">↓ 4%</span>
+    </div>
+    <div class="stat">
+      <div class="ic" style="background:#EDE9FD;color:#7C5CFA"><svg><use href="#i-users"/></svg></div>
+      <div><div class="v">16</div><div class="k">平台注册用户</div></div>
+      <span class="trend" style="background:#F1F4F2;color:var(--ink-500)">3 位团长</span>
+    </div>
+  </div>
+
+  <div class="grid" style="grid-template-columns:1.55fr 1fr;margin-bottom:20px">
+    <div class="card chart-card">
+      <div class="chart-head">
+        <h3>近 7 日订单趋势</h3>
+        <div class="legend"><span><i style="background:var(--brand)"></i>订单数</span><span><i style="background:var(--accent)"></i>成团数</span></div>
+      </div>
+      <svg viewBox="0 0 620 200" style="width:100%;height:200px">
+        <defs>
+          <linearGradient id="ag" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stop-color="#1E9E5A" stop-opacity=".22"/>
+            <stop offset="100%" stop-color="#1E9E5A" stop-opacity="0"/>
+          </linearGradient>
+        </defs>
+        <g stroke="#EFF3F0" stroke-width="1">
+          <line x1="0" y1="20" x2="620" y2="20"/><line x1="0" y1="70" x2="620" y2="70"/>
+          <line x1="0" y1="120" x2="620" y2="120"/><line x1="0" y1="170" x2="620" y2="170"/>
+        </g>
+        <path d="M10,150 L110,128 L210,140 L310,86 L410,100 L510,52 L600,38 L600,190 L10,190 Z" fill="url(#ag)"/>
+        <path d="M10,150 L110,128 L210,140 L310,86 L410,100 L510,52 L600,38" fill="none" stroke="#1E9E5A" stroke-width="2.6" stroke-linejoin="round" stroke-linecap="round"/>
+        <g fill="#fff" stroke="#1E9E5A" stroke-width="2.6">
+          <circle cx="10" cy="150" r="4"/><circle cx="110" cy="128" r="4"/><circle cx="210" cy="140" r="4"/>
+          <circle cx="310" cy="86" r="4"/><circle cx="410" cy="100" r="4"/><circle cx="510" cy="52" r="4"/><circle cx="600" cy="38" r="4"/>
+        </g>
+        <path d="M10,176 L110,168 L210,172 L310,152 L410,160 L510,140 L600,132" fill="none" stroke="#FF7A1A" stroke-width="2" stroke-dasharray="5 4" stroke-linejoin="round"/>
+        <g font-size="11" fill="#8A9A91" text-anchor="middle" font-family="system-ui">
+          <text x="10" y="196">10-05</text><text x="110" y="196">10-06</text><text x="210" y="196">10-07</text>
+          <text x="310" y="196">10-08</text><text x="410" y="196">10-09</text><text x="510" y="196">10-10</text><text x="600" y="196">今天</text>
+        </g>
+      </svg>
+    </div>
+
+    <div class="card chart-card">
+      <div class="chart-head"><h3>订单状态分布</h3></div>
+      <div class="donut-wrap">
+        <svg width="150" height="150" viewBox="0 0 42 42">
+          <circle cx="21" cy="21" r="15.9" fill="none" stroke="#EDF1EE" stroke-width="6"/>
+          <circle cx="21" cy="21" r="15.9" fill="none" stroke="#1E9E5A" stroke-width="6" stroke-dasharray="37 63" stroke-dashoffset="25" stroke-linecap="round"/>
+          <circle cx="21" cy="21" r="15.9" fill="none" stroke="#FF7A1A" stroke-width="6" stroke-dasharray="22 78" stroke-dashoffset="-12" stroke-linecap="round"/>
+          <circle cx="21" cy="21" r="15.9" fill="none" stroke="#3B82F6" stroke-width="6" stroke-dasharray="15 85" stroke-dashoffset="-34" stroke-linecap="round"/>
+          <circle cx="21" cy="21" r="15.9" fill="none" stroke="#E5484D" stroke-width="6" stroke-dasharray="11 89" stroke-dashoffset="-49" stroke-linecap="round"/>
+          <text x="21" y="20.4" text-anchor="middle" font-size="7.6" font-weight="700" fill="#0F1A14" font-family="system-ui">27</text>
+          <text x="21" y="25.4" text-anchor="middle" font-size="3.4" fill="#8A9A91" font-family="system-ui">总订单</text>
+        </svg>
+        <div class="donut-legend">
+          <div class="row"><i style="background:var(--brand)"></i><span>已完成</span><b>10</b></div>
+          <div class="row"><i style="background:var(--accent)"></i><span>待支付 / 待成团</span><b>6</b></div>
+          <div class="row"><i style="background:var(--info)"></i><span>待取货</span><b>4</b></div>
+          <div class="row"><i style="background:var(--danger)"></i><span>已取消 / 退款</span><b>7</b></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card" style="overflow:hidden">
+    <div style="padding:16px 20px;border-bottom:1px solid var(--line-soft);display:flex;align-items:center">
+      <h3 style="font-size:15px;font-weight:650;color:var(--ink-900)">最近订单</h3>
+      <span class="more" style="margin-left:auto;font-size:12.5px;color:var(--ink-400)">查看全部<svg width="13" height="13"><use href="#i-chev"/></svg></span>
+    </div>
+    <table class="table">
+      <thead><tr><th>订单号</th><th>商品</th><th>用户</th><th>金额</th><th>状态</th><th>时间</th></tr></thead>
+      <tbody>
+        <tr><td class="no" style="font-family:ui-monospace,Menlo,monospace;font-size:12.5px">…000327</td><td>农家散养土鸡蛋 30 枚</td><td>李**</td><td><b>¥28.00</b></td><td><span class="badge b-green"><i class="d"></i>待取货</span></td><td class="muted" style="display:table-cell">14:22</td></tr>
+        <tr><td style="font-family:ui-monospace,Menlo,monospace;font-size:12.5px">…000331</td><td>有机小番茄 500g ×2</td><td>王**</td><td><b>¥25.80</b></td><td><span class="badge b-orange"><i class="d"></i>待支付</span></td><td class="muted" style="display:table-cell">16:05</td></tr>
+        <tr><td style="font-family:ui-monospace,Menlo,monospace;font-size:12.5px">…000318</td><td>丹东 99 草莓 2 斤装</td><td>赵**</td><td><b>¥39.90</b></td><td><span class="badge b-gray"><i class="d"></i>已完成</span></td><td class="muted" style="display:table-cell">11:48</td></tr>
+        <tr><td style="font-family:ui-monospace,Menlo,monospace;font-size:12.5px">…000306</td><td>冰鲜三文鱼中段 300g</td><td>孙**</td><td><b>¥49.00</b></td><td><span class="badge b-red"><i class="d"></i>已退款</span></td><td class="muted" style="display:table-cell">09:31</td></tr>
+      </tbody>
+    </table>
+  </div>
+</template>
+
+<!-- ---------- 管理员 · 商品管理 ---------- -->
+<template id="tpl-admin-products">
+  <div class="toolbar">
+    <div class="field" style="width:260px"><svg><use href="#i-search"/></svg><input placeholder="搜索商品名称…"></div>
+    <span class="sort">全部分类<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m6 9 6 6 6-6"/></svg></span>
+    <span class="sort">库存状态<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m6 9 6 6 6-6"/></svg></span>
+    <span class="spacer"></span>
+    <button class="btn btn-primary"><svg><use href="#i-plus"/></svg>新增商品</button>
+  </div>
+
+  <div class="card" style="overflow:hidden">
+    <table class="table">
+      <thead>
+        <tr><th style="width:64px">图片</th><th>商品名称</th><th>分类</th><th>拼团价</th><th>原价</th><th>库存</th><th>评分</th><th>操作</th></tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><div class="thumb g1">🍅</div></td>
+          <td><b style="color:var(--ink-900);font-weight:600">有机小番茄 500g</b></td>
+          <td><span class="badge b-gray">生鲜果蔬</span></td>
+          <td><b style="color:var(--accent-600)">¥12.90</b></td>
+          <td class="muted" style="display:table-cell">¥19.90</td>
+          <td><span class="stock-bar"><span class="bar" style="width:72%;background:var(--brand)"></span></span><span class="ok">36 件</span></td>
+          <td><span style="color:#F5A524">★</span> <b>4.8</b></td>
+          <td><button class="btn btn-sm btn-ghost" style="padding:0 9px"><svg width="14" height="14"><use href="#i-edit"/></svg></button>
+              <button class="btn btn-sm btn-ghost" style="padding:0 9px;color:var(--danger)"><svg width="14" height="14"><use href="#i-trash"/></svg></button></td>
+        </tr>
+        <tr>
+          <td><div class="thumb g2">🥚</div></td>
+          <td><b style="color:var(--ink-900);font-weight:600">农家散养土鸡蛋 30 枚</b></td>
+          <td><span class="badge b-gray">肉禽蛋奶</span></td>
+          <td><b style="color:var(--accent-600)">¥28.00</b></td>
+          <td class="muted" style="display:table-cell">¥42.00</td>
+          <td><span class="stock-bar"><span class="bar" style="width:18%;background:var(--danger)"></span></span><span class="low">9 件 · 偏低</span></td>
+          <td><span style="color:#F5A524">★</span> <b>4.9</b></td>
+          <td><button class="btn btn-sm btn-ghost" style="padding:0 9px"><svg width="14" height="14"><use href="#i-edit"/></svg></button>
+              <button class="btn btn-sm btn-ghost" style="padding:0 9px;color:var(--danger)"><svg width="14" height="14"><use href="#i-trash"/></svg></button></td>
+        </tr>
+        <tr>
+          <td><div class="thumb g5">🍓</div></td>
+          <td><b style="color:var(--ink-900);font-weight:600">丹东 99 草莓 2 斤装</b></td>
+          <td><span class="badge b-gray">生鲜果蔬</span></td>
+          <td><b style="color:var(--accent-600)">¥39.90</b></td>
+          <td class="muted" style="display:table-cell">¥58.00</td>
+          <td><span class="stock-bar"><span class="bar" style="width:54%;background:var(--brand)"></span></span><span class="ok">27 件</span></td>
+          <td><span style="color:#F5A524">★</span> <b>4.6</b></td>
+          <td><button class="btn btn-sm btn-ghost" style="padding:0 9px"><svg width="14" height="14"><use href="#i-edit"/></svg></button>
+              <button class="btn btn-sm btn-ghost" style="padding:0 9px;color:var(--danger)"><svg width="14" height="14"><use href="#i-trash"/></svg></button></td>
+        </tr>
+        <tr>
+          <td><div class="thumb g4">🐟</div></td>
+          <td><b style="color:var(--ink-900);font-weight:600">冰鲜三文鱼中段 300g</b></td>
+          <td><span class="badge b-gray">肉禽蛋奶</span></td>
+          <td><b style="color:var(--accent-600)">¥49.00</b></td>
+          <td class="muted" style="display:table-cell">¥68.00</td>
+          <td><span class="stock-bar"><span class="bar" style="width:42%;background:var(--brand)"></span></span><span class="ok">21 件</span></td>
+          <td><span style="color:#F5A524">★</span> <b>4.7</b></td>
+          <td><button class="btn btn-sm btn-ghost" style="padding:0 9px"><svg width="14" height="14"><use href="#i-edit"/></svg></button>
+              <button class="btn btn-sm btn-ghost" style="padding:0 9px;color:var(--danger)"><svg width="14" height="14"><use href="#i-trash"/></svg></button></td>
+        </tr>
+        <tr>
+          <td><div class="thumb g6">🍚</div></td>
+          <td><b style="color:var(--ink-900);font-weight:600">五常稻花香大米 5kg</b></td>
+          <td><span class="badge b-gray">粮油副食</span></td>
+          <td><b style="color:var(--accent-600)">¥59.90</b></td>
+          <td class="muted" style="display:table-cell">¥89.00</td>
+          <td><span class="stock-bar"><span class="bar" style="width:8%;background:var(--danger)"></span></span><span class="low">4 件 · 偏低</span></td>
+          <td><span style="color:#F5A524">★</span> <b>5.0</b></td>
+          <td><button class="btn btn-sm btn-ghost" style="padding:0 9px"><svg width="14" height="14"><use href="#i-edit"/></svg></button>
+              <button class="btn btn-sm btn-ghost" style="padding:0 9px;color:var(--danger)"><svg width="14" height="14"><use href="#i-trash"/></svg></button></td>
+        </tr>
+        <tr>
+          <td><div class="thumb g3">🥬</div></td>
+          <td><b style="color:var(--ink-900);font-weight:600">高山娃娃菜 3 颗装</b></td>
+          <td><span class="badge b-gray">生鲜果蔬</span></td>
+          <td><b style="color:var(--accent-600)">¥9.90</b></td>
+          <td class="muted" style="display:table-cell">¥15.90</td>
+          <td><span class="stock-bar"><span class="bar" style="width:66%;background:var(--brand)"></span></span><span class="ok">33 件</span></td>
+          <td><span style="color:#F5A524">★</span> <b>4.5</b></td>
+          <td><button class="btn btn-sm btn-ghost" style="padding:0 9px"><svg width="14" height="14"><use href="#i-edit"/></svg></button>
+              <button class="btn btn-sm btn-ghost" style="padding:0 9px;color:var(--danger)"><svg width="14" height="14"><use href="#i-trash"/></svg></button></td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="pager">
+    <span>共 16 条</span>
+    <button>‹</button><button class="on">1</button><button>2</button><button>3</button><button>›</button>
+  </div>
+</template>
+
+<script>
+/* ============================================================
+   Screen registry
+   ============================================================ */
+const SCREENS = [
+  { id:'tokens',              name:'设计系统',    group:'基础',   role:'通用', desc:'色板 · 字阶 · 组件 · 圆角阴影，全部映射为可复用 token', url:'—', full:true },
+  { id:'auth',                name:'登录 / 注册', group:'认证',   role:'通用', desc:'左右分栏：左侧品牌叙事 + 右侧表单，注册支持用户 / 团长角色选择', url:'localhost:5173/login', full:true },
+  { id:'user-home',           name:'团购广场',    group:'用户端', role:'USER', desc:'Hero 引导 + 筛选 chips + 团购卡片；进度条与倒计时是核心视觉锚点', url:'localhost:5173/user/groups', nav:'home' },
+  { id:'user-products',       name:'商品浏览',    group:'用户端', role:'USER', desc:'左侧分类与价格筛选，右侧商品网格，评分前置', url:'localhost:5173/user/products', nav:'grid' },
+  { id:'user-product-detail', name:'商品详情',    group:'用户端', role:'USER', desc:'大图 + 拼团价条 + 团购进度 + 评价 + 关联团购', url:'localhost:5173/user/products/1', nav:'grid' },
+  { id:'user-orders',         name:'我的订单',    group:'用户端', role:'USER', desc:'状态 Tab + 订单卡片 + 取货码票据 + 状态时间轴', url:'localhost:5173/user/orders', nav:'receipt' },
+  { id:'user-notifications',  name:'消息中心',    group:'用户端', role:'USER', desc:'按事件类型分组，未读高亮 + 圆点标识 + 一键已读', url:'localhost:5173/notifications', nav:'bell' },
+  { id:'leader-groups',       name:'我的团购',    group:'团长端', role:'LEADER', desc:'经营数据 + 团购列表（进度 / 差多少人 / 核销数）', url:'localhost:5173/leader/groups', nav:'box' },
+  { id:'leader-verify',       name:'核销台',      group:'团长端', role:'LEADER', desc:'专注式大字号取货码输入 + 最近核销记录', url:'localhost:5173/leader/verify', nav:'qr' },
+  { id:'admin-dashboard',     name:'数据看板',    group:'管理端', role:'ADMIN', desc:'KPI 卡 + 趋势折线 + 状态分布环形 + 最近订单', url:'localhost:5173/admin/dashboard', nav:'chart' },
+  { id:'admin-products',      name:'商品管理',    group:'管理端', role:'ADMIN', desc:'搜索筛选 + 数据表格 + 库存可视化 + 行内操作', url:'localhost:5173/admin/products', nav:'box2' }
+];
+
+const NAV = {
+  home:'i-home', grid:'i-grid', receipt:'i-receipt', bell:'i-bell',
+  box:'i-box', box2:'i-box', qr:'i-qr', chart:'i-chart'
+};
+
+/* sidebar per role */
+const MENU = {
+  USER: [
+    { g:'选购', items:[['团购广场','home'],['商品浏览','grid']] },
+    { g:'我的', items:[['我的订单','receipt'],['消息中心','bell',6]] }
+  ],
+  LEADER: [
+    { g:'经营', items:[['我的团购','box'],['核销台','qr']] },
+    { g:'选购', items:[['团购广场','home'],['商品浏览','grid']] },
+    { g:'我的', items:[['我的订单','receipt'],['消息中心','bell',6]] }
+  ],
+  ADMIN: [
+    { g:'平台管理', items:[['数据看板','chart'],['商品管理','box2']] },
+    { g:'我的', items:[['消息中心','bell',6]] }
+  ]
+};
+
+const ROLE_LABEL = { USER:'用户', LEADER:'团长', ADMIN:'管理员' };
+const ROLE_USER  = { USER:'user1', LEADER:'leader1', ADMIN:'admin' };
+
+let current = 'tokens';
+
+function buildSidebar(role){
+  const menu = MENU[role] || MENU.USER;
+  const navHtml = menu.map(grp=>`
+    <div class="nav-grp">
+      <label>${grp.g}</label>
+      ${grp.items.map(([label,key,badge])=>`
+        <button class="nav-item" data-nav="${key}">
+          <svg><use href="#${NAV[key]}"/></svg>
+          <span>${label}</span>
+          ${badge?`<span class="n-badge">${badge}</span>`:''}
+        </button>`).join('')}
+    </div>`).join('');
+
+  return `
+  <div class="app">
+    <aside class="app-side">
+      <div class="side-logo">
+        <div class="mark">🥬</div>
+        <div><b>FreshCommunity</b><small>社区生鲜团购</small></div>
+      </div>
+      <nav class="side-nav">${navHtml}</nav>
+      <div class="side-foot">
+        <div class="side-user">
+          <div class="avatar">${ROLE_USER[role][0].toUpperCase()}</div>
+          <div style="flex:1;min-width:0">
+            <b>${ROLE_USER[role]}</b>
+            <small>${ROLE_LABEL[role]}</small>
+          </div>
+          <button class="icon-btn" style="width:30px;height:30px" title="退出登录"><svg width="16" height="16"><use href="#i-out"/></svg></button>
+        </div>
+      </div>
+    </aside>
+    <div class="app-main">
+      <header class="app-top">
+        <div class="crumb">FreshCommunity <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m9 6 6 6-6 6"/></svg> <b id="crumbTitle"></b></div>
+        <div class="top-search"><svg width="16" height="16"><use href="#i-search"/></svg><span>搜索商品 / 团购 / 订单…</span></div>
+        <button class="icon-btn"><svg width="19" height="19"><use href="#i-bell"/></svg><span class="dot-badge">6</span></button>
+        <div class="avatar" style="width:36px;height:36px">${ROLE_USER[role][0].toUpperCase()}</div>
+      </header>
+      <div class="app-body" id="appBody"></div>
+    </div>
+  </div>`;
+}
+
+function render(id){
+  current = id;
+  const s = SCREENS.find(x=>x.id===id);
+  const tpl = document.getElementById('tpl-'+id);
+  const stage = document.getElementById('stage');
+  stage.innerHTML = '';
+
+  if (s.full){
+    stage.appendChild(tpl.content.cloneNode(true));
+  } else {
+    const wrap = document.createElement('div');
+    wrap.style.height = '100%';
+    wrap.innerHTML = buildSidebar(s.role);
+    stage.appendChild(wrap);
+    const body = wrap.querySelector('#appBody');
+    body.appendChild(tpl.content.cloneNode(true));
+    wrap.querySelector('#crumbTitle').textContent = s.name;
+    const active = wrap.querySelector(`.nav-item[data-nav="${s.nav}"]`);
+    if (active) active.classList.add('on');
+  }
+
+  document.getElementById('stageTitle').textContent = s.name;
+  document.getElementById('stageRole').textContent = s.role;
+  document.getElementById('stageDesc').textContent = s.desc;
+  document.getElementById('urlText').textContent = s.url;
+  document.querySelectorAll('.tab').forEach(t=>t.classList.toggle('on', t.dataset.id===id));
+  document.getElementById('stage').scrollTop = 0;
+  history.replaceState(null,'','#'+id);
+}
+
+function buildTabs(){
+  const groups = [];
+  SCREENS.forEach(s=>{
+    let g = groups.find(x=>x.name===s.group);
+    if(!g){ g={name:s.group, items:[]}; groups.push(g); }
+    g.items.push(s);
+  });
+  document.getElementById('tabs').innerHTML = groups.map(g=>`
+    <div class="tab-grp">
+      <span>${g.name}</span>
+      ${g.items.map(s=>`<button class="tab" data-id="${s.id}">${s.name}</button>`).join('')}
+    </div>`).join('');
+  document.querySelectorAll('.tab').forEach(b=>b.addEventListener('click',()=>render(b.dataset.id)));
+}
+
+buildTabs();
+window.addEventListener('hashchange', ()=>{
+  const id = location.hash.slice(1);
+  if (id && SCREENS.some(s=>s.id===id) && id!==current) render(id);
+});
+const startId = location.hash.slice(1);
+render(SCREENS.some(s=>s.id===startId) ? startId : 'tokens');
+</script>
+</body>
+</html>
