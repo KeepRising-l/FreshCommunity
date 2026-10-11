@@ -1,13 +1,14 @@
 <template>
   <article class="gb-card" :class="'v-' + layout" @click="$emit('click', group)">
-    <div class="media" :class="visual.gradient">
-      <span class="emoji">{{ visual.emoji }}</span>
+    <div class="media" :class="imageUrl ? '' : visual.gradient">
+      <img v-if="imageUrl" class="cover" :src="imageUrl" :alt="displayName" loading="lazy" />
+      <span v-else class="emoji">{{ visual.emoji }}</span>
       <span v-if="flag" class="flag" :class="flag.cls">{{ flag.text }}</span>
       <slot name="media-extra" />
     </div>
 
     <div class="body">
-      <h4 class="title">{{ group.title }}</h4>
+      <h4 class="title">{{ displayName }}</h4>
 
       <div v-if="pickupText" class="from">
         <el-icon><LocationInformation /></el-icon>
@@ -15,8 +16,8 @@
       </div>
 
       <div v-if="hasPrice" class="price-line">
-        <span class="fc-price price"><i>¥</i>{{ formatMoney(price) }}</span>
-        <s v-if="originalPrice">{{ formatPrice(originalPrice) }}</s>
+        <span class="fc-price price"><i>¥</i>{{ formatMoney(resolvedPrice) }}</span>
+        <s v-if="resolvedOriginal">{{ formatPrice(resolvedOriginal) }}</s>
         <span v-if="saved" class="save-tag">省 {{ saved }} 元</span>
       </div>
 
@@ -52,13 +53,18 @@ import { productVisual } from '../utils/visual'
 import { formatMoney, formatPrice, remaining, progressPercent, remainingMembers, fromNow } from '../utils/format'
 
 const props = defineProps({
-  /** GroupBuyListVO：{ id, title, targetCount, deadline, status, memberCount, leaderName, pickupPointName, pickupPointAddress, createdAt } */
+  /**
+   * GroupBuyListVO：{ id, title, targetCount, deadline, status, memberCount,
+   *   leaderName, pickupPointName, pickupPointAddress, createdAt,
+   *   productId, productName, imageUrl, price, originalPrice }
+   */
   group: { type: Object, required: true },
   /** card（纵向，网格用） | row（横向，列表用） */
   layout: { type: String, default: 'card' },
-  /** 以下为可选：后端团购列表暂未返回价格与图片，页面拿到时可传入 */
+  /** 以下三项默认取 group 上的同名字段，也允许页面覆盖 */
   price: { type: [Number, String], default: null },
   originalPrice: { type: [Number, String], default: null },
+  imageUrl: { type: String, default: null },
   /** 自定义按钮文案；不传则按状态推导 */
   actionText: { type: String, default: '' },
   actionDisabled: { type: Boolean, default: false },
@@ -70,7 +76,22 @@ defineEmits(['action', 'click'])
 
 const now = useNow()
 
-const visual = computed(() => productVisual(props.group.title))
+/**
+ * 展示名用「团购标题」——它是团长起的名字，通常已包含商品名与卖点
+ * （如「红颜草莓 · 现摘现发」）。productName 只在标题缺失时兜底，
+ * 另外用于推导占位图 emoji。
+ */
+const displayName = computed(() => props.group.title || props.group.productName || '')
+
+/** 图片与价格：props 优先，其次取 group 上的字段 */
+const resolvedImage = computed(() => props.imageUrl ?? props.group.imageUrl ?? '')
+const imageUrl = computed(() => (resolvedImage.value ? resolvedImage.value : ''))
+const resolvedPrice = computed(() => (props.price ?? props.group.price ?? null))
+const resolvedOriginal = computed(() => (props.originalPrice ?? props.group.originalPrice ?? null))
+
+const visual = computed(() =>
+  productVisual(props.group.productName || displayName.value)
+)
 const percent = computed(() => progressPercent(props.group.memberCount, props.group.targetCount))
 const left = computed(() => remaining(props.group.deadline, now.value))
 const gap = computed(() => remainingMembers(props.group.memberCount, props.group.targetCount))
@@ -82,11 +103,13 @@ const pickupText = computed(() => {
   return name || (leader ? `团长 ${leader}` : '')
 })
 
-const hasPrice = computed(() => props.price !== null && props.price !== undefined && props.price !== '')
+const hasPrice = computed(
+  () => resolvedPrice.value !== null && resolvedPrice.value !== undefined && resolvedPrice.value !== ''
+)
 
 const saved = computed(() => {
-  if (!hasPrice.value || !props.originalPrice) return ''
-  const diff = Number(props.originalPrice) - Number(props.price)
+  if (!hasPrice.value || !resolvedOriginal.value) return ''
+  const diff = Number(resolvedOriginal.value) - Number(resolvedPrice.value)
   return diff > 0 ? diff.toFixed(0) : ''
 })
 
@@ -149,6 +172,13 @@ defineExpose({ left })
 
 .v-card .emoji {
   font-size: 52px;
+}
+
+.cover {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
 }
 
 /* ---- 横向行 ---- */

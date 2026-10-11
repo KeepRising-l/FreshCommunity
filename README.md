@@ -209,6 +209,7 @@ DB_PASSWORD=<你的MySQL密码> mvn test
 
 ## 开发说明
 
+- **团购的价格来自 `group_buy_item`，不在 `group_buy` 表上**：`group_buy_item.price_snapshot` 是拼团价，`product.price` 是零售价，两者刻意拉开差距以便前端展示「立省 X 元」。因此 `GET /api/group-buys` 与 `GET /api/group-buys/{id}` 返回的 VO 会额外带上 `productId / productName / imageUrl / price / originalPrice`；订单金额一律按 `price_snapshot × quantity` 计算。
 - **数据库表名 `order` 是 MySQL 保留字**，实体上必须写成 `@TableName("`order`")`（带反引号），否则 MyBatis-Plus 生成的 `SELECT ... FROM order` 会报 `SQLSyntaxErrorException`。
 - **JWT 无法主动失效**：token 签发后到期前一直有效。毕设场景可接受，生产需引入黑名单或改用短 token + refresh token。
 - **密码存储**：BCrypt 哈希，`$2a$10$` 前缀，长度 60。手写 `schema.sql` 时注意别写坏哈希长度，否则登录会恒定失败。

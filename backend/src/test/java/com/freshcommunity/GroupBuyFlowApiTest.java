@@ -35,6 +35,34 @@ class GroupBuyFlowApiTest extends ApiTestBase {
     }
 
     @Test
+    @DisplayName("团购列表与详情透出所挂商品、拼团价与原价（回归：曾无价格字段）")
+    void listAndDetailExposeProductAndPrice() throws Exception {
+        String leader = login("leader1", "123456");
+        String token = login("user1", "123456");
+        long productId = firstProductId(token);
+        long gid = createGroupBuy(leader, productId, 3);
+
+        // 商品原价取自 product，拼团价取自 group_buy_item.price_snapshot
+        JsonNode product = perform(get("/api/products/" + productId), token, null).data();
+        String productName = product.path("name").asText();
+        double originalPrice = product.path("price").asDouble();
+
+        JsonNode listItem = perform(get("/api/group-buys"), token, null).data().get(0);
+        assertThat(listItem.path("productId").asLong()).isEqualTo(productId);
+        assertThat(listItem.path("productName").asText()).isEqualTo(productName);
+        assertThat(listItem.path("originalPrice").asDouble()).isEqualTo(originalPrice);
+        // 拼团价必须存在且不高于原价
+        assertThat(listItem.path("price").isNumber()).isTrue();
+        assertThat(listItem.path("price").asDouble()).isLessThanOrEqualTo(originalPrice);
+
+        JsonNode detail = groupBuyDetail(token, gid);
+        assertThat(detail.path("productId").asLong()).isEqualTo(productId);
+        assertThat(detail.path("productName").asText()).isEqualTo(productName);
+        assertThat(detail.path("price").asDouble()).isEqualTo(listItem.path("price").asDouble());
+        assertThat(detail.path("originalPrice").asDouble()).isEqualTo(originalPrice);
+    }
+
+    @Test
     @DisplayName("取消待成团订单回退团购人数，不再产生虚假成团")
     void cancelOrderRollsBackMemberCount() throws Exception {
         String leader = login("leader1", "123456");

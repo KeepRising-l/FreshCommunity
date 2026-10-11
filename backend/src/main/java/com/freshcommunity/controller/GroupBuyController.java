@@ -7,8 +7,12 @@ import com.freshcommunity.dto.GroupBuyListVO;
 import com.freshcommunity.dto.RatingVO;
 import com.freshcommunity.dto.UserVO;
 import com.freshcommunity.entity.GroupBuy;
+import com.freshcommunity.entity.GroupBuyItem;
 import com.freshcommunity.entity.Order;
+import com.freshcommunity.entity.Product;
 import com.freshcommunity.entity.User;
+import com.freshcommunity.mapper.GroupBuyItemMapper;
+import com.freshcommunity.mapper.ProductMapper;
 import com.freshcommunity.mapper.UserMapper;
 import com.freshcommunity.service.GroupBuyService;
 import com.freshcommunity.service.ReviewService;
@@ -32,12 +36,34 @@ public class GroupBuyController {
     private final GroupBuyService groupBuyService;
     private final UserMapper userMapper;
     private final ReviewService reviewService;
+    private final GroupBuyItemMapper groupBuyItemMapper;
+    private final ProductMapper productMapper;
 
     public GroupBuyController(GroupBuyService groupBuyService, UserMapper userMapper,
-                              ReviewService reviewService) {
+                              ReviewService reviewService, GroupBuyItemMapper groupBuyItemMapper,
+                              ProductMapper productMapper) {
         this.groupBuyService = groupBuyService;
         this.userMapper = userMapper;
         this.reviewService = reviewService;
+        this.groupBuyItemMapper = groupBuyItemMapper;
+        this.productMapper = productMapper;
+    }
+
+    /**
+     * 填充团购所挂商品信息（拼团价、原价、图片）。
+     * 团购本身不存价格：拼团价取自 group_buy_item.price_snapshot，原价与图片取自 product。
+     */
+    private void fillProduct(GroupBuyListVO vo, GroupBuyItem item, Product product) {
+        if (item == null) {
+            return;
+        }
+        vo.setProductId(item.getProductId());
+        vo.setPrice(item.getPriceSnapshot());
+        if (product != null) {
+            vo.setProductName(product.getName());
+            vo.setImageUrl(product.getImageUrl());
+            vo.setOriginalPrice(product.getPrice());
+        }
     }
 
     @GetMapping
@@ -49,6 +75,23 @@ public class GroupBuyController {
         Set<Long> leaderIds = groups.stream().map(GroupBuy::getLeaderId).collect(Collectors.toSet());
         Map<Long, User> leaders = userMapper.selectBatchIds(leaderIds).stream()
                 .collect(Collectors.toMap(User::getId, u -> u));
+
+        // 团购所挂商品：一个团购目前只挂一个商品，取第一条（与 OrderService.createOrder 口径一致）
+        List<Long> groupIds = groups.stream().map(GroupBuy::getId).toList();
+        Map<Long, GroupBuyItem> itemByGroup = groupBuyItemMapper
+                .selectList(new LambdaQueryWrapper<GroupBuyItem>().in(GroupBuyItem::getGroupBuyId, groupIds))
+                .stream()
+                .collect(Collectors.toMap(GroupBuyItem::getGroupBuyId, i -> i, (a, b) -> a));
+
+        Map<Long, Product> products = Collections.emptyMap();
+        Set<Long> productIds = itemByGroup.values().stream()
+                .map(GroupBuyItem::getProductId)
+                .collect(Collectors.toSet());
+        if (!productIds.isEmpty()) {
+            products = productMapper.selectBatchIds(productIds).stream()
+                    .collect(Collectors.toMap(Product::getId, p -> p));
+        }
+
         List<GroupBuyListVO> vos = new ArrayList<>();
         for (GroupBuy g : groups) {
             GroupBuyListVO vo = new GroupBuyListVO();
@@ -59,6 +102,8 @@ public class GroupBuyController {
                 vo.setPickupPointName(leader.getPickupPointName());
                 vo.setPickupPointAddress(leader.getPickupPointAddress());
             }
+            GroupBuyItem item = itemByGroup.get(g.getId());
+            fillProduct(vo, item, item == null ? null : products.get(item.getProductId()));
             vos.add(vo);
         }
         return Result.success(vos);
@@ -87,6 +132,14 @@ public class GroupBuyController {
             vo.setLeaderAvgScore(rating.getAvgScore());
             vo.setLeaderReviewCount(rating.getCount());
         }
+
+        GroupBuyItem item = groupBuyItemMapper.selectOne(
+                new LambdaQueryWrapper<GroupBuyItem>()
+                        .eq(GroupBuyItem::getGroupBuyId, id)
+                        .last("LIMIT 1"));
+        if (item != null) {
+            fillProduct(vo, item, productMapper.selectById(item.getProductId()));
+        }
         return Result.success(vo);
     }
 
@@ -105,19 +158,12 @@ public class GroupBuyController {
         return Result.success(groupBuyService.listOrdersForLeader(id, leaderId));
     }
 
+    /**
+     * 团购详情。字段是列表项的父集（含商品与价格），另加团长评分汇总。
+     */
     @lombok.Data
-    public static class GroupBuyDetailVO {
-        private Long id;
-        private Long leaderId;
-        private String title;
-        private Integer targetCount;
-        private java.time.LocalDateTime deadline;
-        private String status;
-        private Integer memberCount;
-        private String leaderName;
-        private String pickupPointName;
-        private String pickupPointAddress;
-        private java.time.LocalDateTime createdAt;
+    @lombok.EqualsAndHashCode(callSuper = true)
+    public static class GroupBuyDetailVO extends GroupBuyListVO {
         /** 团长评分汇总（来自已核销订单的评价） */
         private Double leaderAvgScore;
         private Long leaderReviewCount;
