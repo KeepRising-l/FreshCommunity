@@ -63,7 +63,8 @@ onMounted(load)
   margin-bottom: 8px;
 }
 .item.unread {
-  border-left: 3px solid #409eff;
+  border-left: 3px solid var(--fc-brand);
+  background: #F7FCF9;
 }
 .row {
   display: flex;

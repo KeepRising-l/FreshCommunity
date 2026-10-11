@@ -1,0 +1,259 @@
+/* ============================================================
+ * FreshCommunity 设计系统 · Design Tokens
+ * 对应 docs/ui-design/design-spec.md §4
+ * 本文件分三部分：
+ *   1) 品牌 token（--fc-*）—— 供自定义组件引用
+ *   2) Element Plus 变量覆盖 —— 让内置组件自动换肤
+ *   3) 全局基础样式与滚动条
+ * 引入顺序必须晚于 element-plus/dist/index.css
+ * ============================================================ */
+
+/* ---------- 1. 品牌 token ---------- */
+:root {
+  /* 品牌主色 · 新叶绿 */
+  --fc-brand: #1E9E5A;
+  --fc-brand-600: #178A4E;
+  --fc-brand-700: #12713F;
+  --fc-brand-800: #0C5530;
+  --fc-brand-100: #D6F0E1;
+  --fc-brand-50: #EAF7F0;
+
+  /* 强调色 · 暖橙（价格 / 倒计时 / 优惠） */
+  --fc-accent: #FF7A1A;
+  --fc-accent-600: #EE6A08;
+  --fc-accent-50: #FFF3E8;
+
+  /* 语义色 */
+  --fc-success: #1E9E5A;
+  --fc-warning: #F5A524;
+  --fc-warning-50: #FEF6E7;
+  --fc-danger: #E5484D;
+  --fc-danger-50: #FDECEC;
+  --fc-info: #3B82F6;
+  --fc-info-50: #EAF2FE;
+  --fc-purple: #7C5CFA;
+  --fc-purple-50: #EDE9FD;
+
+  /* 中性色（带极轻微绿调，营造生鲜感） */
+  --fc-ink-900: #0F1A14;
+  --fc-ink-800: #1B2A22;
+  --fc-ink-700: #33443B;
+  --fc-ink-500: #5B6B62;
+  --fc-ink-400: #8A9A91;
+  --fc-ink-300: #B7C2BB;
+  --fc-line: #E4EAE6;
+  --fc-line-soft: #EFF3F0;
+  --fc-bg: #F3F7F4;
+  --fc-card: #FFFFFF;
+  --fc-card-2: #FAFCFA;
+
+  /* 圆角 */
+  --fc-r-xl: 20px;
+  --fc-r-lg: 16px;
+  --fc-r: 12px;
+  --fc-r-sm: 9px;
+  --fc-r-pill: 999px;
+
+  /* 阴影 */
+  --fc-sh-1: 0 1px 2px rgba(15, 26, 20, .05), 0 4px 12px rgba(15, 26, 20, .05);
+  --fc-sh-2: 0 8px 24px rgba(15, 26, 20, .10);
+  --fc-sh-3: 0 16px 48px rgba(15, 26, 20, .14);
+
+  /* 布局 */
+  --fc-side-w: 236px;
+  --fc-top-h: 64px;
+
+  /* 字体 */
+  --fc-font: "PingFang SC", "HarmonyOS Sans SC", "Microsoft YaHei", system-ui, -apple-system, "Segoe UI", sans-serif;
+}
+
+/* ---------- 2. Element Plus 变量覆盖 ---------- */
+:root {
+  /* 主色及其派生梯度（Element Plus 用 light-3/5/7/8/9 与 dark-2 生成 hover/disabled/边框等） */
+  --el-color-primary: #1E9E5A;
+  --el-color-primary-light-3: #5FBE8B;
+  --el-color-primary-light-5: #8FD2AC;
+  --el-color-primary-light-7: #BFE5CE;
+  --el-color-primary-light-8: #D6F0E1;
+  --el-color-primary-light-9: #EAF7F0;
+  --el-color-primary-dark-2: #178A4E;
+
+  --el-color-success: #1E9E5A;
+  --el-color-success-light-9: #EAF7F0;
+  --el-color-warning: #F5A524;
+  --el-color-warning-light-9: #FEF6E7;
+  --el-color-danger: #E5484D;
+  --el-color-danger-light-9: #FDECEC;
+  --el-color-error: #E5484D;
+  --el-color-error-light-9: #FDECEC;
+  --el-color-info: #8A9A91;
+  --el-color-info-light-9: #F3F7F4;
+
+  /* 文本与边框 */
+  --el-text-color-primary: #0F1A14;
+  --el-text-color-regular: #33443B;
+  --el-text-color-secondary: #5B6B62;
+  --el-text-color-placeholder: #B7C2BB;
+  --el-text-color-disabled: #B7C2BB;
+
+  --el-border-color: #E4EAE6;
+  --el-border-color-light: #EFF3F0;
+  --el-border-color-lighter: #EFF3F0;
+  --el-border-color-extra-light: #F3F7F4;
+  --el-border-color-hover: #B7C2BB;
+
+  --el-fill-color: #F3F7F4;
+  --el-fill-color-light: #F7FAF8;
+  --el-fill-color-lighter: #FAFCFA;
+  --el-fill-color-blank: #FFFFFF;
+  --el-bg-color: #FFFFFF;
+  --el-bg-color-page: #F3F7F4;
+  --el-bg-color-overlay: #FFFFFF;
+
+  /* 圆角与字体 */
+  --el-border-radius-base: 9px;
+  --el-border-radius-small: 7px;
+  --el-border-radius-round: 999px;
+  --el-font-family: var(--fc-font);
+  --el-font-size-base: 14px;
+
+  /* 阴影 */
+  --el-box-shadow-light: 0 1px 2px rgba(15, 26, 20, .05), 0 4px 12px rgba(15, 26, 20, .05);
+  --el-box-shadow: 0 8px 24px rgba(15, 26, 20, .10);
+}
+
+/* ---------- 3. 全局基础样式 ---------- */
+* {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#app {
+  height: 100%;
+}
+
+body {
+  margin: 0;
+  font-family: var(--fc-font);
+  font-size: 14px;
+  line-height: 1.55;
+  color: var(--fc-ink-700);
+  background: var(--fc-bg);
+  -webkit-font-smoothing: antialiased;
+  -webkit-text-size-adjust: 100%;
+}
+
+/* 金额 / 进度 / 取货码等数字使用等宽数字，避免纵向跳动 */
+.fc-num {
+  font-variant-numeric: tabular-nums;
+}
+
+/* 滚动条 */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #D8E2DA;
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #C2CFC7;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+/* ---------- 通用工具类 ---------- */
+.fc-card {
+  background: var(--fc-card);
+  border: 1px solid var(--fc-line);
+  border-radius: var(--fc-r-lg);
+  box-shadow: var(--fc-sh-1);
+}
+
+.fc-muted {
+  color: var(--fc-ink-400);
+  font-size: 12.5px;
+}
+
+.fc-price {
+  color: var(--fc-accent-600);
+  font-weight: 750;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -.4px;
+}
+
+.fc-price i {
+  font-style: normal;
+  font-size: .66em;
+  font-weight: 600;
+  margin-right: 1px;
+}
+
+.fc-section-title {
+  font-size: 15.5px;
+  font-weight: 650;
+  color: var(--fc-ink-900);
+  letter-spacing: .2px;
+}
+
+/* 商品图占位渐变（真实项目应替换为商品图片） */
+.fc-g1 { background: linear-gradient(140deg, #FFE9E0, #FFD3C2); }
+.fc-g2 { background: linear-gradient(140deg, #FFF6DA, #FFE7A8); }
+.fc-g3 { background: linear-gradient(140deg, #E4F6E7, #C4EBCE); }
+.fc-g4 { background: linear-gradient(140deg, #E8F1FF, #CFE1FB); }
+.fc-g5 { background: linear-gradient(140deg, #FDE9F3, #F9CFE4); }
+.fc-g6 { background: linear-gradient(140deg, #EDE9FD, #DCD4FA); }
+
+/* 进度条 */
+.fc-progress {
+  height: 7px;
+  border-radius: var(--fc-r-pill);
+  background: #EDF1EE;
+  overflow: hidden;
+}
+
+.fc-progress > i {
+  display: block;
+  height: 100%;
+  border-radius: var(--fc-r-pill);
+  background: linear-gradient(90deg, #4CC98A, #1E9E5A);
+  transition: width .4s ease;
+}
+
+.fc-progress > i.is-hot {
+  background: linear-gradient(90deg, #FFA45C, #FF7A1A);
+}
+
+/* ---------- Element Plus 细节打磨 ---------- */
+.el-button {
+  font-weight: 600;
+}
+
+.el-card {
+  border-radius: var(--fc-r-lg);
+  border-color: var(--fc-line);
+  box-shadow: var(--fc-sh-1);
+}
+
+.el-table th.el-table__cell {
+  background: var(--fc-card-2);
+  font-weight: 700;
+  font-size: 11.5px;
+  letter-spacing: .6px;
+  text-transform: uppercase;
+  color: var(--fc-ink-400);
+}
+
+.el-table td.el-table__cell {
+  border-bottom-color: var(--fc-line-soft);
+}
+
+.el-menu {
+  border-right: none;
+}

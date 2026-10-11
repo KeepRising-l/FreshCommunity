@@ -5,7 +5,11 @@
       <el-table-column prop="orderNo" label="订单号" />
       <el-table-column prop="quantity" label="数量" />
       <el-table-column prop="amount" label="金额" />
-      <el-table-column prop="status" label="状态" />
+      <el-table-column label="状态">
+        <template #default="scope">
+          <StatusBadge kind="order" :status="scope.row.status" />
+        </template>
+      </el-table-column>
       <el-table-column prop="pickupCode" label="取货码" />
       <el-table-column label="操作">
         <template #default="scope">
@@ -43,6 +47,7 @@ import { ref, reactive, onMounted } from 'vue'
 import { listMyOrders, payOrder, cancelOrder } from '../api/order'
 import { submitReview } from '../api/review'
 import { ElMessage } from 'element-plus'
+import StatusBadge from '../components/StatusBadge.vue'
 
 const orders = ref([])
 const reviewVisible = ref(false)
