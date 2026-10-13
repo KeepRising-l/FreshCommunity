@@ -4,29 +4,22 @@ schema: spec-driven
 # Add only constraints that should guide OpenSpec artifacts and workflows.
 # Include constraints an agent cannot infer by reading the code.
 # Keep general project documentation and discoverable codebase facts out.
-# Example:
-#   context: |
-#     Designs and tasks must cover Windows, macOS, and Linux
-#     Write all artifacts in Spanish
+context: |
+  社区生鲜团购平台（FreshCommunity），毕业设计项目。后端 Spring Boot 3 + MyBatis-Plus + MySQL，
+  前端 Vue 3 + Element Plus。所有 OpenSpec 产物（proposal / design / tasks / spec）一律用中文书写。
+
+  质量约束（不可从代码推断，必须遵守）：
+  - 完成声明必须有实测证据：对真实运行的后端发起请求并做可执行断言，禁止仅凭阅读代码下结论
+    （方法学见 docs/verification-report.md）。
+  - tasks.md 勾选仅代表「代码已写」；本项目有「勾了但没做」的虚报先例，归档前必须抽查勾选项与实现是否一致。
+  - 修 bug 必须同时补回归测试（backend/src/test/），已修复缺陷均已转化为用例。
 
 # Per-artifact rules (optional)
-# Add custom rules for specific artifacts.
-# Example:
-#   rules:
-#     proposal:
-#       - Keep proposals under 500 words
-#       - Always state what is out of scope
-#     tasks:
-#       - Break tasks into chunks of max 2 hours
+# 本项目暂无额外的产物级规则。
 
 # Per-operation guidance (optional)
-# Add advisory guidance for how apply and archive work should be conducted.
-# This is separate from artifact rules above.
-# Example:
-#   operations:
-#     apply:
-#       guidance:
-#         - Keep test summaries concise
-#     archive:
-#       guidance:
-#         - Summarize the archive outcome before finishing
+operations:
+  archive:
+    guidance:
+      - 归档前抽查 tasks 勾选项与实现是否一致（本项目有虚报先例），并确认规格与实现对齐
+      - 归档后运行 openspec validate --specs 校验基线
