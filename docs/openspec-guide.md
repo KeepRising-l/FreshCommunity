@@ -251,6 +251,8 @@ openspec/
 
 7 个 capability、共 23 条 requirement 已成为正式基线，`openspec validate --specs` 通过。此后每个新功能都是**对这条基线的增量**，delta 才有东西可比对。
 
+> **后续更新（2026-10-13）**：第二个变更 `reviews-and-notifications`（评价 + 站内消息）也已归档并同步基线。当前 `openspec/specs/` 为 **9 个 capability / 35 条 requirement / 57 个场景**，`changes/` 下无活跃变更。
+
 ### 归档前先修规格与实现的偏差（本次按此执行）
 
 原计划归档时，`specs/user-roles/spec.md` 写着「角色注册与登录」，而代码里没有注册功能（见 `docs/verification-report.md`）。当时二选一：

@@ -100,4 +100,4 @@
 
 前端同步：新增 `Register.vue`、`/register` 路由与守卫放行、登录页注册入口、`api/auth.js` 的 `register`、401 跳转时排除登录/注册页。
 
-> 本次修复后数据库再次还原为 `schema.sql` + `seed.sql` 的干净演示状态。变更归档（archive）仍待执行。
+> 本次修复后数据库再次还原为 `schema.sql` + `seed.sql` 的干净演示状态。变更归档已于 2026-10-11 完成（见 `openspec/changes/archive/2026-10-11-mvp-group-buying/`）。

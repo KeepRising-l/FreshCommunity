@@ -57,10 +57,11 @@ FreshCommunity/
 ├── backend/                       # Spring Boot 后端
 │   └── src/main/
 │       ├── java/com/freshcommunity/
-│       │   ├── controller/        # Auth / Product / GroupBuy / Order / Admin / File / Health
-│       │   ├── service/           # OrderService / GroupBuyService / PayService(接口) + MockPayServiceImpl
+│       │   ├── controller/        # Auth / Product / GroupBuy / Order / Review / Notification / Admin / File / Health
+│       │   ├── service/           # OrderService / GroupBuyService / ReviewService / NotificationService /
+│       │   │                      # PayService(接口) + MockPayServiceImpl
 │       │   ├── mapper/            # MyBatis-Plus Mapper（含原子扣减、超时关单等自定义 SQL）
-│       │   ├── entity/            # User / Product / GroupBuy / GroupBuyItem / Order
+│       │   ├── entity/            # User / Product / GroupBuy / GroupBuyItem / Order / Review / Notification
 │       │   ├── security/          # SecurityConfig / JwtUtil / JwtAuthenticationFilter
 │       │   ├── job/               # ScheduledJobs 定时任务
 │       │   ├── dto/  common/  config/
@@ -69,15 +70,20 @@ FreshCommunity/
 │           └── application-dev.yml    # 数据源（dev profile）
 ├── frontend/                      # Vue 3 前端
 │   └── src/
-│       ├── views/                 # Login / Home / AdminProducts / AdminDashboard /
-│       │                          # LeaderGroups / LeaderVerify / UserGroups / UserOrders
+│       ├── views/                 # 认证：Login / Register；布局：Dashboard / Home
+│       │                          # 用户：UserGroups / GroupBuyDetail / UserOrders /
+│       │                          #       ProductList / ProductDetail / MyNotifications
+│       │                          # 团长：LeaderGroups / LeaderVerify
+│       │                          # 管理：AdminProducts / AdminDashboard
+│       ├── components/            # 公共组件（StatusBadge / GroupBuyCard / OrderCard / StatCard 等）
+│       ├── styles/tokens.css      # 设计 token（品牌色，含 Element Plus 变量覆盖）
 │       ├── api/                   # 按模块拆分的接口封装
-│       ├── stores/user.js         # Pinia：token 与当前用户
+│       ├── stores/                # Pinia：user（token 与当前用户）、notification（未读计数）
 │       ├── router/index.js        # 路由（未登录统一跳 /login）
 │       └── utils/request.js       # Axios 实例
 ├── db/
-│   ├── schema.sql                 # 建库建表 + 三个测试账号 + 3 个商品
-│   └── seed.sql                   # 可选：一场进行中的演示团购
+│   ├── schema.sql                 # 建库建表（7 张）+ 三个基础账号 + 3 个商品
+│   └── seed.sql                   # 丰富的演示数据集（可重复执行）
 └── openspec/                      # 需求与设计文档（capability 规格、任务清单）
 ```
 
@@ -203,7 +209,7 @@ DB_PASSWORD=<你的MySQL密码> mvn test
 - 测试库由 `db/schema.sql` 自动初始化（库名替换为 `freshcommunity_test`），**不会动开发库 `freshcommunity`**
 - 每个测试方法带事务，结束自动回滚，用例之间互不污染
 - 数据库账号可用 `DB_USER` / `DB_PASSWORD` 环境变量覆盖，默认 `root` / `1234`
-- 共 **26 个用例**，覆盖：认证与错误处理（401/404/405）、团购生命周期与库存、取消回退人数、退款状态守卫、超时关单、评价体系、站内消息与权限隔离
+- 共 **30 个用例**（4 个测试类），覆盖：认证（登录 / 注册 / 401）与错误处理（404/405）、团购生命周期与库存、取消回退人数、退款状态守卫、超时关单、评价体系、站内消息与权限隔离
 
 ---
 
@@ -219,14 +225,18 @@ DB_PASSWORD=<你的MySQL密码> mvn test
 
 ## 需求文档
 
-`openspec/` 目录下是完整的规格文档，含 7 个 capability 的详细场景定义与任务清单：
+`openspec/` 目录下是完整的规格文档：**9 个 capability 基线**（35 条 Requirement / 57 个 Scenario）与 **2 个已归档变更**。
 
 ```
-openspec/changes/mvp-group-buying/
-├── proposal.md      # 为什么做、做什么、边界
-├── design.md        # 表结构、状态机、关键决策与取舍
-├── tasks.md         # 任务清单
-└── specs/           # 各 capability 的 Requirement / Scenario
-    ├── user-roles/  product-catalog/  group-buying/  inventory/
-    └── order-lifecycle/  pickup-verification/  admin-dashboard/
+openspec/
+├── specs/                          # 基线：系统当前真实行为
+│   ├── user-roles/  product-catalog/  group-buying/  inventory/
+│   ├── order-lifecycle/  pickup-verification/  admin-dashboard/
+│   └── reviews/  notifications/
+└── changes/
+    └── archive/                    # 已归档变更（提案 / 增量规格 / 设计 / 任务清单）
+        ├── 2026-10-11-mvp-group-buying/
+        └── 2026-10-11-reviews-and-notifications/
 ```
+
+每个变更目录含 `proposal.md`（为什么做、边界）、`specs/`（delta 增量规格）、`design.md`（技术方案与取舍）、`tasks.md`（任务清单）；归档时 delta 合并进基线。完整工作流说明见 [`docs/openspec-guide.md`](docs/openspec-guide.md)。
