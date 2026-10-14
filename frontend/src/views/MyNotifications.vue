@@ -241,6 +241,7 @@ onMounted(load)
 .tone-blue { background: var(--fc-info-50); }
 .tone-red { background: var(--fc-danger-50); }
 .tone-gray { background: #F1F4F2; }
+.tone-purple { background: var(--fc-purple-50); }
 
 .msg .body {
   flex: 1;

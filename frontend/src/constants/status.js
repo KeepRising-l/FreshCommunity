@@ -4,7 +4,7 @@
  * 后端状态取值（见 entity 注释与 service 常量）：
  *   团购 GroupBuy.status   : ONGOING / SUCCESS / FAIL
  *   订单 Order.status      : PENDING_PAYMENT / PENDING_GROUP / SUCCESS / PENDING_PICKUP / COMPLETED / CANCELLED / REFUNDED
- *   消息 Notification.type : GROUP_SUCCESS / GROUP_FAILED / ORDER_TIMEOUT / PICKUP_DONE / REFUNDED
+ *   消息 Notification.type : GROUP_SUCCESS / GROUP_FAILED / ORDER_TIMEOUT / PICKUP_DONE / REFUNDED / SUBSCRIPTION_MATCH
  *
  * 配色语义（与 design-spec.md §5「状态徽章」一致）：
  *   orange 需要你立即行动（含倒计时）  blue 进行中 / 等待
@@ -57,7 +57,8 @@ export const NOTIFICATION_TYPE = {
   GROUP_FAILED: { text: '团购已解散', icon: '↩️', tone: TONE.RED },
   ORDER_TIMEOUT: { text: '订单已关闭', icon: '⏰', tone: TONE.ORANGE },
   PICKUP_DONE: { text: '核销成功', icon: '✅', tone: TONE.BLUE },
-  REFUNDED: { text: '退款到账', icon: '💰', tone: TONE.RED }
+  REFUNDED: { text: '退款到账', icon: '💰', tone: TONE.RED },
+  SUBSCRIPTION_MATCH: { text: 'AI 导购提醒', icon: '🤖', tone: TONE.PURPLE }
 }
 
 /** 取默认值，避免出现未知状态时页面空白 */
