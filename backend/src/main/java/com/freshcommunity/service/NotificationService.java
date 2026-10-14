@@ -15,6 +15,8 @@ public class NotificationService {
     public static final String TYPE_ORDER_TIMEOUT = "ORDER_TIMEOUT";
     public static final String TYPE_PICKUP_DONE = "PICKUP_DONE";
     public static final String TYPE_REFUNDED = "REFUNDED";
+    /** AI 导购：需求订阅命中提醒 */
+    public static final String TYPE_SUBSCRIPTION_MATCH = "SUBSCRIPTION_MATCH";
 
     private final NotificationMapper notificationMapper;
 

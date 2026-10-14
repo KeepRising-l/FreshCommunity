@@ -23,15 +23,18 @@ public class GroupBuyService {
     private final ProductMapper productMapper;
     private final OrderService orderService;
     private final NotificationService notificationService;
+    private final SubscriptionService subscriptionService;
 
     public GroupBuyService(GroupBuyMapper groupBuyMapper, GroupBuyItemMapper groupBuyItemMapper,
                            ProductMapper productMapper, OrderService orderService,
-                           NotificationService notificationService) {
+                           NotificationService notificationService,
+                           SubscriptionService subscriptionService) {
         this.groupBuyMapper = groupBuyMapper;
         this.groupBuyItemMapper = groupBuyItemMapper;
         this.productMapper = productMapper;
         this.orderService = orderService;
         this.notificationService = notificationService;
+        this.subscriptionService = subscriptionService;
     }
 
     @Transactional
@@ -61,6 +64,9 @@ public class GroupBuyService {
         item.setProductId(product.getId());
         item.setPriceSnapshot(product.getPrice());
         groupBuyItemMapper.insert(item);
+
+        // AI 导购：新团匹配用户需求订阅，命中即向订阅用户发送提醒（与创建同事务）
+        subscriptionService.matchNewGroupBuy(groupBuy.getId());
 
         return groupBuy;
     }

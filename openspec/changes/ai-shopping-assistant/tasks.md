@@ -4,14 +4,14 @@
 
 - [ ] 1.1 `db/schema.sql` 追加 `user_subscription`、`review_analysis` 两张表（保持脚本可重复执行），验证：`mysql -uroot -p1234 --default-character-set=utf8mb4 < db/schema.sql` 连续执行两次无报错，`SHOW TABLES` 显示 9 张表
 - [ ] 1.2 LLM 客户端封装（OpenAI 兼容接口；配置项 `ai.base-url / ai.api-key / ai.model / ai.timeout`；无 key 时标记"不可用"而非抛错），验证：无 key 环境下应用正常启动且客户端状态为不可用；`mvn compile` 通过
-- [ ] 1.3 规则解析器（正则覆盖 `X 元以内/以下的 Y` 类表述），验证：新增集成用例断言 `"10 元以内的苹果"` → `{keyword: 苹果, maxPrice: 10}`，非标表述返回解析失败
+- [x] 1.3 规则解析器（正则覆盖 `X 元以内/以下的 Y` 类表述），验证：新增集成用例断言 `"10 元以内的苹果"` → `{keyword: 苹果, maxPrice: 10}`，非标表述返回解析失败
 
 ## 2. 需求订阅（后端）
 
 - [ ] 2.1 `DemandParseService`：LLM 优先、超时/异常/结果不合法时回落规则解析，验证：无 key 环境下走规则解析成功；两条链路均失败时返回明确错误
-- [ ] 2.2 订阅创建 / 列表 / 取消接口（含归属校验与解析回显），验证：新增 `AiSubscriptionApiTest` 断言——创建成功并回显解析结果、列表只含本人订阅、取消生效、跨用户操作被拒
-- [ ] 2.3 开团匹配：`GroupBuyService.createGroupBuy` 创建后匹配有效订阅（商品名 + 拼团价），命中即 `notify()`（`SUBSCRIPTION_MATCH` 类型），验证：集成用例断言——订阅后开命中团收到通知、开不命中团无通知、同一团购不重复通知
-- [ ] 2.4 订阅时立即匹配进行中团购，验证：集成用例断言——已存在命中团时订阅成功即收到通知
+- [x] 2.2 订阅创建 / 列表 / 取消接口（含归属校验与解析回显），验证：新增 `AiSubscriptionApiTest` 断言——创建成功并回显解析结果、列表只含本人订阅、取消生效、跨用户操作被拒
+- [x] 2.3 开团匹配：`GroupBuyService.createGroupBuy` 创建后匹配有效订阅（商品名 + 拼团价），命中即 `notify()`（`SUBSCRIPTION_MATCH` 类型），验证：集成用例断言——订阅后开命中团收到通知、开不命中团无通知、同一团购不重复通知
+- [x] 2.4 订阅时立即匹配进行中团购，验证：集成用例断言——已存在命中团时订阅成功即收到通知
 
 ## 3. 评价洞察（后端）
 

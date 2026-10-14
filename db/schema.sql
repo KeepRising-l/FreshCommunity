@@ -4,6 +4,7 @@ CREATE DATABASE IF NOT EXISTS freshcommunity
 
 USE freshcommunity;
 
+DROP TABLE IF EXISTS user_subscription;
 DROP TABLE IF EXISTS review;
 DROP TABLE IF EXISTS notification;
 DROP TABLE IF EXISTS `order`;
@@ -99,7 +100,7 @@ CREATE TABLE review (
 CREATE TABLE notification (
     id BIGINT AUTO_INCREMENT PRIMARY KEY,
     user_id BIGINT NOT NULL COMMENT '接收人',
-    type VARCHAR(32) NOT NULL COMMENT 'GROUP_SUCCESS/GROUP_FAILED/ORDER_TIMEOUT/PICKUP_DONE/REFUNDED',
+    type VARCHAR(32) NOT NULL COMMENT 'GROUP_SUCCESS/GROUP_FAILED/ORDER_TIMEOUT/PICKUP_DONE/REFUNDED/SUBSCRIPTION_MATCH',
     title VARCHAR(128) NOT NULL,
     content VARCHAR(500),
     ref_order_id BIGINT COMMENT '关联订单',
@@ -107,6 +108,18 @@ CREATE TABLE notification (
     created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     deleted TINYINT NOT NULL DEFAULT 0,
     INDEX idx_user_read (user_id, is_read)
+);
+
+-- AI 导购：用户自然语言需求订阅（匹配命中的提醒经 notification 表发送）
+CREATE TABLE user_subscription (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    user_id BIGINT NOT NULL,
+    keyword VARCHAR(64) NOT NULL COMMENT '归一后的商品关键词',
+    max_price DECIMAL(10,2) COMMENT '价格上限（可为空，用户未提价格时）',
+    source_text VARCHAR(255) COMMENT '用户原始输入',
+    created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    deleted TINYINT NOT NULL DEFAULT 0,
+    INDEX idx_user (user_id)
 );
 
 -- 初始化测试账号（三个账号密码统一为：123456）
