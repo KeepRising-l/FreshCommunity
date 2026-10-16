@@ -251,7 +251,7 @@ openspec/
 
 7 个 capability、共 23 条 requirement 已成为正式基线，`openspec validate --specs` 通过。此后每个新功能都是**对这条基线的增量**，delta 才有东西可比对。
 
-> **后续更新（2026-10-13）**：第二个变更 `reviews-and-notifications`（评价 + 站内消息）也已归档并同步基线。当前 `openspec/specs/` 为 **9 个 capability / 35 条 requirement / 57 个场景**，`changes/` 下无活跃变更。
+> **后续更新（2026-10-16）**：第二个变更 `reviews-and-notifications`（评价 + 站内消息）已归档并同步基线。当前 `openspec/specs/` 为 **9 个 capability / 35 条 requirement / 57 个场景**；`changes/ai-shopping-assistant/` 正在实施，订阅闭环、LLM 解析降级链与评价洞察均已落地（16/18 任务），仅余端到端演示实测与变更归档。
 
 ### 归档前先修规格与实现的偏差（本次按此执行）
 

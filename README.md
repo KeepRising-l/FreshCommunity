@@ -10,7 +10,7 @@
 
 | 角色 | 能做什么 |
 | --- | --- |
-| 用户 | 自助注册/登录、浏览商品与评分、参加团购下单、模拟支付、取消未成团订单、查看订单与取货码、评价已完成订单、查看站内消息 |
+| 用户 | 自助注册/登录、浏览商品与评分、参加团购下单、模拟支付、取消未成团订单、查看订单与取货码、评价已完成订单、查看站内消息、AI 导购订阅 |
 | 团长 | 发起团购（设成团人数 + 截止时间）、查看自己开的团、输入取货码核销 |
 | 管理员 | 商品增删改查（名称/价格/库存/图片）、数据看板、订单退款兜底 |
 
@@ -25,7 +25,9 @@
   - 处理到期团购（达标成团 / 未达标解散退款）
   - 关闭超过 30 分钟未支付的订单并回补库存
 - **评价**：已完成（已核销）订单可对**商品**与**团长**分别打分（1–5 星）+ 文字评论，一单一评（`review.order_id` 唯一索引防重复）；商品与团长各自汇总平均分与评价数，实时聚合
-- **站内消息**：五类订单事件自动发站内信 —— 成团、解散退款、待支付超时关单、核销成功、管理员退款；与状态变更同事务写入，含未读计数与标记已读
+- **站内消息**：六类事件自动发站内信 —— 成团、解散退款、待支付超时关单、核销成功、管理员退款、需求订阅命中；与状态变更同事务写入，含未读计数与标记已读
+- **AI 导购 · 需求订阅**：用户用一句话订阅商品与价格意向（如「10 元以内的苹果」）；解析为结构化条件（关键词 + 价格上限）→ 用户确认后创建订阅 → 匹配已有团与新开团，命中即发站内信（含口碑摘要）。解析走「LLM 优先、规则兜底」：配置了 OpenAI 兼容密钥则调用大模型并把口语词归一映射到在售商品名，无密钥或调用失败时自动回落正则规则解析，因此**默认无需任何外部服务即可运行演示**
+- **AI 导购 · 评价洞察**：定时任务（每 60 秒）扫描有文字、尚无分析记录的评价，生成情感倾向（正面/负面/中性）与关键词标签，写入 `review_analysis`；商品详情与团购详情返回高频口碑标签（`insightTags`），订阅命中提醒附「已有 N 人评价都说…」摘要。同样「LLM 优先、规则词典兜底」
 
 **明确不做**：商家入驻、配送骑手、佣金结算、真实支付、限购/优惠券/秒杀、评价审核/敏感词、团长回复评价、外部推送通道（短信/App 推送）、App/小程序。支付为 `MockPayServiceImpl` 模拟实现，通过 `PayService` 接口预留了接真实支付的扩展点。
 
@@ -57,32 +59,35 @@ FreshCommunity/
 ├── backend/                       # Spring Boot 后端
 │   └── src/main/
 │       ├── java/com/freshcommunity/
-│       │   ├── controller/        # Auth / Product / GroupBuy / Order / Review / Notification / Admin / File / Health
-│       │   ├── service/           # OrderService / GroupBuyService / ReviewService / NotificationService /
+│       │   ├── controller/        # Auth / Product / GroupBuy / Order / Review / Notification / Subscription / Admin / File / Health
+│       │   ├── service/           # OrderService / GroupBuyService / ReviewService / ReviewAnalysisService /
+│       │   │                      # SubscriptionService / NotificationService / AiClient /
+│       │   │                      # DemandParseService(接口) + LlmParseService(LLM优先+规则降级) + RuleDemandParseService /
 │       │   │                      # PayService(接口) + MockPayServiceImpl
 │       │   ├── mapper/            # MyBatis-Plus Mapper（含原子扣减、超时关单等自定义 SQL）
-│       │   ├── entity/            # User / Product / GroupBuy / GroupBuyItem / Order / Review / Notification
+│       │   ├── entity/            # User / Product / GroupBuy / GroupBuyItem / Order / Review / Notification /
+│       │   │                      # UserSubscription / ReviewAnalysis
 │       │   ├── security/          # SecurityConfig / JwtUtil / JwtAuthenticationFilter
 │       │   ├── job/               # ScheduledJobs 定时任务
 │       │   ├── dto/  common/  config/
 │       └── resources/
-│           ├── application.yml        # 端口 8080、JWT、上传路径
+│           ├── application.yml        # 端口 8080、JWT、上传路径、AI 解析配置（ai.*）
 │           └── application-dev.yml    # 数据源（dev profile）
 ├── frontend/                      # Vue 3 前端
 │   └── src/
-│       ├── views/                 # 认证：Login / Register；布局：Dashboard / Home
+│       ├── views/                 # 认证：Login / Register；布局：Dashboard / Home；AI 导购：AiShoppingAssistant
 │       │                          # 用户：UserGroups / GroupBuyDetail / UserOrders /
 │       │                          #       ProductList / ProductDetail / MyNotifications
 │       │                          # 团长：LeaderGroups / LeaderVerify
 │       │                          # 管理：AdminProducts / AdminDashboard
 │       ├── components/            # 公共组件（StatusBadge / GroupBuyCard / OrderCard / StatCard 等）
 │       ├── styles/tokens.css      # 设计 token（品牌色，含 Element Plus 变量覆盖）
-│       ├── api/                   # 按模块拆分的接口封装
+│       ├── api/                   # 按模块拆分的接口封装（含 subscription.js）
 │       ├── stores/                # Pinia：user（token 与当前用户）、notification（未读计数）
 │       ├── router/index.js        # 路由（未登录统一跳 /login）
 │       └── utils/request.js       # Axios 实例
 ├── db/
-│   ├── schema.sql                 # 建库建表（7 张）+ 三个基础账号 + 3 个商品
+│   ├── schema.sql                 # 建库建表（9 张）+ 三个基础账号 + 3 个商品
 │   └── seed.sql                   # 丰富的演示数据集（可重复执行）
 └── openspec/                      # 需求与设计文档（capability 规格、任务清单）
 ```
@@ -104,7 +109,7 @@ mysql -uroot -p --default-character-set=utf8mb4 < db/seed.sql
 
 > Windows 下务必带 `--default-character-set=utf8mb4`，否则中文会因 GBK 解析而报 `ERROR 1366`。
 
-- **`schema.sql`**：建库、建 7 张表，写入三个基础账号和 3 个商品
+- **`schema.sql`**：建库、建 9 张表（含需求订阅 `user_subscription` 与评价洞察 `review_analysis`），写入三个基础账号和 3 个商品
 - **`seed.sql`**：**丰富的演示数据集**，可重复执行（每次清空业务表重建），时间全部是相对 `NOW()` 的，任何时候执行都能得到"看起来正在发生"的数据：
 
 | 数据 | 规模 |
@@ -137,6 +142,15 @@ $env:DB_PASSWORD="你的MySQL密码"; mvn spring-boot:run
 IntelliJ IDEA 中：Run Configuration → Environment variables 里加 `DB_PASSWORD=你的MySQL密码`。
 
 后端跑在 <http://localhost:8080>，健康检查 `GET /api/health` 应返回 `{"code":200,"msg":"success","data":"ok"}`。
+
+**可选的 AI 解析配置**（不配也能跑，AI 导购自动回落规则解析）：
+
+```bash
+cd backend
+AI_API_KEY=你的密钥 AI_BASE_URL=https://api.deepseek.com/v1 AI_MODEL=deepseek-chat mvn spring-boot:run
+```
+
+对应 `application.yml` 的 `ai.*` 四项（`base-url` / `api-key` / `model` / `timeout-seconds`），接口为 OpenAI 兼容协议，可指向 DeepSeek、通义等任意兼容供应商。留空 `AI_API_KEY` 时 `AiClient` 标记为不可用，需求解析与评价洞察均走规则实现。
 
 ### 3. 启动前端
 
@@ -188,6 +202,10 @@ npm run dev
 | POST | `/api/reviews` | 提交评价（仅已完成订单，一单一评） | 登录 |
 | GET | `/api/reviews/mine` | 我的评价 | 登录 |
 | GET | `/api/reviews/product/{id}` | 商品评价列表与评分汇总 | 登录 |
+| POST | `/api/subscriptions/parse` | 预览需求解析结果，不创建订阅 | 登录 |
+| POST | `/api/subscriptions` | 创建需求订阅并立即匹配进行中的团购 | 登录 |
+| GET | `/api/subscriptions` | 我的需求订阅 | 登录 |
+| DELETE | `/api/subscriptions/{id}` | 取消本人订阅 | 登录 |
 | GET | `/api/notifications` | 我的消息列表 | 登录 |
 | GET | `/api/notifications/unread-count` | 未读消息数 | 登录 |
 | POST | `/api/notifications/{id}/read` | 标记单条消息已读 | 登录 |
@@ -209,7 +227,7 @@ DB_PASSWORD=<你的MySQL密码> mvn test
 - 测试库由 `db/schema.sql` 自动初始化（库名替换为 `freshcommunity_test`），**不会动开发库 `freshcommunity`**
 - 每个测试方法带事务，结束自动回滚，用例之间互不污染
 - 数据库账号可用 `DB_USER` / `DB_PASSWORD` 环境变量覆盖，默认 `root` / `1234`
-- 共 **30 个用例**（4 个测试类），覆盖：认证（登录 / 注册 / 401）与错误处理（404/405）、团购生命周期与库存、取消回退人数、退款状态守卫、超时关单、评价体系、站内消息与权限隔离
+- 测试源码目前包含 **47 个用例**（7 个测试类），覆盖认证、团购生命周期与库存、订阅匹配、LLM 解析降级、评价洞察、退款状态守卫、评价、站内消息与权限隔离；运行结果以最近一次实测报告为准
 
 ---
 
@@ -225,7 +243,7 @@ DB_PASSWORD=<你的MySQL密码> mvn test
 
 ## 需求文档
 
-`openspec/` 目录下是完整的规格文档：**9 个 capability 基线**（35 条 Requirement / 57 个 Scenario）与 **2 个已归档变更**。
+`openspec/` 目录下有 **9 个 capability 基线**（35 条 Requirement / 57 个 Scenario）、**2 个已归档变更**，以及一个仍在实施中的 `ai-shopping-assistant` 变更。
 
 ```
 openspec/
@@ -234,6 +252,7 @@ openspec/
 │   ├── order-lifecycle/  pickup-verification/  admin-dashboard/
 │   └── reviews/  notifications/
 └── changes/
+    ├── ai-shopping-assistant/      # 进行中：订阅闭环、LLM 解析、评价洞察均已实现（16/18 任务）
     └── archive/                    # 已归档变更（提案 / 增量规格 / 设计 / 任务清单）
         ├── 2026-10-11-mvp-group-buying/
         └── 2026-10-11-reviews-and-notifications/

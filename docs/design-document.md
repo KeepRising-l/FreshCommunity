@@ -16,7 +16,7 @@
 
 ### 1.2 系统概述
 
-平台围绕社区团购交易闭环提供三角色（用户 / 团长 / 管理员）在线服务：团长发起生鲜商品限时团购；用户在线参团、模拟支付；达到成团人数即拼团成功并生成提货码，到点未达标自动解散并全额退款；用户到提货点由团长核销取货；全流程的成团、解散、超时关单、核销、退款事件由站内消息主动触达用户。平台并引入 AI 导购能力：用户以自然语言表达购物需求，系统解析为订阅条件，在新团出现时自动匹配并提醒。
+平台围绕社区团购交易闭环提供三角色（用户 / 团长 / 管理员）在线服务：团长发起生鲜商品限时团购；用户在线参团、模拟支付；达到成团人数即拼团成功并生成提货码，到点未达标自动解散并全额退款；用户到提货点由团长核销取货；全流程的成团、解散、超时关单、核销、退款事件由站内消息主动触达用户。AI 导购订阅的后端和前端首版代码已具备，当前使用规则解析；LLM 解析与评价洞察仍在后续计划中。
 
 ### 1.3 术语约定
 
@@ -49,8 +49,8 @@
 | **正确性优先** | 交易核心（库存、人数、金额）以数据库原子操作与状态机守卫保证；关键缺陷（虚假成团、重复退款）已修复并纳入回归测试 |
 | **状态透明** | 团购 3 态、订单 7 态显式建模，状态只能沿合法路径流转 |
 | **单一职责分层** | Controller / Service / Mapper 分层，定时任务独立成组 |
-| **可扩展** | 支付以 `PayService` 接口隔离；AI 解析以 `DemandParseService` 接口隔离（规则实现当前可用，LLM 实现可插入）；通知类型枚举化管理 |
-| **可用性降级** | 外部依赖（LLM）不可用时功能以规则链路兜底，核心交易不依赖任何外部服务 |
+| **可扩展** | 支付以 `PayService` 接口隔离；AI 解析以 `DemandParseService` 接口隔离（当前只有规则实现，LLM 实现尚待开发）；通知类型枚举化管理 |
+| **可用性降级（目标）** | LLM 客户端完成后，外部解析不可用时回落规则链路；当前仅运行规则解析，核心交易不依赖外部服务 |
 
 ### 2.2 系统架构
 
@@ -71,13 +71,13 @@ flowchart TB
 
     subgraph BE[Spring Boot 后端]
         SEC[JWT 认证过滤器 + 授权]
-        CTL[Controller 层<br/>9 个控制器 · 32 个接口]
+        CTL[Controller 层<br/>10 个控制器 · 33 个接口]
         SVC[Service 层<br/>业务规则 · 事务边界]
         MAP[Mapper 层<br/>MyBatis-Plus + 自定义 SQL]
         JOB[定时任务<br/>60 秒周期扫描]
     end
 
-    DB[(MySQL 8<br/>9 张表)]
+    DB[(MySQL 8<br/>9 张已建表)]
 
     BR <--> VIEW
     VIEW --> ROUTER
@@ -109,7 +109,7 @@ flowchart TB
 | UI 组件 | Element Plus | 2.6 | 通过 CSS 变量覆盖实现品牌换肤 |
 | 状态管理 | Pinia | 2.1 | 轻量、类型友好 |
 | 定时调度 | Spring @Scheduled | — | 单体应用内置调度，无需引入任务框架 |
-| AI 解析 | OpenAI 兼容 HTTP 接口（可插拔） | — | 以接口隔离实现；当前为规则实现，LLM 实现可插入且失败可降级 |
+| AI 解析 | OpenAI 兼容 HTTP 接口 | — | `AiClient` 封装 chat/completions，`LlmParseService`（需求解析）与 `ReviewAnalysisService`（评价洞察）均「LLM 优先、规则兜底」；无 key 自动降级，默认不配外部服务即可运行 |
 
 ### 2.4 功能模块划分
 
@@ -158,7 +158,7 @@ flowchart LR
 | 评价体系 | 资格 / 内容 / 入口 / 汇总 / 展示 | FR-8-1 ~ FR-8-5 |
 | 站内消息 | 事件通知 / 可见性 / 未读计数 | FR-9-1 ~ FR-9-4 |
 | 界面与交互 | 设计系统 / 用户端主链路（已交付）；团长、管理端与移动端（规划中） | FR-10-1 ~ FR-10-5 |
-| AI 导购 | 需求订阅 / 匹配提醒 / 解析降级 / 评价洞察（第二批） | FR-11（新增） |
+| AI 导购 | 规则订阅 / 匹配提醒已编写；LLM 降级链与评价洞察待实施 | FR-11（活动变更，未归档） |
 
 ---
 
@@ -188,12 +188,12 @@ erDiagram
     GROUP_BUY ||--o{ ORDER : "产生"
     PRODUCT ||--o{ ORDER : "购买"
     ORDER ||--o| REVIEW : "评价(1:0..1)"
-    REVIEW ||--o| REVIEW_ANALYSIS : "洞察(规划中)"
+    REVIEW ||--o| REVIEW_ANALYSIS : "洞察(1:0..1)"
 ```
 
 ### 3.3 表结构详表
 
-> 共 9 张表：8 张已建成（`db/schema.sql`），`review_analysis` 为 AI 导购第二批（评价洞察）规划表。
+> 共 9 张表，全部已建成（`db/schema.sql`），含 AI 导购的 `user_subscription` 与 `review_analysis`。
 
 **（1）user —— 用户表**
 
@@ -243,7 +243,7 @@ erDiagram
 
 **（8）user_subscription —— 需求订阅表（AI 导购）**：id、user_id、keyword(VARCHAR 64)、max_price(DECIMAL 10,2 可空)、source_text(VARCHAR 255，原始输入)、created_at、deleted、`idx_user(user_id)`。
 
-**（9）review_analysis —— 评价洞察表（规划中）**：id、review_id(UNIQUE)、sentiment(VARCHAR 16：POSITIVE/NEGATIVE/NEUTRAL)、tags(VARCHAR 255)、analyzed_at、deleted。
+**（9）review_analysis —— 评价洞察表（AI 导购）**：id、review_id(BIGINT UNIQUE，1:1 关联评价)、product_id(BIGINT，冗余供按商品聚合)、sentiment(VARCHAR 16：POSITIVE/NEGATIVE/NEUTRAL)、tags(VARCHAR 255，逗号分隔)、analyzed_at、deleted、`uk_review_id(review_id)`、`idx_product_id(product_id)`。
 
 ### 3.4 关键约束与索引设计说明
 
@@ -267,7 +267,7 @@ erDiagram
 - **鉴权**：`Authorization: Bearer <JWT>`；控制器以 `@RequestAttribute("userId")` 获取当前用户；角色限制用 `@PreAuthorize`，数据归属在 Service 层校验；
 - **参数校验**：请求 DTO 使用 Jakarta Validation 注解，失败返回中文提示。
 
-### 4.2 接口清单（32 个）
+### 4.2 接口清单（33 个）
 
 | 模块 | 方法与路径 | 权限 | 说明 |
 | --- | --- | --- | --- |
@@ -291,6 +291,7 @@ erDiagram
 | 消息 | POST `/api/notifications/{id}/read` · `/read-all` | 登录 | 标记已读 |
 | 看板 | GET `/api/admin/dashboard` | ADMIN | 今日订单 / 成团数 |
 | **AI 导购** | POST `/api/subscriptions` | 登录 | 创建订阅（解析 + 立即匹配） |
+| **AI 导购** | POST `/api/subscriptions/parse` | 登录 | 预览解析结果，不创建订阅 |
 | **AI 导购** | GET `/api/subscriptions` | 登录 | 我的订阅列表 |
 | **AI 导购** | DELETE `/api/subscriptions/{id}` | 登录 | 取消订阅 |
 
@@ -436,12 +437,14 @@ sequenceDiagram
     participant GB as GroupBuyService
 
     Note over U,L: ① 订阅阶段
-    U->>API: "想要 10 元以内的苹果"
+    U->>API: POST /subscriptions/parse（自然语言需求）
     API->>P: 解析需求文本
-    P-->>API: {keyword:苹果, maxPrice:10}（LLM 优先，失败回落规则解析）
+    P-->>API: {keyword:苹果, maxPrice:10}（当前运行规则解析；LLM 优先为后续目标）
+    API-->>U: 回显解析条件供确认或重写
+    U->>API: POST /subscriptions（确认解析条件）
     API->>API: 保存订阅
     API->>API: 立即匹配进行中团购（命中即提醒）
-    API-->>U: 回显解析结果 + 命中数量
+    API-->>U: 返回创建结果 + 命中数量
 
     Note over U,L: ② 触发阶段（开团触发）
     L->>GB: 创建新团购
@@ -458,11 +461,15 @@ sequenceDiagram
 
 | 设计点 | 方案 |
 | --- | --- |
-| 解析可插拔 | `DemandParseService` 接口：规则实现（当前）与 LLM 实现（可插入）统一入口；LLM 超时/异常/结果不合法时回落规则解析 |
+| 解析可插拔 | `DemandParseService` 接口与规则实现已存在；LLM 客户端和配置未实现。后续须覆盖无密钥、超时、异常和非法结果回落 |
 | 匹配规则 | 商品名包含关键词（子串）+ 拼团价 ≤ 价格上限（上限可空） |
-| 双触发点 | 订阅创建时（扫已有团）+ 开团时（扫全部订阅）；两触发路径的团购集合互斥，天然不重复提醒 |
-| 触达通道 | 复用站内消息体系（新增 `SUBSCRIPTION_MATCH` 类型），与业务同事务 |
-| 规划扩展 | 评价洞察（评价文本 → 情感与标签 → 展示与提醒摘要），分析走定时批量任务 |
+| 双触发点 | 订阅创建时（扫已有团）+ 开团时（扫全部订阅）；顺序调用不会交叉重复，但并发创建订阅和团购可能同时漏过彼此 |
+| 触达通道 | 复用站内消息体系（新增 `SUBSCRIPTION_MATCH` 类型），与业务同事务；当前消息不带团购 ID，无法直接跳转 |
+| P0 验证 | 完成订阅页构建、解析预览、确认创建 / 取消走查，并运行已有后端订阅与交易回归用例 |
+| P1 解析 | 实现可选 LLM 客户端、配置和规则兜底，使无密钥演示仍可用 |
+| P2 一致性 | 引入唯一键保护的订阅-团购匹配记录，并设计可重试补偿扫描；消息关联团购后提供直达入口 |
+| P3 评价洞察 | 订阅和解析链路稳定后，再增加评价分析表、批处理、标签展示与外部文本处理边界 |
+| P4 界面与容量 | 团长 / 管理端精修、移动适配、分页和按需加载 |
 
 ---
 
@@ -514,7 +521,7 @@ flowchart LR
 | 初始化 | `mysql --default-character-set=utf8mb4 < db/schema.sql`（建库建表）→ `db/seed.sql`（演示数据集，可重复执行） |
 | 后端启动 | `DB_PASSWORD=<密码> mvn spring-boot:run`（数据库口令经环境变量注入，不入库不入仓） |
 | 前端启动 | `npm install && npm run dev`（Vite 代理 /api 至 8080） |
-| 测试 | `DB_PASSWORD=<密码> mvn test`（独立测试库 `freshcommunity_test`，37 个集成用例） |
+| 测试 | `DB_PASSWORD=<密码> mvn test`（独立测试库 `freshcommunity_test`，47 个集成用例） |
 | 部署形态 | 单体单机；生产化建议见 §6 已知限制与各节演进项 |
 
 ---
@@ -534,7 +541,7 @@ flowchart LR
 ### 9.2 验证与质量资产
 
 - 规格基线：9 capability / 35 requirement / 57 scenario（`openspec/specs/`）；
-- 集成测试：37 个用例（4 大类 + AI 导购，`backend/src/test/`）；
+- 集成测试源码：47 个测试方法（7 个测试类，`backend/src/test/`）；最近一次 `mvn test` 全绿；
 - 实测报告：MVP 规格符合性 48 项断言（`docs/verification-report.md`）。
 
 ### 9.3 版本记录
