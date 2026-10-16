@@ -43,6 +43,13 @@
             <span class="fc-muted">团长 {{ detail.leaderName }}</span>
           </div>
 
+          <div v-if="insightTags.length" class="insight-row">
+            <span class="insight-label">口碑</span>
+            <el-tag v-for="tag in insightTags" :key="tag" type="success" effect="plain" size="small">
+              {{ tag }}
+            </el-tag>
+          </div>
+
           <!-- 价格条 -->
           <div class="price-bar">
             <span class="fc-price big"><i>¥</i>{{ formatMoney(detail.price) }}</span>
@@ -243,6 +250,8 @@ const saved = computed(() => {
 
 const totalAmount = computed(() => Number(detail.value.price || 0) * quantity.value)
 
+const insightTags = computed(() => detail.value.insightTags || product.value.insightTags || [])
+
 async function load() {
   loading.value = true
   const id = route.params.id
@@ -387,6 +396,19 @@ watch(() => route.params.id, load)
 
 .dot {
   color: var(--fc-ink-300);
+}
+
+.insight-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 8px;
+  flex-wrap: wrap;
+}
+
+.insight-label {
+  font-size: 12px;
+  color: var(--fc-ink-400);
 }
 
 .price-bar {

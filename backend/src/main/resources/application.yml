@@ -26,5 +26,12 @@ jwt:
   secret: freshcommunity-secret-key-change-in-production
   expiration: 86400000
 
+# AI 需求解析（OpenAI 兼容接口）。不配置 api-key 时走规则解析，应用正常可用。
+ai:
+  base-url: ${AI_BASE_URL:https://api.deepseek.com/v1}
+  api-key: ${AI_API_KEY:}
+  model: ${AI_MODEL:deepseek-chat}
+  timeout-seconds: 5
+
 upload:
   path: ${user.dir}/uploads

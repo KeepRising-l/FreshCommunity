@@ -20,6 +20,8 @@ USE freshcommunity;
 SET NAMES utf8mb4;
 
 -- ---------------------------------------------------------------- 清空业务数据
+DELETE FROM review_analysis;
+DELETE FROM user_subscription;
 DELETE FROM review;
 DELETE FROM notification;
 DELETE FROM `order`;

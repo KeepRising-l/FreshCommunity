@@ -5,6 +5,7 @@ import com.freshcommunity.common.Result;
 import com.freshcommunity.dto.RatingVO;
 import com.freshcommunity.entity.Product;
 import com.freshcommunity.mapper.ProductMapper;
+import com.freshcommunity.service.ReviewAnalysisService;
 import com.freshcommunity.service.ReviewService;
 import jakarta.validation.Valid;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -18,10 +19,13 @@ public class ProductController {
 
     private final ProductMapper productMapper;
     private final ReviewService reviewService;
+    private final ReviewAnalysisService reviewAnalysisService;
 
-    public ProductController(ProductMapper productMapper, ReviewService reviewService) {
+    public ProductController(ProductMapper productMapper, ReviewService reviewService,
+                             ReviewAnalysisService reviewAnalysisService) {
         this.productMapper = productMapper;
         this.reviewService = reviewService;
+        this.reviewAnalysisService = reviewAnalysisService;
     }
 
     @GetMapping
@@ -41,6 +45,7 @@ public class ProductController {
         RatingVO rating = reviewService.productRating(id);
         p.setAvgScore(rating.getAvgScore());
         p.setReviewCount(rating.getCount());
+        p.setInsightTags(reviewAnalysisService.topTags(id, 5));
         return Result.success(p);
     }
 

@@ -15,6 +15,7 @@ import com.freshcommunity.mapper.GroupBuyItemMapper;
 import com.freshcommunity.mapper.ProductMapper;
 import com.freshcommunity.mapper.UserMapper;
 import com.freshcommunity.service.GroupBuyService;
+import com.freshcommunity.service.ReviewAnalysisService;
 import com.freshcommunity.service.ReviewService;
 import jakarta.validation.Valid;
 import lombok.Data;
@@ -24,6 +25,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -36,15 +38,18 @@ public class GroupBuyController {
     private final GroupBuyService groupBuyService;
     private final UserMapper userMapper;
     private final ReviewService reviewService;
+    private final ReviewAnalysisService reviewAnalysisService;
     private final GroupBuyItemMapper groupBuyItemMapper;
     private final ProductMapper productMapper;
 
     public GroupBuyController(GroupBuyService groupBuyService, UserMapper userMapper,
-                              ReviewService reviewService, GroupBuyItemMapper groupBuyItemMapper,
+                              ReviewService reviewService, ReviewAnalysisService reviewAnalysisService,
+                              GroupBuyItemMapper groupBuyItemMapper,
                               ProductMapper productMapper) {
         this.groupBuyService = groupBuyService;
         this.userMapper = userMapper;
         this.reviewService = reviewService;
+        this.reviewAnalysisService = reviewAnalysisService;
         this.groupBuyItemMapper = groupBuyItemMapper;
         this.productMapper = productMapper;
     }
@@ -84,12 +89,16 @@ public class GroupBuyController {
                 .collect(Collectors.toMap(GroupBuyItem::getGroupBuyId, i -> i, (a, b) -> a));
 
         Map<Long, Product> products = Collections.emptyMap();
+        Map<Long, List<String>> tagsByProduct = new HashMap<>();
         Set<Long> productIds = itemByGroup.values().stream()
                 .map(GroupBuyItem::getProductId)
                 .collect(Collectors.toSet());
         if (!productIds.isEmpty()) {
             products = productMapper.selectBatchIds(productIds).stream()
                     .collect(Collectors.toMap(Product::getId, p -> p));
+            for (Long pid : productIds) {
+                tagsByProduct.put(pid, reviewAnalysisService.topTags(pid, 5));
+            }
         }
 
         List<GroupBuyListVO> vos = new ArrayList<>();
@@ -104,6 +113,9 @@ public class GroupBuyController {
             }
             GroupBuyItem item = itemByGroup.get(g.getId());
             fillProduct(vo, item, item == null ? null : products.get(item.getProductId()));
+            if (item != null) {
+                vo.setInsightTags(tagsByProduct.getOrDefault(item.getProductId(), List.of()));
+            }
             vos.add(vo);
         }
         return Result.success(vos);
@@ -139,6 +151,7 @@ public class GroupBuyController {
                         .last("LIMIT 1"));
         if (item != null) {
             fillProduct(vo, item, productMapper.selectById(item.getProductId()));
+            vo.setInsightTags(reviewAnalysisService.topTags(item.getProductId(), 5));
         }
         return Result.success(vo);
     }

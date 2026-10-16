@@ -39,19 +39,22 @@ public class SubscriptionService {
     private final ProductMapper productMapper;
     private final NotificationService notificationService;
     private final DemandParseService demandParseService;
+    private final ReviewAnalysisService reviewAnalysisService;
 
     public SubscriptionService(UserSubscriptionMapper subscriptionMapper,
                                GroupBuyMapper groupBuyMapper,
                                GroupBuyItemMapper groupBuyItemMapper,
                                ProductMapper productMapper,
                                NotificationService notificationService,
-                               DemandParseService demandParseService) {
+                               DemandParseService demandParseService,
+                               ReviewAnalysisService reviewAnalysisService) {
         this.subscriptionMapper = subscriptionMapper;
         this.groupBuyMapper = groupBuyMapper;
         this.groupBuyItemMapper = groupBuyItemMapper;
         this.productMapper = productMapper;
         this.notificationService = notificationService;
         this.demandParseService = demandParseService;
+        this.reviewAnalysisService = reviewAnalysisService;
     }
 
     /** 预览解析结果，不保存订阅。 */
@@ -139,7 +142,7 @@ public class SubscriptionService {
         List<UserSubscription> subs = subscriptionMapper.selectList(new LambdaQueryWrapper<>());
         for (UserSubscription sub : subs) {
             if (matches(sub, product.getName(), item.getPriceSnapshot())) {
-                sendMatchNotify(sub.getUserId(), product.getName(), item.getPriceSnapshot(), groupBuy);
+                sendMatchNotify(sub.getUserId(), product.getName(), item.getPriceSnapshot(), groupBuy, product.getId());
                 matched++;
             }
         }
@@ -156,7 +159,7 @@ public class SubscriptionService {
             GroupBuyItem item = findItem(groupBuy.getId());
             Product product = item == null ? null : productMapper.selectById(item.getProductId());
             if (item != null && product != null && matches(sub, product.getName(), item.getPriceSnapshot())) {
-                sendMatchNotify(sub.getUserId(), product.getName(), item.getPriceSnapshot(), groupBuy);
+                sendMatchNotify(sub.getUserId(), product.getName(), item.getPriceSnapshot(), groupBuy, product.getId());
                 matched++;
             }
         }
@@ -171,13 +174,19 @@ public class SubscriptionService {
         return sub.getMaxPrice() == null || price.compareTo(sub.getMaxPrice()) <= 0;
     }
 
-    private void sendMatchNotify(Long userId, String productName, BigDecimal price, GroupBuy groupBuy) {
+    private void sendMatchNotify(Long userId, String productName, BigDecimal price, GroupBuy groupBuy, Long productId) {
         int remain = Math.max(groupBuy.getTargetCount() - groupBuy.getMemberCount(), 0);
+        String content = String.format("「%s」正在团购：拼团价 ¥%s，还差 %d 人成团，去看看吧。",
+                productName, price.toPlainString(), remain);
+
+        List<String> tags = reviewAnalysisService.topTags(productId, 3);
+        if (!tags.isEmpty()) {
+            long analyzed = reviewAnalysisService.analyzedCount(productId);
+            content += String.format("已有 %d 人评价都说%s。", analyzed, String.join("、", tags));
+        }
+
         notificationService.notify(userId, NotificationService.TYPE_SUBSCRIPTION_MATCH,
-                "你关注的商品开团了",
-                String.format("「%s」正在团购：拼团价 ¥%s，还差 %d 人成团，去看看吧。",
-                        productName, price.toPlainString(), remain),
-                null);
+                "你关注的商品开团了", content, null);
     }
 
     private GroupBuyItem findItem(Long groupBuyId) {

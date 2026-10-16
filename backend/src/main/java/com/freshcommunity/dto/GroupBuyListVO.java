@@ -34,4 +34,6 @@ public class GroupBuyListVO {
     private BigDecimal price;
     /** 商品原价（product.price） */
     private BigDecimal originalPrice;
+    /** 商品口碑标签（来自评价洞察，无数据时为空列表） */
+    private java.util.List<String> insightTags;
 }

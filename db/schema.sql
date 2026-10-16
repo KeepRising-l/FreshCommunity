@@ -4,6 +4,7 @@ CREATE DATABASE IF NOT EXISTS freshcommunity
 
 USE freshcommunity;
 
+DROP TABLE IF EXISTS review_analysis;
 DROP TABLE IF EXISTS user_subscription;
 DROP TABLE IF EXISTS review;
 DROP TABLE IF EXISTS notification;
@@ -120,6 +121,19 @@ CREATE TABLE user_subscription (
     created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     deleted TINYINT NOT NULL DEFAULT 0,
     INDEX idx_user (user_id)
+);
+
+-- AI 导购：评价洞察（每条评价一行，定时批量分析生成）
+CREATE TABLE review_analysis (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    review_id BIGINT NOT NULL COMMENT '1:1 关联评价',
+    product_id BIGINT NOT NULL COMMENT '冗余商品 id，供按商品聚合标签',
+    sentiment VARCHAR(16) NOT NULL COMMENT 'POSITIVE/NEGATIVE/NEUTRAL',
+    tags VARCHAR(255) COMMENT '逗号分隔关键词，如"新鲜,实惠"',
+    analyzed_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    deleted TINYINT NOT NULL DEFAULT 0,
+    UNIQUE KEY uk_review_id (review_id),
+    INDEX idx_product_id (product_id)
 );
 
 -- 初始化测试账号（三个账号密码统一为：123456）
