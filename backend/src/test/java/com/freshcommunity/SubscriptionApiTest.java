@@ -29,6 +29,42 @@ class SubscriptionApiTest extends ApiTestBase {
     }
 
     @Test
+    @DisplayName("解析预览：只返回条件不落库，订阅列表不受影响")
+    void previewDoesNotCreate() throws Exception {
+        String u1 = login("user1", "123456");
+
+        ApiResult r = perform(post("/api/subscriptions/parse"), u1, Map.of("text", "想要 10 元以内的苹果"));
+
+        assertThat(r.ok()).isTrue();
+        assertThat(r.data().path("keyword").asText()).isEqualTo("苹果");
+        assertThat(r.data().path("maxPrice").asDouble()).isEqualTo(10.0);
+        assertThat(perform(get("/api/subscriptions"), u1, null).data().size()).isZero();
+    }
+
+    @Test
+    @DisplayName("确认创建：以用户确认的条件落库，而非按原文重新解析")
+    void createUsesConfirmedCondition() throws Exception {
+        String u1 = login("user1", "123456");
+
+        ApiResult preview = perform(post("/api/subscriptions/parse"), u1, Map.of("text", "想要 10 元以内的苹果"));
+        assertThat(preview.data().path("keyword").asText()).isEqualTo("苹果");
+
+        ApiResult created = perform(post("/api/subscriptions"), u1, Map.of(
+                "text", "想要 10 元以内的苹果",
+                "keyword", "红富士",
+                "maxPrice", 25));
+
+        assertThat(created.ok()).isTrue();
+        assertThat(created.data().path("keyword").asText()).isEqualTo("红富士");
+        assertThat(created.data().path("maxPrice").asDouble()).isEqualTo(25.0);
+
+        JsonNode list = perform(get("/api/subscriptions"), u1, null).data();
+        assertThat(list.size()).isEqualTo(1);
+        assertThat(list.get(0).path("keyword").asText()).isEqualTo("红富士");
+        assertThat(list.get(0).path("maxPrice").asDouble()).isEqualTo(25.0);
+    }
+
+    @Test
     @DisplayName("无法解析的输入不创建订阅（400）")
     void subscribeRejectsUnparseable() throws Exception {
         String u1 = login("user1", "123456");

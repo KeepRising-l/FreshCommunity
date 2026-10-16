@@ -20,6 +20,7 @@ const routes = [
       { path: '/user/groups', component: () => import('../views/UserGroups.vue') },
       { path: '/user/groups/:id', component: () => import('../views/GroupBuyDetail.vue') },
       { path: '/user/orders', component: () => import('../views/UserOrders.vue') },
+      { path: '/user/ai', component: () => import('../views/AiShoppingAssistant.vue') },
       { path: '/user/products', component: () => import('../views/ProductList.vue') },
       { path: '/user/products/:id', component: () => import('../views/ProductDetail.vue') },
       { path: '/notifications', component: () => import('../views/MyNotifications.vue') }

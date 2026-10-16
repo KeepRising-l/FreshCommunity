@@ -80,7 +80,7 @@
 import { computed, onMounted, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import {
-  ArrowRight, Bell, Box, Checked, DataAnalysis, Goods,
+  ArrowRight, Bell, Box, Checked, DataAnalysis, Goods, MagicStick,
   Search, Sell, SwitchButton, Tickets
 } from '@element-plus/icons-vue'
 import { useUserStore } from '../stores/user'
@@ -104,7 +104,8 @@ const SHOP_GROUP = {
   group: '选购',
   items: [
     { key: 'groups', label: '团购广场', path: '/user/groups', icon: Sell },
-    { key: 'products', label: '商品浏览', path: '/user/products', icon: Goods }
+    { key: 'products', label: '商品浏览', path: '/user/products', icon: Goods },
+    { key: 'ai', label: 'AI 导购', path: '/user/ai', icon: MagicStick }
   ]
 }
 

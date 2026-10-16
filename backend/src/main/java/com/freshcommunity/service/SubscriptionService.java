@@ -31,6 +31,8 @@ import java.util.List;
 @Service
 public class SubscriptionService {
 
+    private static final String PARSE_FAILURE = "未能识别需求中的商品，请换一种说法（例如：10 元以内的苹果）";
+
     private final UserSubscriptionMapper subscriptionMapper;
     private final GroupBuyMapper groupBuyMapper;
     private final GroupBuyItemMapper groupBuyItemMapper;
@@ -52,13 +54,25 @@ public class SubscriptionService {
         this.demandParseService = demandParseService;
     }
 
-    /** 创建订阅：解析失败拒绝创建；成功后立即对进行中的团购匹配一次。 */
+    /** 预览解析结果，不保存订阅。 */
+    public DemandCondition preview(String text) {
+        DemandCondition condition = demandParseService.parse(text);
+        validateCondition(condition);
+        return condition;
+    }
+
+    /** 创建订阅：确认条件或解析失败时拒绝创建；成功后立即匹配进行中的团购。 */
     @Transactional
     public SubscriptionCreateVO create(Long userId, String text) {
-        DemandCondition condition = demandParseService.parse(text);
-        if (condition == null) {
-            throw new IllegalArgumentException("未能识别需求中的商品，请换一种说法（例如：10 元以内的苹果）");
-        }
+        return create(userId, text, null);
+    }
+
+    @Transactional
+    public SubscriptionCreateVO create(Long userId, String text, DemandCondition confirmedCondition) {
+        DemandCondition condition = confirmedCondition == null
+                ? demandParseService.parse(text)
+                : confirmedCondition;
+        validateCondition(condition);
 
         UserSubscription sub = new UserSubscription();
         sub.setUserId(userId);
@@ -77,6 +91,15 @@ public class SubscriptionService {
         vo.setCreatedAt(sub.getCreatedAt());
         vo.setMatchedCount(matchedCount);
         return vo;
+    }
+
+    private void validateCondition(DemandCondition condition) {
+        if (condition == null || condition.getKeyword() == null
+                || condition.getKeyword().isBlank() || condition.getKeyword().length() > 64
+                || (condition.getMaxPrice() != null && condition.getMaxPrice().signum() < 0)) {
+            throw new IllegalArgumentException(PARSE_FAILURE);
+        }
+        condition.setKeyword(condition.getKeyword().trim());
     }
 
     /** 我的订阅列表（仅本人可见）。 */
