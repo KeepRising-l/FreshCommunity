@@ -4,8 +4,8 @@
 
 现状约束（动机见 proposal.md - Why）：
 
-- 已交付 9 capability（交易闭环 + 评价 + 站内信），既有 7 张表；MyBatis-Plus + 逻辑删除；统一返回 `{code,msg,data}`；JWT 无状态鉴权。
-- 站内信体系就绪：`NotificationService.notify(userId, type, title, content, refOrderId)`，5 类事件同事务写入；`notification.type` 为 VARCHAR(32)，扩展类型无需改表。
+- 现行基线有 9 个 capability；当前 schema 有 8 张表（含已加入的 `user_subscription`），`review_analysis` 尚未建表；MyBatis-Plus + 逻辑删除；统一返回 `{code,msg,data}`；JWT 无状态鉴权。
+- 站内信体系就绪：`NotificationService.notify(userId, type, title, content, refOrderId)`，5 类订单事件及 `SUBSCRIPTION_MATCH` 同事务写入；`notification.type` 为 VARCHAR(32)，扩展类型无需改表。
 - `GroupBuyService.createGroupBuy` 为开团入口；拼团价存于 `group_buy_item.price_snapshot`。
 - **`product` 表无 category 字段**（只有 name），匹配只能基于商品名。
 - 项目约束：不引入 Redis / 消息队列；演示环境为本地单机；无 LLM 依赖的既有经验，需自带降级。
@@ -58,7 +58,8 @@ user_subscription(
 - 触发两处（均在 `GroupBuyService.createGroupBuy` 内与订阅创建时）：
   - **开团触发**：新团购创建后，取该团商品与 `price_snapshot` 匹配全部有效订阅（`product.name LIKE %keyword%` 且 `price_snapshot <= max_price`），命中即逐用户 `notify()`。
   - **订阅触发**：创建订阅后立即对进行中团购做一次同样匹配（对应"订阅即有货"场景）。
-- 防重复（"同一订阅对同一团购只提醒一次"）：**不引入匹配记录表**。两个触发路径匹配的团购集合互斥（订阅触发只匹配"已存在"的团，开团触发只匹配"新建"的团），同一团购对同一订阅不存在二次触发路径。若未来增加周期性扫描，再引入记录表。
+- 顺序触发时，订阅创建只扫描已存在团，开团只扫描新团，因此通常不会重复提醒；但并发创建订阅与团购可能同时看不到对方，造成漏提醒。当前没有持久化匹配记录或补偿扫描，不能保证并发下不漏。
+- 后续可靠性优化：增加带唯一键的订阅-团购匹配记录，并通过可重试扫描补偿未完成匹配；这属于当前首版之后的工作。
 - 价格匹配对象为拼团价 `price_snapshot`（用户参团实付价）。
 
 **4. 通知扩展：新增 `SUBSCRIPTION_MATCH` 类型**
@@ -113,9 +114,9 @@ review_analysis(
 
 ## Migration Plan
 
-1. `db/schema.sql` 追加 `user_subscription`、`review_analysis` 两张表（脚本保持可重复执行）
-2. 新表为纯增量，既有数据与接口不受影响
-3. 回滚：删除两张表 + 移除新模块代码，无数据迁移负担
+1. `user_subscription` 已存在于 `db/schema.sql`；评价洞察阶段再追加 `review_analysis` 表并保持脚本可重复执行
+2. `review_analysis` 为纯增量，既有数据与接口不受影响
+3. 回滚：删除 `review_analysis` 表 + 移除评价洞察模块代码，无既有数据迁移负担
 
 ## Open Questions
 
