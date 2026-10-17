@@ -5,6 +5,7 @@ import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import lombok.Data;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
 @Data
@@ -18,4 +19,9 @@ public class GroupBuyCreateRequest {
     private Integer targetCount;
     @NotNull(message = "截止时间不能为空")
     private LocalDateTime deadline;
+    /**
+     * 拼团价（可选）。不传时取商品零售价快照；传了则必须大于 0 且不高于零售价，
+     * 否则「立省」为负，前端展示会失真。
+     */
+    private BigDecimal price;
 }

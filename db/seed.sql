@@ -10,10 +10,12 @@
 --   * 所有账号密码统一为 123456
 --
 -- 覆盖的状态（方便答辩演示）：
+--   商品：17 个（含 AI 导购演示专用的「红富士苹果」）
 --   团购：进行中（进度 0/N、1/N、2/N）、即将截止、已成团待取货、已全部核销、已解散
 --   订单：待支付 / 待成团 / 已成团待取货 / 已完成 / 已取消 / 已退款
---   评价：8 条（覆盖 3 个商品、2 个团长，含一条低分）
+--   评价：11 条（覆盖 4 个商品、2 个团长，含一条低分；苹果 3 条用于口碑摘要演示）
 --   通知：27 条（成团 / 解散 / 核销 / 超时关单），部分未读
+--   订阅：0 条（演示时由 user1 现场创建）
 -- ============================================================================
 
 USE freshcommunity;
@@ -69,7 +71,10 @@ INSERT INTO product (id, name, price, stock, image_url, status) VALUES
 (13, '黑猪五花肉',   59.90,  50, '', 1),
 (14, '鲜活基围虾',   79.90,  35, '', 1),
 (15, '深海带鱼段',   42.00,  45, '', 1),
-(16, '有机鲜牛奶',   16.80, 110, '', 1);
+(16, '有机鲜牛奶',   16.80, 110, '', 1),
+-- 17 专为 AI 导购演示准备：演示脚本用的是「10 元以内的苹果」，
+-- 只有存在一个零售价够低、拼团价能压到 10 元以下的苹果，订阅才可能被命中。
+(17, '红富士苹果',   12.90, 120, '', 1);
 
 -- -------------------------------------------------------------------- 团购活动
 -- 1-3   今日成团（updated_at = 今天 → 计入看板"今日成团数"）
@@ -88,7 +93,9 @@ INSERT INTO group_buy (id, leader_id, title, target_count, deadline, status, mem
 (8,  3, '黑猪五花肉 · 冷鲜配送',      5, DATE_SUB(NOW(), INTERVAL 1 DAY),   'FAIL',    2, DATE_SUB(NOW(), INTERVAL 4 DAY),  DATE_SUB(NOW(), INTERVAL 1 DAY)),
 (9,  4, '深海带鱼段 · 船冻直供',      8, DATE_SUB(NOW(), INTERVAL 2 DAY),   'FAIL',    3, DATE_SUB(NOW(), INTERVAL 5 DAY),  DATE_SUB(NOW(), INTERVAL 2 DAY)),
 (10, 2, '有机鲜牛奶 · 每日配送',      3, DATE_ADD(NOW(), INTERVAL 6 HOUR),  'ONGOING', 0, DATE_SUB(NOW(), INTERVAL 20 MINUTE), NOW()),
-(11, 2, '新鲜菠菜 · 有机种植',        4, DATE_SUB(NOW(), INTERVAL 3 DAY),   'SUCCESS', 4, DATE_SUB(NOW(), INTERVAL 5 DAY),  DATE_SUB(NOW(), INTERVAL 3 DAY));
+(11, 2, '新鲜菠菜 · 有机种植',        4, DATE_SUB(NOW(), INTERVAL 3 DAY),   'SUCCESS', 4, DATE_SUB(NOW(), INTERVAL 5 DAY),  DATE_SUB(NOW(), INTERVAL 3 DAY)),
+-- 12    苹果历史团（2 天前成团并核销）——给 AI 导购演示提供「口碑摘要」数据源
+(12, 2, '红富士苹果 · 产地直发',      3, DATE_SUB(NOW(), INTERVAL 2 DAY),   'SUCCESS', 3, DATE_SUB(NOW(), INTERVAL 3 DAY),  DATE_SUB(NOW(), INTERVAL 2 DAY));
 
 -- price_snapshot = 该团购的拼团价，恒低于 product.price（零售价），差额即前端展示的「立省」。
 -- 订单金额 = price_snapshot × quantity，见下方 order 表。
@@ -103,7 +110,9 @@ INSERT INTO group_buy_item (group_buy_id, product_id, price_snapshot) VALUES
 (8,  13, 45.00),
 (9,  15, 32.00),
 (10, 16, 12.50),
-(11, 3,   4.50);
+(11, 3,   4.50),
+-- 12：苹果历史团，拼团价 9.90（演示「10 元以内的苹果」订阅的条件）
+(12, 17,  9.90);
 
 -- ------------------------------------------------------------------------ 订单
 -- 已支付（计入团购人数）的状态：PENDING_GROUP / SUCCESS / PENDING_PICKUP / COMPLETED
@@ -142,6 +151,10 @@ INSERT INTO `order` (id, order_no, user_id, group_buy_id, product_id, quantity, 
 (22, 'D0022', 9,  11, 3, 2, 9.00, 'COMPLETED', '400002', DATE_SUB(NOW(), INTERVAL 4 DAY), DATE_SUB(NOW(), INTERVAL 4 DAY), DATE_SUB(NOW(), INTERVAL 3 DAY)),
 (23, 'D0023', 10, 11, 3, 1, 4.50, 'COMPLETED', '400003', DATE_SUB(NOW(), INTERVAL 4 DAY), DATE_SUB(NOW(), INTERVAL 4 DAY), DATE_SUB(NOW(), INTERVAL 3 DAY)),
 (24, 'D0024', 11, 11, 3, 2, 9.00, 'COMPLETED', '400004', DATE_SUB(NOW(), INTERVAL 4 DAY), DATE_SUB(NOW(), INTERVAL 4 DAY), DATE_SUB(NOW(), INTERVAL 3 DAY)),
+-- 团购 12：苹果历史团（3 人，2 天前，全部核销）—— 供 AI 导购演示的口碑摘要
+(28, 'D0028', 8,  12, 17, 1, 9.90, 'COMPLETED', '500001', DATE_SUB(NOW(), INTERVAL 3 DAY), DATE_SUB(NOW(), INTERVAL 3 DAY), DATE_SUB(NOW(), INTERVAL 2 DAY)),
+(29, 'D0029', 9,  12, 17, 2, 19.80, 'COMPLETED', '500002', DATE_SUB(NOW(), INTERVAL 3 DAY), DATE_SUB(NOW(), INTERVAL 3 DAY), DATE_SUB(NOW(), INTERVAL 2 DAY)),
+(30, 'D0030', 10, 12, 17, 1, 9.90, 'COMPLETED', '500003', DATE_SUB(NOW(), INTERVAL 3 DAY), DATE_SUB(NOW(), INTERVAL 3 DAY), DATE_SUB(NOW(), INTERVAL 2 DAY)),
 -- 已取消 / 超时关单（体现"取消规则"与"30 分钟自动关单"）
 (25, 'D0025', 5,  4, 7,  1,  8.80, 'CANCELLED', NULL, NULL, DATE_SUB(NOW(), INTERVAL 1 DAY), DATE_SUB(NOW(), INTERVAL 1 DAY)),
 (26, 'D0026', 6,  5, 14, 1, 59.90, 'CANCELLED', NULL, NULL, DATE_SUB(NOW(), INTERVAL 1 DAY), DATE_SUB(NOW(), INTERVAL 1 DAY)),
@@ -157,7 +170,11 @@ INSERT INTO review (order_id, user_id, product_id, leader_id, product_score, lea
 (21, 8,  3,  2, 4, 4, '菠菜挺嫩的，就是分量一般',               DATE_SUB(NOW(), INTERVAL 3 DAY)),
 (22, 9,  3,  2, 5, 5, '很新鲜，下次还买',                       DATE_SUB(NOW(), INTERVAL 3 DAY)),
 (23, 10, 3,  2, 3, 4, '这次收到的有点蔫，希望改进',             DATE_SUB(NOW(), INTERVAL 3 DAY)),
-(24, 11, 3,  2, 5, 5, '性价比很高，推荐',                       DATE_SUB(NOW(), INTERVAL 3 DAY));
+(24, 11, 3,  2, 5, 5, '性价比很高，推荐',                       DATE_SUB(NOW(), INTERVAL 3 DAY)),
+-- 苹果团评价：AI 导购演示中「已有 N 人评价都说…」摘要的数据来源
+(28, 8,  17, 2, 5, 5, '苹果很新鲜，个头均匀，孩子很爱吃',       DATE_SUB(NOW(), INTERVAL 2 DAY)),
+(29, 9,  17, 2, 4, 5, '甜度不错，价格也实惠，下次还买',         DATE_SUB(NOW(), INTERVAL 2 DAY)),
+(30, 10, 17, 2, 5, 4, '性价比很高，一箱不知不觉就吃完了',       DATE_SUB(NOW(), INTERVAL 2 DAY));
 
 -- -------------------------------------------------------------------- 站内消息
 -- 未读（is_read = 0）集中在最近的成团与核销事件上，让"我的消息"有角标可演示

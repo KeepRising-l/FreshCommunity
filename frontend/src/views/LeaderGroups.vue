@@ -29,6 +29,13 @@
             <el-option v-for="p in products" :key="p.id" :label="p.name" :value="p.id" />
           </el-select>
         </el-form-item>
+        <el-form-item label="拼团价">
+          <el-input-number v-model="form.price" :min="0.01" :precision="2" :step="1"
+                           :placeholder="selectedProduct ? `默认 ¥${selectedProduct.price}` : '默认取零售价'" />
+          <span v-if="selectedProduct" class="price-hint">
+            零售价 ¥{{ selectedProduct.price }}，不填则按零售价开团
+          </span>
+        </el-form-item>
         <el-form-item label="成团人数">
           <el-input-number v-model="form.targetCount" :min="1" />
         </el-form-item>
@@ -59,7 +66,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted, reactive } from 'vue'
+import { ref, onMounted, reactive, computed } from 'vue'
 import { listMyGroupBuys, createGroupBuy, listGroupBuyOrders } from '../api/groupBuy'
 import { listProducts } from '../api/product'
 import StatusBadge from '../components/StatusBadge.vue'
@@ -69,7 +76,9 @@ const products = ref([])
 const dialogVisible = ref(false)
 const orderDialogVisible = ref(false)
 const orders = ref([])
-const form = reactive({ title: '', productId: null, targetCount: 1, deadline: '' })
+const form = reactive({ title: '', productId: null, price: null, targetCount: 1, deadline: '' })
+
+const selectedProduct = computed(() => products.value.find((p) => p.id === form.productId) || null)
 
 async function load() {
   const res = await listMyGroupBuys()
@@ -82,12 +91,15 @@ async function loadProducts() {
 }
 
 function openDialog() {
-  Object.assign(form, { title: '', productId: null, targetCount: 1, deadline: '' })
+  Object.assign(form, { title: '', productId: null, price: null, targetCount: 1, deadline: '' })
   dialogVisible.value = true
 }
 
 async function submit() {
-  await createGroupBuy(form)
+  // price 留空表示按零售价开团，不发送该字段，避免后端收到 null 之外的空值
+  const payload = { ...form }
+  if (payload.price == null) delete payload.price
+  await createGroupBuy(payload)
   dialogVisible.value = false
   load()
 }
@@ -103,3 +115,11 @@ onMounted(() => {
   loadProducts()
 })
 </script>
+
+<style scoped>
+.price-hint {
+  margin-left: 8px;
+  color: var(--text-secondary, #909399);
+  font-size: 12px;
+}
+</style>

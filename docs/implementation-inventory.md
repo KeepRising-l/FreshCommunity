@@ -2,7 +2,7 @@
 
 > **用途**：答辩展示「做了什么、怎么做、还差什么」；与 `docs/requirements-analysis.md` 的功能编号逐条对应。
 > **状态口径**：✅ 已交付（功能可用且有验证）｜🔸 已交付 · 视觉简版｜🛠️ 代码已写、验证待补｜⬜ 待实施（已规划未开发）
-> **数据截至**：2026-10-16（源码数量按当前目录统计；测试运行结果为最近一次 `mvn test` 实测：47 用例全绿）
+> **数据截至**：2026-10-17（源码数量按当前目录统计；测试运行结果为最近一次 `mvn test` 实测：52 用例全绿）
 
 ---
 
@@ -10,13 +10,13 @@
 
 | 维度 | 数量 | 说明 |
 | --- | --- | --- |
-| 功能能力（capability） | **9 个基线能力已交付** | 35 条 requirement / 57 个 scenario；AI 导购仍属未归档变更 |
+| 功能能力（capability） | **11 个基线能力已交付** | 42 条 requirement / 77 个 scenario；`ai-shopping-assistant` 已于 2026-10-17 归档 |
 | 后端接口 | **33 个** | 10 个 Controller，统一 `{code, msg, data}` 返回 |
 | 数据库表 | **9 张** | 7 张交易与配套表 + `user_subscription` + `review_analysis` |
 | 前端页面 | **15 个** | 含 AI 导购页；另有 6 个公共组件 |
-| 自动化测试 | **47 个测试方法** | 7 个测试类；最近一次实测 `mvn test` 全绿 |
-| 规格实测 | **48 项断言** | `docs/verification-report.md`（对真实运行的后端发请求） |
-| 待实施 / 待验证 | **收尾中** | 仅剩端到端演示实测（5.1）与本文档同步（5.2） |
+| 自动化测试 | **52 个测试方法** | 7 个测试类；最近一次实测 `mvn test` 全绿 |
+| 规格实测 | **48 项断言 + AI 导购端到端** | `docs/verification-report.md`（§一～五 为 MVP 基线；§六 为 2026-10-17 的 AI 导购端到端实测） |
+| 待实施 / 待验证 | **AI 导购已收尾** | 端到端演示实测（5.1）已完成；剩余为 P2 并发匹配可靠性（下一变更）与 P4 界面扩展 |
 
 ---
 
@@ -105,7 +105,7 @@
 | FR-9-3 | 消息仅本人可见 | ✅ | 查询与更新均带 `user_id` 条件 | `NotificationApiTest.cannotReadOthersNotification` |
 | FR-9-4 | 未读计数与标记已读 | ✅ | `NotificationService.unreadCount` / `markRead` / `markAllRead` + 顶栏角标 | `NotificationApiTest.markReadBehaviour` |
 
-### FR-11 AI 导购（ai-shopping-assistant）—— 全部交付
+### FR-11 AI 导购（ai-shopping-assistant）—— 全部交付（变更已于 2026-10-17 归档）
 
 | 编号 | 功能点 | 状态 | 实现位置 | 验证证据 |
 | --- | --- | --- | --- | --- |
@@ -114,7 +114,8 @@
 | FR-11-3 | 创建订阅时匹配已有团 | ✅ | `SubscriptionService.matchAgainstOngoing` | `SubscriptionApiTest`：subscribeMatchesExisting |
 | FR-11-4 | 查看与取消本人订阅 | ✅ | `SubscriptionController`、`AiShoppingAssistant.vue` | `SubscriptionApiTest.listAndCancelOwnership`；`vite build` 通过 |
 | FR-11-5 | LLM 优先与规则降级 | ✅ | `AiClient`（OpenAI 兼容客户端）、`LlmParseService`（`@Primary`，LLM 优先→规则回落）、`AiProperties` | `LlmParseServiceTest`：noKeyFallsBackToRule / noKeyUnparseable / noKeyNoPrice |
-| FR-11-6 | 评价情感与标签洞察 | ✅ | `ReviewAnalysisService`、`review_analysis` 表、`ScheduledJobs.analyzePendingReviews` | `ReviewInsightsTest`：analyzeOnceIdempotent / analyzeNegative / pendingBatchSkipsBlank / productDetailExposesTags / notifyIncludesInsightSummary |
+| FR-11-6 | 评价情感与标签洞察 | ✅ | `ReviewAnalysisService`、`review_analysis` 表、`ScheduledJobs.analyzePendingReviews` | `ReviewInsightsTest`：analyzeOnceIdempotent / analyzeNegative / pendingBatchSkipsBlank / productDetailExposesTags / notifyIncludesInsightSummary / neutralReviewProducesNoTags |
+| FR-11-7 | 开团指定拼团价（订阅价格匹配的真实输入） | ✅ | `GroupBuyCreateRequest.price` + `GroupBuyService.resolvePrice` + `LeaderGroups.vue` | `GroupBuyFlowApiTest`：createGroupBuyWithCustomPrice / customPriceValidation；`vite build` 通过 |
 
 > **P2 匹配可靠性**（并发创建订阅与团购可能漏提醒）属 design.md 记录的首版已知缺口，明确不在本变更范围，留待后续演进。
 
@@ -203,7 +204,8 @@
 - **P0 订阅闭环**：解析预览接口、AI 导购页、匹配提醒、后端全量回归 —— 已完成。
 - **P1 LLM 解析链**：`AiClient`（OpenAI 兼容）+ `LlmParseService`（LLM 优先、规则降级）+ `ai.*` 配置 —— 已完成，无密钥环境仍可订阅。
 - **P3 评价洞察**：`review_analysis` 表 + 批量分析任务 + 详情标签 + 提醒摘要 —— 已完成。
-- **遗留（P2）**：并发"创建订阅 / 创建团购"存在漏提醒窗口，且通知不含团购跳转引用；需引入唯一键匹配记录与补偿扫描。此项明确不在本变更范围。
+- **收尾（2026-10-17）**：端到端演示脚本在「无 key / LLM mock / LLM 不可达」三种模式下实测通过；期间修掉 5 个真实缺陷（演示脚本无对应商品、开团无法指定拼团价、中性评价写成口碑标签、规则词典单字误伤、否定表达被记成正面），均已补回归用例。
+- **遗留（P2）**：并发"创建订阅 / 创建团购"存在漏提醒窗口，且通知不含团购跳转引用；需引入唯一键匹配记录与补偿扫描。此项明确不在本变更范围，作为下一个变更推进。
 
 ### P4：界面与容量扩展
 
@@ -223,10 +225,10 @@
 
 | 资产 | 内容 | 位置 |
 | --- | --- | --- |
-| 自动化测试 | 7 个测试类 / 47 个测试方法 | `backend/src/test/` |
-| 规格实测报告 | 48 项断言，3 个真实缺陷已修复转回归 | `docs/verification-report.md` |
-| 需求基线 | 9 capability / 35 req / 57 scenario | `openspec/specs/` |
-| 变更归档 | 2 个已归档变更；AI 导购变更进行中 | `openspec/changes/` |
+| 自动化测试 | 7 个测试类 / 52 个测试方法 | `backend/src/test/` |
+| 规格实测报告 | MVP 基线 48 项断言 + AI 导购端到端实测（2026-10-17）；累计 7 个真实缺陷已修复转回归 | `docs/verification-report.md` |
+| 需求基线 | 11 capability / 42 req / 77 scenario | `openspec/specs/` |
+| 变更归档 | 3 个已归档变更（最新：`2026-10-17-ai-shopping-assistant`） | `openspec/changes/` |
 | 设计资产 | 设计规范 + 双端原型 + 31 张预览图 | `docs/ui-design/` |
 
 测试用例分布：
@@ -234,13 +236,13 @@
 | 测试类 | 用例数 | 覆盖 |
 | --- | --- | --- |
 | `AuthApiTest` | 8 | 登录 / 注册 / 401 / 404 / 405 / 越权注册管理员 |
-| `GroupBuyFlowApiTest` | 10 | 列表字段、库存、取消回退人数、退款守卫、超时关单、团长订单权限 |
+| `GroupBuyFlowApiTest` | 12 | 列表字段、库存、取消回退人数、退款守卫、超时关单、团长订单权限、拼团价指定与校验 |
 | `ReviewApiTest` | 7 | 评价资格、重复 / 越界、评分汇总、无评价不误导 |
 | `NotificationApiTest` | 5 | 六类事件通知、跨用户隔离、未读数 |
 | `SubscriptionApiTest` | 9 | 需求解析、预览不落库、确认条件、归属隔离、新团与已有团匹配 |
 | `LlmParseServiceTest` | 3 | 无 key 回落规则解析、非标表述返回 null、无价格需求 |
-| `ReviewInsightsTest` | 5 | 情感与标签、重复分析幂等、批量跳过无文字评价、详情标签、提醒摘要 |
-| **合计** | **47** | 最近一次 `mvn test` 实测全绿 |
+| `ReviewInsightsTest` | 8 | 情感与标签、重复分析幂等、批量跳过无文字评价、详情标签、提醒摘要、中性零标签、词典长词优先 |
+| **合计** | **52** | 最近一次 `mvn test` 实测全绿 |
 
 ---
 

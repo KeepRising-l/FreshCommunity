@@ -15,3 +15,9 @@ upload:
 mybatis-plus:
   configuration:
     log-impl: org.apache.ibatis.logging.nologging.NoLoggingImpl
+
+# 测试库由 ApiTestBase 在 @BeforeAll 里重建（DROP → CREATE），
+# 定时任务若在重建窗口内抢跑会刷出 "Table doesn't exist" 的假错误。
+# 测试期间把首次执行推迟到测试结束之后，用例仍可显式调用 job 方法。
+scheduling:
+  initial-delay-ms: 3600000

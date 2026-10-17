@@ -59,6 +59,34 @@ class ReviewInsightsTest extends ApiTestBase {
     }
 
     @Test
+    @DisplayName("中性评价不产出标签：情感倾向不混进口碑标签（回归：曾写入「中性」标签）")
+    void neutralReviewProducesNoTags() throws Exception {
+        long reviewId = submitReview("第二次买了，品质一直稳定");
+
+        analysisService.analyze(reviewId);
+
+        ReviewAnalysis a = analysisMapper.selectOne(
+                new LambdaQueryWrapper<ReviewAnalysis>().eq(ReviewAnalysis::getReviewId, reviewId));
+        assertThat(a.getSentiment()).isEqualTo("NEUTRAL");
+        assertThat(a.getTags()).isNullOrEmpty();
+        assertThat(analysisService.topTags(a.getProductId(), 5)).doesNotContain("中性");
+    }
+
+    @Test
+    @DisplayName("词典按「长的在前」匹配：单字「快」不再把「很快吃完」误判为到货快")
+    void keywordDictionaryMatchesLongestFirst() throws Exception {
+        // 「一箱很快吃完了」里的「快」与到货速度无关；旧词典把「快」映射为「到货快」，
+        // 会给这条中性评价凭空造出一个正面标签。
+        long reviewId = submitReview("一箱很快吃完了");
+
+        analysisService.analyze(reviewId);
+
+        ReviewAnalysis a = analysisMapper.selectOne(
+                new LambdaQueryWrapper<ReviewAnalysis>().eq(ReviewAnalysis::getReviewId, reviewId));
+        assertThat(a.getTags()).isNullOrEmpty();
+    }
+
+    @Test
     @DisplayName("批量任务：有文字评价被分析，无文字评价不产生记录")
     void pendingBatchSkipsBlank() throws Exception {
         long withText = submitReview("非常新鲜好吃");
@@ -70,6 +98,20 @@ class ReviewInsightsTest extends ApiTestBase {
                 .eq(ReviewAnalysis::getReviewId, withText))).isEqualTo(1);
         assertThat(analysisMapper.selectCount(new LambdaQueryWrapper<ReviewAnalysis>()
                 .eq(ReviewAnalysis::getReviewId, withoutText))).isZero();
+    }
+
+    @Test
+    @DisplayName("否定表达不误判：「不新鲜」不产出正面标签")
+    void negatedPositiveWordIsNotPositive() throws Exception {
+        long reviewId = submitReview("这次的菜不新鲜，叶子都黄了");
+
+        analysisService.analyze(reviewId);
+
+        ReviewAnalysis a = analysisMapper.selectOne(
+                new LambdaQueryWrapper<ReviewAnalysis>().eq(ReviewAnalysis::getReviewId, reviewId));
+        assertThat(a.getSentiment()).isEqualTo("NEGATIVE");
+        // 标签是逗号分隔的字符串：按标签逐个比对，避免「不新鲜」子串包含「新鲜」造成误判
+        assertThat(a.getTags().split(",")).contains("不新鲜").doesNotContain("新鲜");
     }
 
     @Test

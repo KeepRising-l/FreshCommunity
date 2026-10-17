@@ -24,10 +24,10 @@
 | 前端 Vue 文件 | **22** 个 / 约 **4865** 行（`frontend/src`） |
 | 数据库表 | **9** 张已建（含 `user_subscription`、`review_analysis`） |
 | 后端接口 | **33** 个 |
-| 功能能力（capability） | **9** 个基线能力，35 条需求、57 个场景；AI 导购为活动变更 |
+| 功能能力（capability） | **11** 个基线能力，42 条需求、77 个场景 |
 | 自动化测试 | **47** 个测试方法（7 个测试类，最近一次 `mvn test` 全绿） |
-| 规格变更 | **2** 个已归档，`ai-shopping-assistant` 进行中 |
-| 演示数据规模 | 16 用户 / 16 商品 / 11 场团购 / 27 笔订单 / 8 条评价 / 27 条站内消息 |
+| 规格变更 | **3** 个已归档（最新 `2026-10-17-ai-shopping-assistant`） |
+| 演示数据规模 | 16 用户 / 17 商品 / 12 场团购 / 30 笔订单 / 11 条评价 / 27 条站内消息 |
 
 ---
 
@@ -36,14 +36,14 @@
 | 论文章节 | 可直接引用的素材 | 位置 |
 | --- | --- | --- |
 | **选题背景与意义** | 社区团购业务闭环描述、三角色诉求分析 | `docs/ui-design/design-spec.md` §1 |
-| **需求分析** | 9 个 capability 的完整需求与验收场景（含 WHEN/THEN） | `openspec/specs/*/spec.md` |
+| **需求分析** | 11 个 capability 的完整需求与验收场景（含 WHEN/THEN） | `openspec/specs/*/spec.md` |
 | **需求优先级与范围** | 明确「做什么 / 不做什么」的边界声明 | `openspec/changes/archive/2026-10-11-mvp-group-buying/proposal.md` |
 | **系统总体设计** | 分层架构、模块划分、技术选型理由 | `openspec/changes/archive/.../design.md` |
 | **数据库设计** | 9 张已建表的 DDL、索引设计 | `db/schema.sql`、`docs/design-document.md` |
 | **关键机制设计** | 库存防超卖（原子扣减）、状态机、定时任务、并发成团判定 | 同上 `design.md` + `openspec/specs/inventory/spec.md`、`order-lifecycle/spec.md` |
 | **界面设计** | 设计原则、信息架构、视觉语言、双端原型 | `docs/ui-design/design-spec.md`、`prototype.html`、`prototype-mobile.html` |
 | **系统实现** | 各模块接口清单与权限 | `README.md` 接口一览 |
-| **系统测试** | 实测验证方法与结论、47 个测试源码方法 | `docs/verification-report.md`、`backend/src/test/` |
+| **系统测试** | 实测验证方法与结论、52 个测试源码方法 | `docs/verification-report.md`、`backend/src/test/` |
 | **过程管理** | 需求→实现→归档的可追溯轨迹，含当前活动变更 | `openspec/changes/`（proposal / design / tasks / specs） |
 | **开发规范与工具** | 规格驱动开发方法论 | `docs/openspec-guide.md` |
 
@@ -63,7 +63,7 @@
 | 时序图 | 下单→支付→达标成团的并发判定 | `design.md` 决策 4 |
 | 时序图 | 到点未成团→自动解散→退款 | `specs/group-buying/spec.md` |
 | 界面原型图 | 三角色关键页面 | `docs/ui-design/preview/*.png` |
-| 测试用例分布图 | 7 个测试类 / 47 个方法 | `backend/src/test/` |
+| 测试用例分布图 | 7 个测试类 / 52 个方法 | `backend/src/test/` |
 
 ---
 
@@ -95,7 +95,7 @@
 - 所有列表**无分页**
 - 前端主包 **1.27MB**（Element Plus 全量引入，未做按需）
 - 评价不支持修改/删除、无审核与敏感词过滤
-- 无前端自动化测试；后端源码含 47 个集成测试方法，最近一次 `mvn test` 全绿
+- 无前端自动化测试；后端源码含 52 个集成测试方法，最近一次 `mvn test` 全绿
 
 ---
 
@@ -107,12 +107,12 @@
 | 测试类 | 用例数 | 覆盖 |
 | --- | --- | --- |
 | `AuthApiTest` | 8 | 登录 / 注册 / 401 / 404 / 405 / 越权注册管理员 |
-| `GroupBuyFlowApiTest` | 10 | 列表/详情字段、库存、取消回退人数、退款守卫、超时关单、团长订单归属与权限 |
+| `GroupBuyFlowApiTest` | 12 | 列表/详情字段、库存、取消回退人数、退款守卫、超时关单、团长订单归属与权限、拼团价指定与校验 |
 | `ReviewApiTest` | 7 | 评价资格、重复 / 越界、评分汇总、无评价不误导 |
 | `NotificationApiTest` | 5 | 六类事件通知、跨用户隔离、未读数 |
 | `SubscriptionApiTest` | 9 | 需求解析、预览不落库、归属隔离、新团与已有团匹配 |
 | `LlmParseServiceTest` | 3 | 无 key 回落规则解析、非标表述、无价格需求 |
-| `ReviewInsightsTest` | 5 | 情感与标签、重复分析幂等、批量跳过无文字评价、详情标签、提醒摘要 |
+| `ReviewInsightsTest` | 8 | 情感与标签、重复分析幂等、批量跳过无文字评价、详情标签、提醒摘要、中性零标签、词典长词优先 |
 
 - **运行方式**：`cd backend && DB_PASSWORD=1234 mvn test`（独立测试库 `freshcommunity_test`，不影响开发库）
 - **历史缺陷修复**：MVP 首轮实测发现 3 个真实缺陷（取消订单不回退人数、退款无状态守卫、登录失败未返回 401），均已修复并**转化为回归用例** —— 这是"测试驱动质量"的实证，值得在论文中写成一小节

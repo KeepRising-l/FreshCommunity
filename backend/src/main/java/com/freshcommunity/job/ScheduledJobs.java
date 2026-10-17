@@ -32,13 +32,17 @@ public class ScheduledJobs {
         this.reviewAnalysisService = reviewAnalysisService;
     }
 
-    @Scheduled(fixedDelay = 60000)
+    /**
+     * 首次执行延迟（毫秒）。生产默认 0（启动即跑）；测试 profile 设为大值，
+     * 避免定时任务与测试库重建 schema（DROP → CREATE 之间）抢跑而刷出假错误。
+     */
+    @Scheduled(fixedDelay = 60000, initialDelayString = "${scheduling.initial-delay-ms:0}")
     @Transactional
     public void processExpiredGroupBuys() {
         groupBuyService.handleExpiredGroups();
     }
 
-    @Scheduled(fixedDelay = 60000)
+    @Scheduled(fixedDelay = 60000, initialDelayString = "${scheduling.initial-delay-ms:0}")
     @Transactional
     public void closePendingPaymentOrders() {
         List<Order> expired = orderMapper.findPendingPaymentExpired();
@@ -52,7 +56,7 @@ public class ScheduledJobs {
         }
     }
 
-    @Scheduled(fixedDelay = 60000)
+    @Scheduled(fixedDelay = 60000, initialDelayString = "${scheduling.initial-delay-ms:0}")
     @Transactional
     public void analyzePendingReviews() {
         reviewAnalysisService.analyzePending();

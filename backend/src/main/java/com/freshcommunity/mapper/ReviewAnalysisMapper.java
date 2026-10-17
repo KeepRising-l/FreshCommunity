@@ -22,7 +22,11 @@ public interface ReviewAnalysisMapper extends BaseMapper<ReviewAnalysis> {
             + "WHERE a.deleted = 0 AND a.product_id = #{productId} AND a.tags IS NOT NULL AND a.tags <> ''")
     List<String> findTagsByProduct(Long productId);
 
-    /** 该商品被分析的评价数（供提醒摘要"已有 N 人评价"）。 */
-    @Select("SELECT COUNT(*) FROM review_analysis a WHERE a.deleted = 0 AND a.product_id = #{productId}")
+    /**
+     * 该商品「产出了口碑标签」的评价数（供提醒摘要"已有 N 人评价都说…"）。
+     * 只统计有标签的记录：中性评价不产出标签，若计入会让"都说新鲜"的人数虚高。
+     */
+    @Select("SELECT COUNT(*) FROM review_analysis a WHERE a.deleted = 0 AND a.product_id = #{productId} "
+            + "AND a.tags IS NOT NULL AND a.tags <> ''")
     long countByProduct(Long productId);
 }

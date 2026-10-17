@@ -27,14 +27,21 @@ import java.util.stream.Collectors;
 public class ReviewAnalysisService {
 
     private static final ObjectMapper MAPPER = new ObjectMapper();
-    /** 正面词典 → 标签 */
+    /** 正面词典 → 标签。键按「长的在前」排列：先命中更具体的短语，避免单字误伤。 */
     private static final Map<String, String> POSITIVE_WORDS = orderedMap(
-            "新鲜", "新鲜", "甜", "很甜", "好吃", "好吃", "实惠", "实惠",
-            "便宜", "实惠", "快", "到货快", "满意", "满意", "划算", "划算");
+            "很新鲜", "新鲜", "新鲜", "新鲜", "好吃", "好吃",
+            "性价比", "实惠", "实惠", "实惠", "划算", "划算", "便宜", "实惠",
+            "满意", "满意", "到货快", "到货快", "到货很快", "到货快",
+            "很甜", "很甜", "甜", "甜");
     /** 负面词典 → 标签 */
     private static final Map<String, String> NEGATIVE_WORDS = orderedMap(
+            "不新鲜", "不新鲜", "货不对板", "货不对板", "有异味", "有异味",
+            "分量少", "分量少", "到货慢", "到货慢", "体验差", "体验差",
             "烂", "不新鲜", "贵", "偏贵", "慢", "到货慢", "差", "体验差",
             "忽悠", "货不对板", "异味", "有异味", "缩水", "分量少");
+
+    /** 否定前缀（长的在前）：紧邻这些前缀的正向词不算肯定表达（如「不新鲜」「没有新鲜感」）。 */
+    private static final String[] NEGATION_PREFIXES = {"不怎么", "不太", "不够", "没有", "不", "没", "难"};
 
     private final ReviewMapper reviewMapper;
     private final ReviewAnalysisMapper analysisMapper;
@@ -146,7 +153,7 @@ public class ReviewAnalysisService {
         boolean negative = false;
         boolean positive = false;
         for (Map.Entry<String, String> e : POSITIVE_WORDS.entrySet()) {
-            if (content.contains(e.getKey()) && !tags.contains(e.getValue())) {
+            if (containsAffirmed(content, e.getKey()) && !tags.contains(e.getValue())) {
                 tags.add(e.getValue());
                 positive = true;
             }
@@ -157,14 +164,43 @@ public class ReviewAnalysisService {
                 negative = true;
             }
         }
-        if (tags.isEmpty()) {
-            tags.add("中性");
-        } else if (tags.size() > 3) {
+        if (tags.size() > 3) {
             tags = new ArrayList<>(tags.subList(0, 3));
         }
         String sentiment = negative && !positive ? "NEGATIVE"
                 : positive && !negative ? "POSITIVE" : "NEUTRAL";
+        // 情感倾向与关键词标签是两回事：中性评价不产出标签，
+        // 否则「中性」会混进口碑标签区与提醒摘要（"都说中性、新鲜"）。
         return new Result(sentiment, tags);
+    }
+
+    /**
+     * 正向词是否被「肯定」地提及：「不新鲜」「没有新鲜感」里的「新鲜」是负面表达，
+     * 不能因为子串命中就记成正面标签。只看紧邻的前缀，够用且不会误伤「很新鲜」。
+     */
+    private boolean containsAffirmed(String content, String word) {
+        int from = 0;
+        while (true) {
+            int idx = content.indexOf(word, from);
+            if (idx < 0) {
+                return false;
+            }
+            if (!isNegated(content, idx)) {
+                return true;
+            }
+            from = idx + word.length();
+        }
+    }
+
+    /** 判断位置 idx 前的紧邻前缀是否为否定表达（「不」「没」「没有」「不太」等）。 */
+    private boolean isNegated(String content, int idx) {
+        for (String negation : NEGATION_PREFIXES) {
+            int start = idx - negation.length();
+            if (start >= 0 && content.startsWith(negation, start)) {
+                return true;
+            }
+        }
+        return false;
     }
 
     private String extractJson(String content) {

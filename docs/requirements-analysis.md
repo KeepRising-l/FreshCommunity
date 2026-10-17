@@ -197,8 +197,9 @@
 | FR-11-4 | 订阅管理 | 查看 / 取消自己的订阅；仅本人可操作 | ✅ 已交付：`SubscriptionApiTest.listAndCancelOwnership` |
 | FR-11-5 | 解析降级 | 大模型优先、规则兜底；外部解析服务不可用时常见表述仍可订阅 | ✅ 已交付：`LlmParseService`（LLM 优先→规则回落）+ `AiClient`；无 key 环境走规则，`LlmParseServiceTest` 覆盖 |
 | FR-11-6 | 评价洞察 | 评价文本自动分析（情感 / 关键词标签），用于口碑展示与提醒摘要增强 | ✅ 已交付：`review_analysis` 表 + 定时批量分析 + 详情标签 + 提醒摘要，`ReviewInsightsTest` 覆盖 |
+| FR-11-7 | 拼团价设置 | 团长开团时可指定拼团价（> 0 且 ≤ 零售价），订阅匹配与提醒按该价判断；不填则以零售价快照兜底 | ✅ 已交付：`GroupBuyCreateRequest.price` + `GroupBuyService.resolvePrice`，团长端开团表单可填；`GroupBuyFlowApiTest` 覆盖 |
 
-> FR-11 整个变更（`ai-shopping-assistant`）的实现已全部落地并通过回归，尚余端到端演示实测与变更归档；**并发匹配漏提醒**（design.md 记录的 P2 已知缺口）不在本次范围。
+> FR-11 整个变更（`ai-shopping-assistant`）已于 2026-10-17 完成端到端实测并归档；**并发匹配漏提醒**（design.md 记录的 P2 已知缺口）不在本次范围，作为后续变更推进。
 
 ### 需求优先级（MoSCoW 分级）
 
@@ -226,7 +227,7 @@
 | 性能 | 接口响应 | 常规接口 P95 ≤ 500ms（本地环境） | 目标值；需按统一环境重新压测 |
 | 性能 | 判定延迟 | 到期团购 / 超时关单处理延迟 ≤ 60 秒 | 达成（调度周期） |
 | 容量 | 数据规模 | 单社区百级用户 / 千级订单（教学演示规模） | 满足 |
-| 可维护性 | 自动化测试 | 当前源码含 47 个集成测试方法 | 最近一次 `mvn test` 全绿 |
+| 可维护性 | 自动化测试 | 当前源码含 52 个集成测试方法 | 最近一次 `mvn test` 全绿 |
 | 兼容性 | 运行环境 | Java 17+ / MySQL 8+ / 现代浏览器 | 达成 |
 
 ### NFR-1 安全性
@@ -260,9 +261,9 @@
 
 ### NFR-5 可维护性
 
-- **规格驱动开发**：现行 OpenSpec 基线为 9 capability / 35 requirement / 57 scenario，2 个变更已归档；AI 导购仍在未归档变更中
+- **规格驱动开发**：现行 OpenSpec 基线为 11 capability / 42 requirement / 77 scenario，3 个变更已归档
 - **分层架构**：Controller / Service / Mapper 分层，统一响应格式 `{code, msg, data}`
-- **自动化测试**：当前测试源码含 47 个后端集成测试方法（真实 Spring 上下文 + MockMvc + 独立测试库）；最近一次 `mvn test` 全绿
+- **自动化测试**：当前测试源码含 52 个后端集成测试方法（真实 Spring 上下文 + MockMvc + 独立测试库）；最近一次 `mvn test` 全绿
 - **统一代码规范**：Lombok、MyBatis-Plus 自动填充、状态常量集中定义
 
 ### NFR-6 可扩展性
@@ -283,7 +284,7 @@
 
 ## 5. 关键业务流程（用例）
 
-> 从 57 条验收场景中提炼的主干用例，用于开题报告「业务流程」与答辩演示脚本。
+> 从 77 条验收场景中提炼的主干用例，用于开题报告「业务流程」与答辩演示脚本。
 
 **UC-1 参团到提货（主链路）——完整规约**
 
@@ -345,7 +346,7 @@
 - 消息分类开关、免打扰设置
 - App / 小程序（移动端为响应式 Web，非原生）
 
-**计划中（本文件纳入需求，实现清单标注为待实施）**：FR-7-3 看板扩展、FR-10-3 团长端界面、FR-10-4 管理端界面、FR-10-5 响应式移动端。AI 导购（FR-11-1～FR-11-6）已全部交付，仅余端到端演示实测与变更归档。
+**计划中（本文件纳入需求，实现清单标注为待实施）**：FR-7-3 看板扩展、FR-10-3 团长端界面、FR-10-4 管理端界面、FR-10-5 响应式移动端。AI 导购（FR-11-1～FR-11-7）已全部交付并于 2026-10-17 归档。
 
 ---
 
@@ -353,7 +354,7 @@
 
 | 需求层 | 载体 | 说明 |
 | --- | --- | --- |
-| 工程规格 | `openspec/specs/*/spec.md` | 9 capability / 35 requirement / 57 scenario（基线，含验收场景） |
+| 工程规格 | `openspec/specs/*/spec.md` | 11 capability / 42 requirement / 77 scenario（基线，含验收场景） |
 | 变更记录 | `openspec/changes/archive/` | 2 个已归档变更的提案 / 设计 / 任务 / delta 规格 |
 | 设计依据 | `docs/ui-design/design-spec.md` | 界面需求与设计规范 |
 | 实现追踪 | `docs/implementation-inventory.md` | 需求编号 → 实现状态 / 代码位置 / 验证证据 |

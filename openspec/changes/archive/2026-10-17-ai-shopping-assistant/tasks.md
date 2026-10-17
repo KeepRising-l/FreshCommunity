@@ -37,8 +37,18 @@
 
 ## 5. 端到端整合
 
-- [ ] 5.1 端到端演示脚本实测：启动前后端 → `user1` 订阅"10 元以内的苹果" → `leader1` 开 8.8 元苹果团 → `user1` 收到带口碑摘要的站内信 → 前往参团，验证：LLM 有 key 与无 key（规则降级）两种模式各完整跑通一次
+- [x] 5.1 端到端演示脚本实测：启动前后端 → `user1` 订阅"10 元以内的苹果" → `leader1` 开 8.8 元苹果团 → `user1` 收到带口碑摘要的站内信 → 前往参团，验证：LLM 有 key 与无 key（规则降级）两种模式各完整跑通一次
+  - 无 key（规则解析）实测 2026-10-17：解析 `{keyword: 苹果, maxPrice: 10}` → 订阅 → 开 8.8 元团 → 站内信「拼团价 ¥8.80，还差 5 人成团……已有 3 人评价都说实惠、新鲜、甜」→ 下单支付转 `PENDING_GROUP`
+  - 有 key（LLM）实测 2026-10-17：以本地 OpenAI 兼容 mock 端点验证链路（口语「苹果」归一为「红富士苹果」），提醒内容同上。**真实供应商密钥未验证**，留作部署时确认项
+  - LLM 不可达（key 已配但端点不通）实测：5 秒内回落规则解析，返回 `{keyword: 苹果, maxPrice: 10}`，接口 200
 - [x] 5.2 项目文档同步：`README.md`（功能与接口清单）、`docs/implementation-inventory.md`（新功能状态与验证证据）、`docs/requirements-analysis.md`（AI 导购助理需求并入），验证：三份文档与实现一致，数字经实测统计
+- [x] 5.3 端到端实测暴露的缺陷修复（2026-10-17）
+  - [x] 5.3.1 演示脚本无对应商品：`db/seed.sql` 增加商品「红富士苹果」（零售 12.90）及历史苹果团、订单、评价，使「10 元以内的苹果」可被命中；验证：重跑 `seed.sql` 后订阅该需求，开团即收到提醒
+  - [x] 5.3.2 开团无法指定拼团价（`priceSnapshot` 写死零售价）：`GroupBuyCreateRequest` 增加可选 `price`，服务端校验正数且不高于零售价；团长端开团表单增加「拼团价」输入；验证：`GroupBuyFlowApiTest.createGroupBuyWithCustomPrice` / `customPriceValidation`
+  - [x] 5.3.3 中性评价被写成口碑标签（详情页显示「中性」、提醒写「都说中性」）：情感倾向不再作为标签写入，中性评价零标签；提醒摘要人数只统计有标签的评价；验证：`ReviewInsightsTest.neutralReviewProducesNoTags`
+  - [x] 5.3.4 规则词典单字误伤：「快」被映射为「到货快」，把「一箱很快吃完了」判成正面；改为长词优先并去掉单字泛匹配；验证：`ReviewInsightsTest.keywordDictionaryMatchesLongestFirst`
+  - [x] 5.3.5 测试期定时任务与测试库重建抢跑（日志刷 `Table doesn't exist`）：`@Scheduled` 增加 `scheduling.initial-delay-ms`，测试 profile 置 1 小时；验证：`mvn test` 输出不再出现该错误
+- [x] 5.4 回归与构建：`mvn test` 52 用例全绿（新增 5 个），`vite build` 通过
 
 ## Workflow follow-up
 

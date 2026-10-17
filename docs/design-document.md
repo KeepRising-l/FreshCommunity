@@ -26,7 +26,7 @@
 | 成团 | 已支付订单人数达到成团人数，团购判定成功 |
 | 解散 | 截止时间到仍未成团，团购判定失败并退款 |
 | 核销 | 团长在提货点校验取货码，将订单置为已完成 |
-| 拼团价 | 开团时商品价格的快照（`price_snapshot`），即用户参团实付价格口径 |
+| 拼团价 | 团长开团时设定的价格（`price_snapshot`），即用户参团实付价格口径；未设定时取商品零售价快照 |
 | 订阅 | AI 导购中用户以自然语言留存的需求条件（关键词 + 价格上限） |
 | 匹配 | 新开团购与订阅条件的比对过程，命中即触发提醒 |
 
@@ -34,7 +34,7 @@
 
 - 设计目标为**单体 Web 应用**，本地一键启动，面向教学级部署与答辩演示；
 - 约束：不引入 Redis / 消息队列等中间件；支付以模拟实现（预留扩展点）；外部 LLM 服务可选接入且必须可降级；
-- 依据：OpenSpec 规格基线（9 个 capability / 35 条需求 / 57 个验收场景）与历次实测验证结论。
+- 依据：OpenSpec 规格基线（11 个 capability / 42 条需求 / 77 个验收场景）与历次实测验证结论。
 
 ---
 
@@ -223,7 +223,7 @@ erDiagram
 | member_count | INT | 已支付人数（成团判定依据） |
 | 索引 | | `idx_status_deadline(status, deadline)`（扫描优化） |
 
-**（4）group_buy_item —— 团购商品关联表**：id、group_buy_id、product_id、price_snapshot(DECIMAL 10,2，开团时价格快照)、created_at、deleted。
+**（4）group_buy_item —— 团购商品关联表**：id、group_buy_id、product_id、price_snapshot(DECIMAL 10,2，团长开团时指定的拼团价；未指定时取商品零售价快照，须 ≤ 零售价)、created_at、deleted。
 
 **（5）order —— 订单表**
 
@@ -521,7 +521,7 @@ flowchart LR
 | 初始化 | `mysql --default-character-set=utf8mb4 < db/schema.sql`（建库建表）→ `db/seed.sql`（演示数据集，可重复执行） |
 | 后端启动 | `DB_PASSWORD=<密码> mvn spring-boot:run`（数据库口令经环境变量注入，不入库不入仓） |
 | 前端启动 | `npm install && npm run dev`（Vite 代理 /api 至 8080） |
-| 测试 | `DB_PASSWORD=<密码> mvn test`（独立测试库 `freshcommunity_test`，47 个集成用例） |
+| 测试 | `DB_PASSWORD=<密码> mvn test`（独立测试库 `freshcommunity_test`，52 个集成用例） |
 | 部署形态 | 单体单机；生产化建议见 §6 已知限制与各节演进项 |
 
 ---
@@ -540,8 +540,8 @@ flowchart LR
 
 ### 9.2 验证与质量资产
 
-- 规格基线：9 capability / 35 requirement / 57 scenario（`openspec/specs/`）；
-- 集成测试源码：47 个测试方法（7 个测试类，`backend/src/test/`）；最近一次 `mvn test` 全绿；
+- 规格基线：11 capability / 42 requirement / 77 scenario（`openspec/specs/`）；
+- 集成测试源码：52 个测试方法（7 个测试类，`backend/src/test/`）；最近一次 `mvn test` 全绿；
 - 实测报告：MVP 规格符合性 48 项断言（`docs/verification-report.md`）。
 
 ### 9.3 版本记录

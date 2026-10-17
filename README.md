@@ -11,13 +11,13 @@
 | 角色 | 能做什么 |
 | --- | --- |
 | 用户 | 自助注册/登录、浏览商品与评分、参加团购下单、模拟支付、取消未成团订单、查看订单与取货码、评价已完成订单、查看站内消息、AI 导购订阅 |
-| 团长 | 发起团购（设成团人数 + 截止时间）、查看自己开的团、输入取货码核销 |
+| 团长 | 发起团购（选商品 + 设拼团价 / 成团人数 / 截止时间）、查看自己开的团、输入取货码核销 |
 | 管理员 | 商品增删改查（名称/价格/库存/图片）、数据看板、订单退款兜底 |
 
 **核心机制**
 
 - **自助注册与登录**：用户/团长可自助注册（用户名唯一校验、BCrypt 存储、注册即签发 JWT）；管理员账号由初始化 SQL 预置，不开放自助注册
-- **团购生命周期**：团长设成团人数与截止时间 → 用户下单（模拟支付）→ 人数达标**提前成团**；到点未达标**自动解散并退款**
+- **团购生命周期**：团长选商品、设拼团价（不填取零售价）、成团人数与截止时间 → 用户下单（模拟支付）→ 人数达标**提前成团**；到点未达标**自动解散并退款**
 - **库存防超卖**：下单时用 `UPDATE product SET stock = stock - #{qty} WHERE id = ? AND stock >= #{qty}` 原子扣减，受影响行数为 0 即库存不足；取消/解散时回补
 - **订单状态机**：待支付 → 待成团 → 已成团 → 待取货 → 已完成／已取消／已退款
 - **取货码核销**：成团后为每笔订单生成 6 位取货码，团长网页输码核销，仅限本团订单且防重复核销
@@ -108,6 +108,8 @@ mysql -uroot -p --default-character-set=utf8mb4 < db/seed.sql
 ```
 
 > Windows 下务必带 `--default-character-set=utf8mb4`，否则中文会因 GBK 解析而报 `ERROR 1366`。
+>
+> **已有旧库时必须重跑 `schema.sql`**：它是 `DROP TABLE` + `CREATE TABLE` 的完整重建脚本。只跑 `seed.sql` 不会补建新增的表（例如 AI 导购的 `review_analysis`），后端启动后商品详情会报 `Table doesn't exist`，定时任务也会每 60 秒刷一次同样的错误。
 
 - **`schema.sql`**：建库、建 9 张表（含需求订阅 `user_subscription` 与评价洞察 `review_analysis`），写入三个基础账号和 3 个商品
 - **`seed.sql`**：**丰富的演示数据集**，可重复执行（每次清空业务表重建），时间全部是相对 `NOW()` 的，任何时候执行都能得到"看起来正在发生"的数据：
@@ -115,10 +117,10 @@ mysql -uroot -p --default-character-set=utf8mb4 < db/seed.sql
 | 数据 | 规模 |
 | --- | --- |
 | 用户 | 16 个（1 管理员 / 3 团长 / 12 用户，密码统一 `123456`） |
-| 商品 | 16 个生鲜商品 |
-| 团购 | 11 场 —— 进行中（进度 0/N、1/N、2/N）、即将截止、已成团待取货、已全部核销、已解散 |
-| 订单 | 27 笔 —— 待支付 / 待成团 / 已成团 / 已完成 / 已取消 / 已退款 |
-| 评价 | 8 条（覆盖 3 个商品、2 个团长，含一条低分） |
+| 商品 | 17 个生鲜商品（含专为 AI 导购演示准备的「红富士苹果」，零售 ¥12.90） |
+| 团购 | 12 场 —— 进行中（进度 0/N、1/N、2/N）、即将截止、已成团待取货、已全部核销、已解散，另有一场历史苹果团用于口碑摘要 |
+| 订单 | 30 笔 —— 待支付 / 待成团 / 已成团 / 已完成 / 已取消 / 已退款 |
+| 评价 | 11 条（覆盖 4 个商品、2 个团长，含一条低分；苹果商品的 3 条评价用于演示口碑摘要） |
 | 站内消息 | 27 条（成团 / 解散 / 核销 / 超时关单），部分未读 |
 
 导入后管理员看板显示：今日订单 15、今日成团 3。
@@ -150,7 +152,7 @@ cd backend
 AI_API_KEY=你的密钥 AI_BASE_URL=https://api.deepseek.com/v1 AI_MODEL=deepseek-chat mvn spring-boot:run
 ```
 
-对应 `application.yml` 的 `ai.*` 四项（`base-url` / `api-key` / `model` / `timeout-seconds`），接口为 OpenAI 兼容协议，可指向 DeepSeek、通义等任意兼容供应商。留空 `AI_API_KEY` 时 `AiClient` 标记为不可用，需求解析与评价洞察均走规则实现。
+对应 `application.yml` 的 `ai.*` 四项（`base-url` / `api-key` / `model` / `timeout-seconds`），接口为 OpenAI 兼容协议，可指向 DeepSeek、通义等任意兼容供应商。留空 `AI_API_KEY` 时 `AiClient` 标记为不可用，需求解析与评价洞察均走规则实现。**配了 key 但端点不可达时**，5 秒超时后同样回落规则解析，接口不会报错。
 
 ### 3. 启动前端
 
@@ -227,13 +229,13 @@ DB_PASSWORD=<你的MySQL密码> mvn test
 - 测试库由 `db/schema.sql` 自动初始化（库名替换为 `freshcommunity_test`），**不会动开发库 `freshcommunity`**
 - 每个测试方法带事务，结束自动回滚，用例之间互不污染
 - 数据库账号可用 `DB_USER` / `DB_PASSWORD` 环境变量覆盖，默认 `root` / `1234`
-- 测试源码目前包含 **47 个用例**（7 个测试类），覆盖认证、团购生命周期与库存、订阅匹配、LLM 解析降级、评价洞察、退款状态守卫、评价、站内消息与权限隔离；运行结果以最近一次实测报告为准
+- 测试源码目前包含 **52 个用例**（7 个测试类），覆盖认证、团购生命周期与库存、拼团价设置与校验、订阅匹配、LLM 解析降级、评价洞察、退款状态守卫、评价、站内消息与权限隔离；运行结果以最近一次实测报告为准
 
 ---
 
 ## 开发说明
 
-- **团购的价格来自 `group_buy_item`，不在 `group_buy` 表上**：`group_buy_item.price_snapshot` 是拼团价，`product.price` 是零售价，两者刻意拉开差距以便前端展示「立省 X 元」。因此 `GET /api/group-buys` 与 `GET /api/group-buys/{id}` 返回的 VO 会额外带上 `productId / productName / imageUrl / price / originalPrice`；订单金额一律按 `price_snapshot × quantity` 计算。
+- **团购的价格来自 `group_buy_item`，不在 `group_buy` 表上**：`group_buy_item.price_snapshot` 是拼团价，`product.price` 是零售价。团长开团时可显式指定拼团价（须 > 0 且不高于零售价），不填则以零售价快照兜底；两者有差距时前端展示「立省 X 元」。因此 `GET /api/group-buys` 与 `GET /api/group-buys/{id}` 返回的 VO 会额外带上 `productId / productName / imageUrl / price / originalPrice`；订单金额一律按 `price_snapshot × quantity` 计算。
 - **数据库表名 `order` 是 MySQL 保留字**，实体上必须写成 `@TableName("`order`")`（带反引号），否则 MyBatis-Plus 生成的 `SELECT ... FROM order` 会报 `SQLSyntaxErrorException`。
 - **JWT 无法主动失效**：token 签发后到期前一直有效。毕设场景可接受，生产需引入黑名单或改用短 token + refresh token。
 - **密码存储**：BCrypt 哈希，`$2a$10$` 前缀，长度 60。手写 `schema.sql` 时注意别写坏哈希长度，否则登录会恒定失败。
@@ -243,19 +245,20 @@ DB_PASSWORD=<你的MySQL密码> mvn test
 
 ## 需求文档
 
-`openspec/` 目录下有 **9 个 capability 基线**（35 条 Requirement / 57 个 Scenario）、**2 个已归档变更**，以及一个仍在实施中的 `ai-shopping-assistant` 变更。
+`openspec/` 目录下有 **11 个 capability 基线**（42 条 Requirement / 77 个 Scenario）、**3 个已归档变更**。
 
 ```
 openspec/
 ├── specs/                          # 基线：系统当前真实行为
 │   ├── user-roles/  product-catalog/  group-buying/  inventory/
 │   ├── order-lifecycle/  pickup-verification/  admin-dashboard/
-│   └── reviews/  notifications/
+│   ├── reviews/  notifications/
+│   └── ai-subscription/  review-insights/   # AI 导购（2026-10-17 归档时并入）
 └── changes/
-    ├── ai-shopping-assistant/      # 进行中：订阅闭环、LLM 解析、评价洞察均已实现（16/18 任务）
     └── archive/                    # 已归档变更（提案 / 增量规格 / 设计 / 任务清单）
         ├── 2026-10-11-mvp-group-buying/
-        └── 2026-10-11-reviews-and-notifications/
+        ├── 2026-10-11-reviews-and-notifications/
+        └── 2026-10-17-ai-shopping-assistant/
 ```
 
 每个变更目录含 `proposal.md`（为什么做、边界）、`specs/`（delta 增量规格）、`design.md`（技术方案与取舍）、`tasks.md`（任务清单）；归档时 delta 合并进基线。完整工作流说明见 [`docs/openspec-guide.md`](docs/openspec-guide.md)。

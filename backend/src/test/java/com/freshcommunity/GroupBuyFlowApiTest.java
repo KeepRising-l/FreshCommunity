@@ -63,6 +63,71 @@ class GroupBuyFlowApiTest extends ApiTestBase {
     }
 
     @Test
+    @DisplayName("开团可指定拼团价：落库为指定值，订阅匹配与提醒按该价判断（回归：拼团价曾被写死为零售价）")
+    void createGroupBuyWithCustomPrice() throws Exception {
+        String leader = login("leader1", "123456");
+        String u1 = login("user1", "123456");
+        long productId = firstProductId(u1);
+        double retailPrice = perform(get("/api/products/" + productId), u1, null)
+                .data().path("price").asDouble();
+        double groupPrice = Math.round(retailPrice * 50) / 100.0;
+
+        long gid = createGroupBuyWithPrice(leader, productId, 3, groupPrice);
+
+        assertThat(groupBuyDetail(u1, gid).path("price").asDouble()).isEqualTo(groupPrice);
+
+        // 订阅条件按「拼团价」而非零售价匹配：上限介于两者之间时应命中
+        double maxPrice = (groupPrice + retailPrice) / 2;
+        ApiResult sub = perform(post("/api/subscriptions"), u1,
+                java.util.Map.of("text", String.format("%.2f 元以内的%s", maxPrice, productName(u1, productId))));
+        assertThat(sub.data().path("matchedCount").asInt()).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("拼团价校验：高于零售价或非正数时拒绝创建")
+    void customPriceValidation() throws Exception {
+        String leader = login("leader1", "123456");
+        String u1 = login("user1", "123456");
+        long productId = firstProductId(u1);
+        double retailPrice = perform(get("/api/products/" + productId), u1, null)
+                .data().path("price").asDouble();
+
+        ApiResult tooHigh = perform(post("/api/group-buys"), leader, java.util.Map.of(
+                "title", "价格过高的团",
+                "productId", productId,
+                "targetCount", 3,
+                "price", retailPrice + 1,
+                "deadline", java.time.LocalDateTime.now().plusHours(2).toString()));
+        assertThat(tooHigh.status()).isEqualTo(400);
+        assertThat(tooHigh.msg()).contains("零售价");
+
+        ApiResult nonPositive = perform(post("/api/group-buys"), leader, java.util.Map.of(
+                "title", "零元团",
+                "productId", productId,
+                "targetCount", 3,
+                "price", 0,
+                "deadline", java.time.LocalDateTime.now().plusHours(2).toString()));
+        assertThat(nonPositive.status()).isEqualTo(400);
+    }
+
+    private long createGroupBuyWithPrice(String token, long productId, int target, double price) throws Exception {
+        ApiResult r = perform(post("/api/group-buys"), token, java.util.Map.of(
+                "title", "指定拼团价的团购",
+                "productId", productId,
+                "targetCount", target,
+                "price", price,
+                "deadline", java.time.LocalDateTime.now().plusHours(2).toString()));
+        if (!r.ok()) {
+            throw new IllegalStateException("创建团购失败：" + r.body());
+        }
+        return r.data().asLong();
+    }
+
+    private String productName(String token, long productId) throws Exception {
+        return perform(get("/api/products/" + productId), token, null).data().path("name").asText();
+    }
+
+    @Test
     @DisplayName("取消待成团订单回退团购人数，不再产生虚假成团")
     void cancelOrderRollsBackMemberCount() throws Exception {
         String leader = login("leader1", "123456");

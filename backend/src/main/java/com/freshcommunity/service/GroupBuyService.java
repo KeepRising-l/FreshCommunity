@@ -12,6 +12,8 @@ import com.freshcommunity.mapper.ProductMapper;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.time.LocalDateTime;
 import java.util.List;
 
@@ -49,6 +51,7 @@ public class GroupBuyService {
         if (product == null) {
             throw new IllegalArgumentException("商品不存在");
         }
+        BigDecimal price = resolvePrice(req.getPrice(), product);
 
         GroupBuy groupBuy = new GroupBuy();
         groupBuy.setLeaderId(leaderId);
@@ -62,13 +65,30 @@ public class GroupBuyService {
         GroupBuyItem item = new GroupBuyItem();
         item.setGroupBuyId(groupBuy.getId());
         item.setProductId(product.getId());
-        item.setPriceSnapshot(product.getPrice());
+        item.setPriceSnapshot(price);
         groupBuyItemMapper.insert(item);
 
         // AI 导购：新团匹配用户需求订阅，命中即向订阅用户发送提醒（与创建同事务）
         subscriptionService.matchNewGroupBuy(groupBuy.getId());
 
         return groupBuy;
+    }
+
+    /**
+     * 拼团价：未指定时取商品零售价快照；指定时必须是正数且不高于零售价
+     * （拼团价高于零售价会让前端「立省」变成负数）。
+     */
+    private BigDecimal resolvePrice(BigDecimal requested, Product product) {
+        if (requested == null) {
+            return product.getPrice();
+        }
+        if (requested.signum() <= 0) {
+            throw new IllegalArgumentException("拼团价必须大于0");
+        }
+        if (product.getPrice() != null && requested.compareTo(product.getPrice()) > 0) {
+            throw new IllegalArgumentException("拼团价不能高于商品零售价");
+        }
+        return requested.setScale(2, RoundingMode.HALF_UP);
     }
 
     public List<GroupBuy> listOngoing() {

@@ -1,9 +1,10 @@
-# MVP 规格符合性验证报告
+# 规格符合性验证报告
 
-- **日期**：2026-10-10
-- **范围**：`openspec/changes/mvp-group-buying/specs/` 下 7 个 capability 的 Requirement / Scenario
+- **首轮日期**：2026-10-10（MVP 基线 7 个 capability）
+- **最新更新**：2026-10-17（新增 §六 AI 导购端到端实测）
+- **范围**：`openspec/specs/` 基线的 Requirement / Scenario；§六 另覆盖 `ai-shopping-assistant` 变更的端到端路径
 - **方法**：把规格场景写成可执行断言，对真实运行的后端（Spring Boot 8080 + MySQL `freshcommunity`）发请求实测，而非静态阅读代码
-- **结果**：**48 项断言，45 通过 / 3 未通过**
+- **首轮结果**：**48 项断言，45 通过 / 3 未通过**（问题已在 2026-10-11 全部修复，见 §五）
 
 > 结论：核心闭环（开团 → 参团 → 成团 → 核销）确实可用；但 `tasks.md` 中 22 个任务虽全部勾选，**不等于验证通过**——本次实测即发现 2 个勾选项与实际行为不符。
 
@@ -101,3 +102,53 @@
 前端同步：新增 `Register.vue`、`/register` 路由与守卫放行、登录页注册入口、`api/auth.js` 的 `register`、401 跳转时排除登录/注册页。
 
 > 本次修复后数据库再次还原为 `schema.sql` + `seed.sql` 的干净演示状态。变更归档已于 2026-10-11 完成（见 `openspec/changes/archive/2026-10-11-mvp-group-buying/`）。
+
+---
+
+## 六、AI 导购端到端实测（2026-10-17）
+
+- **范围**：`ai-shopping-assistant` 变更的端到端演示路径（任务 5.1），以及实施期间暴露缺陷的修复验证
+- **方法**：启动真实后端（Spring Boot 8080 + MySQL `freshcommunity`）与真实前端构建产物，用 HTTP 请求按演示脚本逐步执行，每步读取数据库/接口返回值核对；**不读取代码下结论**
+- **环境**：`db/schema.sql` + `db/seed.sql` 重建后的干净演示库
+
+### 6.1 演示路径（无 key / 规则解析）
+
+| 步骤 | 操作 | 实测结果 |
+| --- | --- | --- |
+| 1 | `user1` 调 `POST /api/subscriptions/parse`，文本「想要 10 元以内的苹果，有货叫我」 | `{keyword: 苹果, maxPrice: 10}` |
+| 2 | 确认创建订阅 | 200，返回 id=1、`matchedCount=0`（此时无进行中苹果团） |
+| 3 | `leader1` 开团：商品「红富士苹果」、拼团价 8.8、成团人数 5 | 200，团购 id=13；列表显示拼团价 8.8 / 原价 12.9 |
+| 4 | 查 `user1` 消息中心 | 收到 `SUBSCRIPTION_MATCH`：「「红富士苹果」正在团购：拼团价 ¥8.80，还差 5 人成团，去看看吧。已有 3 人评价都说实惠、新鲜、甜。」 |
+| 5 | `user1` 下单 2 件并支付 | 订单金额 17.60（= 8.8 × 2），状态 `PENDING_PAYMENT` → `PENDING_GROUP` |
+
+### 6.2 演示路径（有 key / LLM）
+
+- 用本地 OpenAI 兼容 mock 端点（`AI_BASE_URL=http://localhost:18080`）验证 `AiClient` 链路，非真实供应商。
+- 解析结果 `{keyword: 红富士苹果, maxPrice: 10}`——口语「苹果」被归一为候选商品名，证明商品名注入生效。
+- 评价洞察改走 LLM：8 条历史评价全部按 mock 返回的 `POSITIVE / 新鲜,实惠` 落库。
+- 开团后提醒：「……已有 3 人评价都说新鲜、实惠。」
+- ⚠️ **真实供应商密钥未验证**（本机无密钥），部署时需补一次真机确认。
+
+### 6.3 降级路径（key 已配但端点不可达）
+
+- `AI_BASE_URL` 指向未监听端口，启动正常（`AiClient` 不因连接失败阻塞启动）。
+- `POST /api/subscriptions/parse` 返回 200 + `{keyword: 苹果, maxPrice: 10}`，耗时 0.11s（连接被拒即时回落，未走满 5 秒超时）。
+
+### 6.4 本次实测发现并修复的缺陷
+
+| # | 问题 | 影响 | 修复 | 回归用例 |
+| --- | --- | --- | --- | --- |
+| 1 | 开发库缺 `review_analysis` 表（旧库未重建） | 商品详情 500；定时任务每 60 秒刷 `Table doesn't exist` | 重跑 `schema.sql`；README 补充「已有旧库必须重跑」说明 | — （环境问题） |
+| 2 | 演示脚本的「苹果」在种子数据中不存在 | 订阅「10 元以内的苹果」永远无团可命中，演示走不通 | `seed.sql` 新增商品「红富士苹果」+ 历史苹果团/订单/评价 | 端到端实测 |
+| 3 | 开团无法指定拼团价（写死零售价） | 演示脚本「开 8.8 元苹果团」无法复现；拼团价永远等于零售价 | `GroupBuyCreateRequest.price` + `resolvePrice` 校验；团长端表单增加拼团价 | `createGroupBuyWithCustomPrice` / `customPriceValidation` |
+| 4 | 中性评价被写入「中性」标签 | 商品详情显示「中性」，提醒写成「都说中性、新鲜」 | 情感倾向不再作为标签写入 | `neutralReviewProducesNoTags` |
+| 5 | 规则词典单字误伤（「快」→「到货快」） | 「一箱很快吃完了」被误判为正面并产出「到货快」 | 词典改为长词优先、去掉单字泛匹配 | `keywordDictionaryMatchesLongestFirst` |
+| 6 | 否定表达被记成正面（「不新鲜」命中正向词「新鲜」） | 差评可能同时出现正面标签，情感与标签自相矛盾 | 正向词命中后检查紧邻否定前缀（不 / 没 / 没有 / 不太 / 不够 / 不怎么） | `negatedPositiveWordIsNotPositive` |
+| 7 | 测试期定时任务与测试库重建抢跑 | `mvn test` 日志刷假错误，干扰「全绿」判断 | `scheduling.initial-delay-ms`，测试 profile 置 1 小时 | `mvn test` 输出无该错误 |
+
+### 6.5 回归结果
+
+- `cd backend && DB_PASSWORD=1234 mvn test`：**52 用例全绿**（原 47 + 本次新增 5），无回归失败
+- `cd frontend && npm run build`：通过，主包 1.27MB
+- `openspec validate --all`：11/11 通过
+- 实测结束后数据库已还原为 `schema.sql` + `seed.sql` 干净演示状态
