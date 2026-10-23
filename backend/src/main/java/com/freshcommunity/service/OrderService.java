@@ -1,6 +1,7 @@
 package com.freshcommunity.service;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.freshcommunity.dto.VerifyRecordVO;
 import com.freshcommunity.entity.GroupBuy;
 import com.freshcommunity.entity.GroupBuyItem;
 import com.freshcommunity.entity.Order;
@@ -198,6 +199,10 @@ public class OrderService {
     public List<Order> listByGroupBuy(Long groupBuyId) {
         return orderMapper.selectList(
                 new LambdaQueryWrapper<Order>().eq(Order::getGroupBuyId, groupBuyId).orderByDesc(Order::getCreatedAt));
+    }
+
+    public List<VerifyRecordVO> recentVerifiedByLeader(Long leaderId) {
+        return orderMapper.findRecentVerifiedByLeader(leaderId);
     }
 
     private String generateOrderNo() {

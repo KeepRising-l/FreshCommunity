@@ -19,3 +19,12 @@ export function createGroupBuy(data) {
 export function listGroupBuyOrders(id) {
   return request.get('/group-buys/' + id + '/orders')
 }
+
+/**
+ * 团长经营概览。
+ * @returns {Promise<{data: {ongoingGroups: number, pendingPickupOrders: number,
+ *   completedOrders: number, totalGmv: number}}>}
+ */
+export function getMyGroupBuySummary() {
+  return request.get('/group-buys/mine/summary')
+}

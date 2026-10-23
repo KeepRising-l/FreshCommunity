@@ -4,6 +4,7 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.freshcommunity.common.Result;
 import com.freshcommunity.dto.GroupBuyCreateRequest;
 import com.freshcommunity.dto.GroupBuyListVO;
+import com.freshcommunity.dto.LeaderSummaryVO;
 import com.freshcommunity.dto.RatingVO;
 import com.freshcommunity.dto.UserVO;
 import com.freshcommunity.entity.GroupBuy;
@@ -125,6 +126,12 @@ public class GroupBuyController {
     @PreAuthorize("hasRole('LEADER')")
     public Result<List<GroupBuy>> mine(@RequestAttribute("userId") Long userId) {
         return Result.success(groupBuyService.listByLeader(userId));
+    }
+
+    @GetMapping("/mine/summary")
+    @PreAuthorize("hasRole('LEADER')")
+    public Result<LeaderSummaryVO> mineSummary(@RequestAttribute("userId") Long userId) {
+        return Result.success(groupBuyService.summaryForLeader(userId));
     }
 
     @GetMapping("/{id}")

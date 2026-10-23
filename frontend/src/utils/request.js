@@ -19,7 +19,7 @@ request.interceptors.response.use(
   res => {
     const data = res.data
     if (data.code !== 200) {
-      ElMessage.error(data.msg || '请求失败')
+      if (!res.config.skipErrorToast) ElMessage.error(data.msg || '请求失败')
       return Promise.reject(new Error(data.msg))
     }
     return data
@@ -27,7 +27,7 @@ request.interceptors.response.use(
   err => {
     const status = err.response?.status
     const msg = err.response?.data?.msg || '网络错误'
-    ElMessage.error(msg)
+    if (!err.config?.skipErrorToast) ElMessage.error(msg)
     if (status === 401) {
       const store = useUserStore()
       store.clearUser()

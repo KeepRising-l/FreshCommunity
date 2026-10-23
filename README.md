@@ -11,8 +11,8 @@
 | 角色 | 能做什么 |
 | --- | --- |
 | 用户 | 自助注册/登录、浏览商品与评分、参加团购下单、模拟支付、取消未成团订单、查看订单与取货码、评价已完成订单、查看站内消息、AI 导购订阅 |
-| 团长 | 发起团购（选商品 + 设拼团价 / 成团人数 / 截止时间）、查看自己开的团、输入取货码核销 |
-| 管理员 | 商品增删改查（名称/价格/库存/图片）、数据看板、订单退款兜底 |
+| 团长 | 发起团购（选商品 + 设拼团价 / 成团人数 / 截止时间）、查看自己开的团与经营概览、输入取货码核销并查看最近核销记录 |
+| 管理员 | 商品增删改查（名称/价格/库存/图片）、数据看板（KPI + 订单状态分布 + 近 7 日趋势）、订单退款兜底 |
 
 **核心机制**
 
@@ -192,6 +192,7 @@ npm run dev
 | POST/PUT/DELETE | `/api/products/**` | 商品增删改 | 管理员 |
 | GET | `/api/group-buys` | 团购列表 | 登录 |
 | GET | `/api/group-buys/mine` | 我发起的团购 | 团长 |
+| GET | `/api/group-buys/mine/summary` | 团长经营概览（进行中团数 / 待取货 / 已核销 / 累计成交额） | 团长 |
 | GET | `/api/group-buys/{id}` | 团购详情（含团长提货点与团长评分） | 登录 |
 | POST | `/api/group-buys` | 发起团购 | 团长 |
 | GET | `/api/group-buys/{id}/orders` | 该团购的订单列表（仅限本人发起的团购） | 团长 |
@@ -200,6 +201,7 @@ npm run dev
 | POST | `/api/orders/{id}/cancel` | 取消（仅未成团） | 登录 |
 | GET | `/api/orders/mine` | 我的订单 | 登录 |
 | POST | `/api/orders/verify?pickupCode=` | 取货码核销 | 团长 |
+| GET | `/api/orders/verify-history` | 本人最近核销记录（最多 10 条，不含买家身份） | 团长 |
 | POST | `/api/orders/{id}/refund` | 退款兜底 | 管理员 |
 | POST | `/api/reviews` | 提交评价（仅已完成订单，一单一评） | 登录 |
 | GET | `/api/reviews/mine` | 我的评价 | 登录 |
@@ -212,7 +214,7 @@ npm run dev
 | GET | `/api/notifications/unread-count` | 未读消息数 | 登录 |
 | POST | `/api/notifications/{id}/read` | 标记单条消息已读 | 登录 |
 | POST | `/api/notifications/read-all` | 全部消息标记已读 | 登录 |
-| GET | `/api/admin/dashboard` | 看板（今日订单数/成团数） | 管理员 |
+| GET | `/api/admin/dashboard` | 看板：今日订单/成团/成交额、注册用户、进行中团购、订单状态分布、近 7 日趋势 | 管理员 |
 | POST | `/api/upload` | 上传商品图片（≤5MB） | 管理员 |
 
 ---
@@ -229,7 +231,7 @@ DB_PASSWORD=<你的MySQL密码> mvn test
 - 测试库由 `db/schema.sql` 自动初始化（库名替换为 `freshcommunity_test`），**不会动开发库 `freshcommunity`**
 - 每个测试方法带事务，结束自动回滚，用例之间互不污染
 - 数据库账号可用 `DB_USER` / `DB_PASSWORD` 环境变量覆盖，默认 `root` / `1234`
-- 测试源码目前包含 **52 个用例**（7 个测试类），覆盖认证、团购生命周期与库存、拼团价设置与校验、订阅匹配、LLM 解析降级、评价洞察、退款状态守卫、评价、站内消息与权限隔离；运行结果以最近一次实测报告为准
+- 测试源码目前包含 **67 个用例**（9 个测试类），覆盖认证、团购生命周期与库存、拼团价设置与校验、订阅匹配、LLM 解析降级、评价洞察、退款状态守卫、评价、站内消息与权限隔离、看板聚合口径、团长经营概览与核销记录；运行结果以最近一次实测报告为准
 
 ---
 
@@ -245,7 +247,7 @@ DB_PASSWORD=<你的MySQL密码> mvn test
 
 ## 需求文档
 
-`openspec/` 目录下有 **11 个 capability 基线**（42 条 Requirement / 77 个 Scenario）、**3 个已归档变更**。
+`openspec/` 目录下有 **11 个 capability 基线**（49 条 Requirement / 98 个 Scenario）、**4 个已归档变更**。
 
 ```
 openspec/
@@ -258,7 +260,8 @@ openspec/
     └── archive/                    # 已归档变更（提案 / 增量规格 / 设计 / 任务清单）
         ├── 2026-10-11-mvp-group-buying/
         ├── 2026-10-11-reviews-and-notifications/
-        └── 2026-10-17-ai-shopping-assistant/
+        ├── 2026-10-17-ai-shopping-assistant/
+        └── 2026-10-23-admin-dashboard-and-leader-ui/
 ```
 
 每个变更目录含 `proposal.md`（为什么做、边界）、`specs/`（delta 增量规格）、`design.md`（技术方案与取舍）、`tasks.md`（任务清单）；归档时 delta 合并进基线。完整工作流说明见 [`docs/openspec-guide.md`](docs/openspec-guide.md)。

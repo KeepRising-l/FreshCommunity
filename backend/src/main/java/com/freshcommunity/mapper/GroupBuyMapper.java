@@ -25,6 +25,12 @@ public interface GroupBuyMapper extends BaseMapper<GroupBuy> {
     @Select("SELECT * FROM group_buy WHERE status = 'ONGOING' AND deadline <= NOW()")
     java.util.List<GroupBuy> findExpiredOngoing();
 
-    @Select("SELECT COUNT(*) FROM group_buy WHERE status = 'SUCCESS' AND DATE(updated_at) = CURDATE()")
+    @Select("SELECT COUNT(*) FROM group_buy WHERE status = 'SUCCESS' AND DATE(updated_at) = CURDATE() AND deleted = 0")
     Long countTodaySuccess();
+
+    @Select("SELECT COUNT(*) FROM group_buy WHERE status = 'ONGOING' AND deleted = 0")
+    Long countOngoing();
+
+    @Select("SELECT COUNT(*) FROM group_buy WHERE leader_id = #{leaderId} AND status = 'ONGOING' AND deleted = 0")
+    Long countOngoingByLeader(@Param("leaderId") Long leaderId);
 }

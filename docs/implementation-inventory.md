@@ -2,7 +2,7 @@
 
 > **用途**：答辩展示「做了什么、怎么做、还差什么」；与 `docs/requirements-analysis.md` 的功能编号逐条对应。
 > **状态口径**：✅ 已交付（功能可用且有验证）｜🔸 已交付 · 视觉简版｜🛠️ 代码已写、验证待补｜⬜ 待实施（已规划未开发）
-> **数据截至**：2026-10-17（源码数量按当前目录统计；测试运行结果为最近一次 `mvn test` 实测：52 用例全绿）
+> **数据截至**：2026-10-23（源码数量按当前目录统计；测试运行结果为最近一次 `mvn test` 实测：67 用例全绿）
 
 ---
 
@@ -10,13 +10,13 @@
 
 | 维度 | 数量 | 说明 |
 | --- | --- | --- |
-| 功能能力（capability） | **11 个基线能力已交付** | 42 条 requirement / 77 个 scenario；`ai-shopping-assistant` 已于 2026-10-17 归档 |
-| 后端接口 | **33 个** | 10 个 Controller，统一 `{code, msg, data}` 返回 |
+| 功能能力（capability） | **11 个基线能力已交付** | 现行基线 49 条 requirement / 98 个 scenario（`admin-dashboard-and-leader-ui` 归档并入 +7 req / +21 scenario） |
+| 后端接口 | **35 个** | 10 个 Controller，统一 `{code, msg, data}` 返回 |
 | 数据库表 | **9 张** | 7 张交易与配套表 + `user_subscription` + `review_analysis` |
 | 前端页面 | **15 个** | 含 AI 导购页；另有 6 个公共组件 |
-| 自动化测试 | **52 个测试方法** | 7 个测试类；最近一次实测 `mvn test` 全绿 |
-| 规格实测 | **48 项断言 + AI 导购端到端** | `docs/verification-report.md`（§一～五 为 MVP 基线；§六 为 2026-10-17 的 AI 导购端到端实测） |
-| 待实施 / 待验证 | **AI 导购已收尾** | 端到端演示实测（5.1）已完成；剩余为 P2 并发匹配可靠性（下一变更）与 P4 界面扩展 |
+| 自动化测试 | **67 个测试方法** | 9 个测试类；最近一次实测 `mvn test` 全绿 |
+| 规格实测 | **48 项断言 + AI 导购端到端 + 看板/团长端 16 项** | `docs/verification-report.md`（§一～五 为 MVP 基线；§六 AI 导购；§七 2026-10-23 看板与团长端） |
+| 待实施 / 待验证 | **看板与团长端已收尾** | 剩余为 P2 并发匹配可靠性（下一变更）与 P4 剩余界面（商品管理、移动端） |
 
 ---
 
@@ -78,13 +78,13 @@
 | FR-6-2 | 防重复核销 | ✅ | 同上（状态守卫） | verification-report §三（重复核销被拒） |
 | FR-6-3 | 仅限本团订单 | ✅ | 同上（归属校验） | verification-report §三 |
 
-### FR-7 数据看板（admin-dashboard）—— 基础交付 / 扩展待实施
+### FR-7 数据看板（admin-dashboard）—— 全部交付
 
 | 编号 | 功能点 | 状态 | 实现位置 | 验证证据 |
 | --- | --- | --- | --- | --- |
-| FR-7-1 | 今日订单数 | ✅ | `AdminController.dashboard` | verification-report §三（与数据库直查结果一致） |
-| FR-7-2 | 今日成团数 | ✅ | 同上 | verification-report §三 |
-| FR-7-3 | 看板扩展（成交额 / 趋势 / 状态分布） | ⬜ | 设计稿预留（design-spec §6.4） | — |
+| FR-7-1 | 今日订单数 | ✅ | `AdminController.dashboard` → `AdminDashboardService` | verification-report §三（与数据库直查一致）、§七 |
+| FR-7-2 | 今日成团数 | ✅ | 同上 | verification-report §三、§七 |
+| FR-7-3 | 看板扩展（成交额 / 注册用户 / 进行中团购 / 趋势 / 状态分布） | ✅ | `AdminDashboardVO` + `AdminDashboardService`（7 日补零）+ `AdminDashboard.vue`（手绘 SVG） | `DashboardApiTest`（7 用例）+ verification-report §七（KPI / 分布 / 趋势 / 空态 / 窄容器） |
 
 ### FR-8 评价体系（reviews）—— 全部交付
 
@@ -119,14 +119,15 @@
 
 > **P2 匹配可靠性**（并发创建订阅与团购可能漏提醒）属 design.md 记录的首版已知缺口，明确不在本变更范围，留待后续演进。
 
-### FR-10 界面与交互（UI）—— 地基与用户端已交付 / 团长、管理端待实施
+### FR-10 界面与交互（UI）—— 地基、用户端、团长端与管理看板已交付 / 商品管理与移动端待实施
 
 | 编号 | 功能点 | 状态 | 实现位置 | 验证证据 |
 | --- | --- | --- | --- | --- |
 | FR-10-1 | 设计系统（tokens / 状态映射 / 6 个公共组件） | ✅ | `styles/tokens.css`、`constants/status.js`、`components/`（6 个） | 提交 `19c5049`；设计稿对照 `docs/ui-design/` |
 | FR-10-2 | 用户端主链路界面（广场 / 详情 / 订单 / 消息） | ✅ | `UserGroups` / `GroupBuyDetail` / `UserOrders` / `MyNotifications` 等 | 提交 `205f487`；预览图 `docs/ui-design/preview/` |
-| FR-10-3 | 团长端界面（我的团购 / 核销台专注模式） | ⬜ | 现为裸 Element Plus（`LeaderGroups.vue` / `LeaderVerify.vue`） | — |
-| FR-10-4 | 管理端界面（看板 KPI / 商品管理改良） | ⬜ | 现为裸 Element Plus（`AdminDashboard.vue` / `AdminProducts.vue`） | — |
+| FR-10-3 | 团长端界面（我的团购经营 KPI / 差几人 / 核销进度；核销台专注模式 / 最近核销） | ✅ | `LeaderGroups.vue`、`LeaderVerify.vue` | `LeaderConsoleApiTest`（8 用例）+ verification-report §七 |
+| FR-10-4 | 管理端看板界面（KPI / 趋势 / 状态分布） | ✅ | `AdminDashboard.vue` | `DashboardApiTest` + verification-report §七 |
+| FR-10-6 | 管理端商品管理改良（搜索筛选 / 库存可视化；拆分自原 FR-10-4） | ⬜ | 现为裸 Element Plus（`AdminProducts.vue`） | — |
 | FR-10-5 | 响应式移动端（<768px / Tab Bar / ≥44px 触摸目标） | ⬜ | 11 屏设计稿就绪（`prototype-mobile.html`） | — |
 
 ---
@@ -164,12 +165,14 @@
 | 25 | GET | `/api/notifications/unread-count` | 登录 | `NotificationController` | `NotificationApiTest.markReadBehaviour` |
 | 26 | POST | `/api/notifications/{id}/read` | 登录 | `NotificationController` | `NotificationApiTest.cannotReadOthersNotification` |
 | 27 | POST | `/api/notifications/read-all` | 登录 | `NotificationController` | `NotificationApiTest.markReadBehaviour` |
-| 28 | GET | `/api/admin/dashboard` | ADMIN | `AdminController` | verification-report §三（与直查一致） |
+| 28 | GET | `/api/admin/dashboard` | ADMIN | `AdminController` | `DashboardApiTest` + verification-report §三、§七 |
 | 29 | POST | `/api/upload` | ADMIN | `FileController` | verification-report §五（403 / 200） |
 | 30 | POST | `/api/subscriptions/parse` | 登录 | `SubscriptionController` | `SubscriptionApiTest.previewDoesNotCreate` |
 | 31 | POST | `/api/subscriptions` | 登录 | `SubscriptionController` | `SubscriptionApiTest`：解析 / 创建 |
 | 32 | GET | `/api/subscriptions` | 登录 | `SubscriptionController` | `SubscriptionApiTest`：本人列表隔离 |
 | 33 | DELETE | `/api/subscriptions/{id}` | 登录 | `SubscriptionController` | `SubscriptionApiTest`：本人取消 / 跨用户拒绝 |
+| 34 | GET | `/api/group-buys/mine/summary` | LEADER | `GroupBuyController` | `LeaderConsoleApiTest`：本人数据 / 零值 / 403 / 真实成团链路 |
+| 35 | GET | `/api/orders/verify-history` | LEADER | `OrderController` | `LeaderConsoleApiTest`：倒序 10 条 / 归属隔离 / 无买家字段 |
 
 ---
 
@@ -188,10 +191,10 @@
 | AiShoppingAssistant.vue | `/user/ai` | ✅ 设计系统 | 创建需求订阅、显示解析结果、查看与取消关注 |
 | ProductList.vue | `/user/products` | 🔸 简版 | 搜索筛选 + 空状态齐备；卡片样式未按设计稿精修 |
 | ProductDetail.vue | `/user/products/:id` | 🔸 简版 | 含评分展示与口碑标签区；视觉未精修 |
-| LeaderGroups.vue | `/leader/groups` | ⬜ 裸 EP | 功能可用，三期按设计稿改造 |
-| LeaderVerify.vue | `/leader/verify` | ⬜ 裸 EP | 功能可用（21 行极简），三期改造为「核销台专注模式」 |
+| LeaderGroups.vue | `/leader/groups` | ✅ 设计系统 | 经营概览四卡 + 团购列表（还差几人 / 核销进度） |
+| LeaderVerify.vue | `/leader/verify` | ✅ 设计系统 | 核销台专注模式：大号等宽输入 + 常驻结果条 + 安全说明 + 最近核销记录 |
 | AdminProducts.vue | `/admin/products` | ⬜ 裸 EP | 功能可用，三期改造（搜索筛选 / 库存可视化） |
-| AdminDashboard.vue | `/admin/dashboard` | ⬜ 裸 EP | 基础 KPI（31 行），三期改造为完整看板 |
+| AdminDashboard.vue | `/admin/dashboard` | ✅ 设计系统 | 5 张 KPI 卡 + 手绘 SVG 7 日趋势 + 订单状态分布条 + 空态 |
 
 公共组件（`src/components/`）：`StatusBadge` / `GroupBuyCard` / `OrderCard` / `StatCard` / `EmptyState` / `SkeletonList`。
 
@@ -209,9 +212,9 @@
 
 ### P4：界面与容量扩展
 
-- `LeaderGroups.vue`：经营 KPI、团购列表（差几人 / 核销数）
-- `LeaderVerify.vue`：核销台专注模式（大输入框 / 大按钮 / 最近核销记录）
-- `AdminDashboard.vue`：KPI 卡 + 趋势折线 + 状态环形 + 最近订单（同时落地 FR-7-3 看板扩展）
+- ~~`LeaderGroups.vue`：经营 KPI、团购列表（差几人 / 核销数）~~ —— 已完成（2026-10-23 变更）
+- ~~`LeaderVerify.vue`：核销台专注模式（大输入框 / 大按钮 / 最近核销记录）~~ —— 已完成
+- ~~`AdminDashboard.vue`：KPI 卡 + 趋势折线 + 状态分布（落地 FR-7-3 看板扩展）~~ —— 已完成（最近订单列表未做）
 - `AdminProducts.vue`：搜索筛选、数据表格、库存可视化（低于 20% 转红）
 - `<768px` 断点 + 底部 Tab Bar + 底部固定操作栏 + `env(safe-area-inset-bottom)`
 - 11 屏移动设计稿已就绪（`docs/ui-design/prototype-mobile.html`）：含取货码全屏票据、核销台自定义数字键盘
@@ -225,10 +228,10 @@
 
 | 资产 | 内容 | 位置 |
 | --- | --- | --- |
-| 自动化测试 | 7 个测试类 / 52 个测试方法 | `backend/src/test/` |
-| 规格实测报告 | MVP 基线 48 项断言 + AI 导购端到端实测（2026-10-17）；累计 7 个真实缺陷已修复转回归 | `docs/verification-report.md` |
+| 自动化测试 | 9 个测试类 / 67 个测试方法 | `backend/src/test/` |
+| 规格实测报告 | MVP 基线 48 项断言 + AI 导购端到端（2026-10-17）+ 看板与团长端 16 项（2026-10-23）；累计 9 个真实缺陷已修复转回归 | `docs/verification-report.md` |
 | 需求基线 | 11 capability / 42 req / 77 scenario | `openspec/specs/` |
-| 变更归档 | 3 个已归档变更（最新：`2026-10-17-ai-shopping-assistant`） | `openspec/changes/` |
+| 变更归档 | 4 个已归档变更（最新：`2026-10-23-admin-dashboard-and-leader-ui`） | `openspec/changes/` |
 | 设计资产 | 设计规范 + 双端原型 + 31 张预览图 | `docs/ui-design/` |
 
 测试用例分布：
@@ -242,7 +245,9 @@
 | `SubscriptionApiTest` | 9 | 需求解析、预览不落库、确认条件、归属隔离、新团与已有团匹配 |
 | `LlmParseServiceTest` | 3 | 无 key 回落规则解析、非标表述返回 null、无价格需求 |
 | `ReviewInsightsTest` | 8 | 情感与标签、重复分析幂等、批量跳过无文字评价、详情标签、提醒摘要、中性零标签、词典长词优先 |
-| **合计** | **52** | 最近一次 `mvn test` 实测全绿 |
+| `DashboardApiTest` | 7 | 成交额口径、今日零值、软删排除、状态分布、7 日连续补零、平台规模、非管理员 403 |
+| `LeaderConsoleApiTest` | 8 | 概览归属隔离与零值、真实成团→核销链路、403、核销记录倒序 10 条 / 归属 / 字段裁剪 |
+| **合计** | **67** | 最近一次 `mvn test` 实测全绿 |
 
 ---
 

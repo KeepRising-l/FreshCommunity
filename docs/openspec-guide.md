@@ -251,7 +251,9 @@ openspec/
 
 7 个 capability、共 23 条 requirement 已成为正式基线，`openspec validate --specs` 通过。此后每个新功能都是**对这条基线的增量**，delta 才有东西可比对。
 
-> **后续更新（2026-10-17）**：第三个变更 `ai-shopping-assistant`（AI 导购：需求订阅 + 评价洞察）已完成端到端实测并归档。当前 `openspec/specs/` 为 **11 个 capability / 42 条 requirement / 77 个场景**，`openspec validate --all` 11/11 通过。归档时 `group-buying` 走了一次 `MODIFIED` delta（开团可指定拼团价），这是本项目第一次使用修改型 delta。
+> **后续更新（2026-10-17）**：第三个变更 `ai-shopping-assistant`（AI 导购：需求订阅 + 评价洞察）已完成端到端实测并归档。归档时 `group-buying` 走了一次 `MODIFIED` delta（开团可指定拼团价），这是本项目第一次使用修改型 delta。
+
+> **后续更新（2026-10-23）**：第四个变更 `admin-dashboard-and-leader-ui`（管理看板扩展 + 团长经营概览 + 核销台）已归档，`admin-dashboard` 与 `pickup-verification` 走 `ADDED`、`group-buying` 再次走 `MODIFIED`。当前 `openspec/specs/` 为 **11 个 capability / 49 条 requirement / 98 个场景**，`openspec validate --all` 11/11 通过。
 
 ### 归档前先修规格与实现的偏差（本次按此执行）
 

@@ -1,6 +1,7 @@
 package com.freshcommunity.controller;
 
 import com.freshcommunity.common.Result;
+import com.freshcommunity.dto.VerifyRecordVO;
 import com.freshcommunity.entity.Order;
 import com.freshcommunity.service.OrderService;
 import com.freshcommunity.service.ReviewService;
@@ -57,6 +58,12 @@ public class OrderController {
                                @RequestParam String pickupCode) {
         orderService.verifyPickupCode(leaderId, pickupCode);
         return Result.success();
+    }
+
+    @GetMapping("/verify-history")
+    @org.springframework.security.access.prepost.PreAuthorize("hasRole('LEADER')")
+    public Result<List<VerifyRecordVO>> verifyHistory(@RequestAttribute("userId") Long leaderId) {
+        return Result.success(orderService.recentVerifiedByLeader(leaderId));
     }
 
     @PostMapping("/{id}/refund")

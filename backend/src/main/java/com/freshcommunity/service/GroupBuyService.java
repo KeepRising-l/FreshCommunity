@@ -2,12 +2,14 @@ package com.freshcommunity.service;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.freshcommunity.dto.GroupBuyCreateRequest;
+import com.freshcommunity.dto.LeaderSummaryVO;
 import com.freshcommunity.entity.GroupBuy;
 import com.freshcommunity.entity.GroupBuyItem;
 import com.freshcommunity.entity.Order;
 import com.freshcommunity.entity.Product;
 import com.freshcommunity.mapper.GroupBuyItemMapper;
 import com.freshcommunity.mapper.GroupBuyMapper;
+import com.freshcommunity.mapper.OrderMapper;
 import com.freshcommunity.mapper.ProductMapper;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -23,17 +25,20 @@ public class GroupBuyService {
     private final GroupBuyMapper groupBuyMapper;
     private final GroupBuyItemMapper groupBuyItemMapper;
     private final ProductMapper productMapper;
+    private final OrderMapper orderMapper;
     private final OrderService orderService;
     private final NotificationService notificationService;
     private final SubscriptionService subscriptionService;
 
     public GroupBuyService(GroupBuyMapper groupBuyMapper, GroupBuyItemMapper groupBuyItemMapper,
-                           ProductMapper productMapper, OrderService orderService,
+                           ProductMapper productMapper, OrderMapper orderMapper,
+                           OrderService orderService,
                            NotificationService notificationService,
                            SubscriptionService subscriptionService) {
         this.groupBuyMapper = groupBuyMapper;
         this.groupBuyItemMapper = groupBuyItemMapper;
         this.productMapper = productMapper;
+        this.orderMapper = orderMapper;
         this.orderService = orderService;
         this.notificationService = notificationService;
         this.subscriptionService = subscriptionService;
@@ -104,6 +109,15 @@ public class GroupBuyService {
                 new LambdaQueryWrapper<GroupBuy>()
                         .eq(GroupBuy::getLeaderId, leaderId)
                         .orderByDesc(GroupBuy::getCreatedAt));
+    }
+
+    public LeaderSummaryVO summaryForLeader(Long leaderId) {
+        LeaderSummaryVO vo = new LeaderSummaryVO();
+        vo.setOngoingGroups(groupBuyMapper.countOngoingByLeader(leaderId));
+        vo.setPendingPickupOrders(orderMapper.countPendingPickupByLeader(leaderId));
+        vo.setCompletedOrders(orderMapper.countByLeaderAndStatus(leaderId, "COMPLETED"));
+        vo.setTotalGmv(orderMapper.sumGmvByLeader(leaderId));
+        return vo;
     }
 
     public GroupBuy detail(Long id) {
