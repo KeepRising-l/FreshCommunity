@@ -445,5 +445,5 @@
 | 2 | prod profile 关闭 MyBatis SQL 控制台打印 | ✅ `application-prod.yml`（NoLoggingImpl；dev 保留打印便于演示观察原子扣减 SQL） |
 | 3 | 前端单测（Node 原生 test runner，零新增依赖） | ✅ `npm test` 11/11 通过（格式化口径 / SSE 行解析跨块缓冲与心跳 / visual 稳定哈希） |
 | 4 | Docker 编排 | ⚠️ 配置就绪（backend/frontend Dockerfile + nginx 反代含 SSE 无缓冲 + compose 建库导种子 + uploads 卷）；**本机无 Docker，待 Docker 环境执行 `docker compose up -d --build` 实测** |
-| 5 | GitHub Actions CI | ⏳ 已推送触发（后端 106 测试 × MySQL 服务容器 + 前端测试/构建），以 Actions 运行结果为准 |
+| 5 | GitHub Actions CI 首跑 | ✅ 运行 40195862111（d51e374）**success**：后端 106 集成测试（MySQL 8 服务容器）+ 前端 11 单测 + 构建全部通过 |
 | 6 | 毕设文档同步 | ✅ `system-functions.md` 全量更新（12 模块 / FR-1-5,6、FR-5-7,8、FR-8-6、FR-9-5,6、FR-11-0 系列等新功能补齐，典型流程扩至 5 条）；`thesis-material.md` 规模数据刷新至 2026-10-26 |
