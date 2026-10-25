@@ -1,0 +1,14 @@
+# 生产 profile：与 dev 相同的数据源注入方式，但关闭 MyBatis 的 SQL 控制台打印
+# （dev 打开是演示需要——能看到原子扣减等关键 SQL；生产打印拖性能且泄漏数据）。
+#
+# 启动：SPRING_PROFILES_ACTIVE=prod DB_PASSWORD=... java -jar app.jar
+spring:
+  datasource:
+    url: jdbc:mysql://${DB_HOST:localhost}:3306/freshcommunity?useUnicode=true&characterEncoding=utf-8&serverTimezone=Asia/Shanghai
+    username: ${DB_USER:root}
+    password: ${DB_PASSWORD:root}
+    driver-class-name: com.mysql.cj.jdbc.Driver
+
+mybatis-plus:
+  configuration:
+    log-impl: org.apache.ibatis.logging.nologging.NoLoggingImpl

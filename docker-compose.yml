@@ -1,0 +1,62 @@
+# FreshCommunity 一键部署：MySQL + 后端 + 前端(Nginx)
+#
+# 用法（仓库根目录）：
+#   DB_PASSWORD=你的密码 AI_API_KEY=你的key docker compose up -d --build
+# 首次启动会自动建库导种子（docker/initdb 挂载），含 41 个商品、12 场团购与演示账号。
+# 访问 http://localhost（80 端口，Nginx 已配 /api 与 /uploads 反代）。
+#
+# 说明：
+#   - AI_API_KEY 不传则使用 application.yml 内置演示 key；留空字符串可关闭 LLM
+#   - uploads 卷持久化用户上传的图片；mysql 卷持久化数据库
+services:
+  mysql:
+    image: mysql:8
+    environment:
+      MYSQL_ROOT_PASSWORD: ${DB_PASSWORD:?请通过 DB_PASSWORD 环境变量设置数据库密码}
+      MYSQL_DATABASE: freshcommunity
+      TZ: Asia/Shanghai
+    volumes:
+      - mysql-data:/var/lib/mysql
+      # 首次初始化自动建表导种子（MySQL 仅在数据目录为空时执行）
+      - ./db/schema.sql:/docker-entrypoint-initdb.d/01-schema.sql:ro
+      - ./db/seed.sql:/docker-entrypoint-initdb.d/02-seed.sql:ro
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-p$$MYSQL_ROOT_PASSWORD"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+    restart: unless-stopped
+
+  backend:
+    build:
+      context: .
+      dockerfile: docker/backend.Dockerfile
+    environment:
+      SPRING_PROFILES_ACTIVE: prod
+      DB_HOST: mysql
+      DB_USER: root
+      DB_PASSWORD: ${DB_PASSWORD}
+      AI_API_KEY: ${AI_API_KEY:-sk-a2a-27b5abe8e7312cd326358d1c5762adcd}
+      AI_BASE_URL: ${AI_BASE_URL:-https://rayagent.cloud:2026/v1}
+      AI_MODEL: ${AI_MODEL:-deepseek-v4.1-flash}
+      TZ: Asia/Shanghai
+    volumes:
+      - uploads:/app/uploads
+    depends_on:
+      mysql:
+        condition: service_healthy
+    restart: unless-stopped
+
+  web:
+    build:
+      context: .
+      dockerfile: docker/frontend.Dockerfile
+    ports:
+      - "80:80"
+    depends_on:
+      - backend
+    restart: unless-stopped
+
+volumes:
+  mysql-data:
+  uploads:
