@@ -33,6 +33,7 @@
 - **商品检索与分页**：商品带分类与描述属性；列表接口支持关键词（名称模糊）、分类、排序（最新/价格升降，白名单校验）与分页（`PageResult{records,total,current,size,pages}`），首次启用 MyBatis-Plus 分页拦截器；管理端另有含下架商品的全量列表
 - **订单信息补全**：「我的订单」/ 订单详情 / 管理端订单列表的 VO 由后端批量补全商品名、商品图、团购标题、团长与提货点（批量查询，无 N+1），前端不再自行拉商品做映射
 - **账号自助维护**：修改密码（旧密码校验 + 6-32 位 + 不得与旧密码相同）、团长维护提货点（即时生效于其名下团购）
+- **移动端适配**：<768px 底部导航（按角色 ≤5 项，含未读角标与 `safe-area-inset-bottom`）、团购详情固定参团操作栏、弹窗 92% 宽度防溢出、按钮触摸目标 ≥44px；桌面布局不受影响
 - **统一错误返回**：安全过滤链的 401/403 也走 `{code,msg,data}` JSON（未登录 401、无权限 403），500 兜底固定文案不泄漏内部异常；上传接口扩展名 + contentType 双重白名单校验
 
 **明确不做**：商家入驻、配送骑手、佣金结算、真实支付、限购/优惠券/秒杀、评价审核/敏感词、团长回复评价、外部推送通道（短信/App 推送）、App/小程序。支付为 `MockPayServiceImpl` 模拟实现，通过 `PayService` 接口预留了接真实支付的扩展点。
@@ -263,7 +264,7 @@ DB_PASSWORD=<你的MySQL密码> mvn test
 
 ## 需求文档
 
-`openspec/` 目录下有 **11 个 capability 基线**（58 条 Requirement / 128 个 Scenario）、**6 个已归档变更**。
+`openspec/` 目录下有 **12 个 capability 基线**（60 条 Requirement / 133 个 Scenario）、**7 个已归档变更**。
 
 ```
 openspec/
@@ -279,7 +280,8 @@ openspec/
         ├── 2026-10-17-ai-shopping-assistant/
         ├── 2026-10-23-admin-dashboard-and-leader-ui/
         ├── 2026-10-25-catalog-retrieval-user-center-admin/
-        └── 2026-10-25-subscription-match-reliability/
+        ├── 2026-10-25-subscription-match-reliability/
+        └── 2026-10-25-mobile-adaptation/
 ```
 
 每个变更目录含 `proposal.md`（为什么做、边界）、`specs/`（delta 增量规格）、`design.md`（技术方案与取舍）、`tasks.md`（任务清单）；归档时 delta 合并进基线。完整工作流说明见 [`docs/openspec-guide.md`](docs/openspec-guide.md)。

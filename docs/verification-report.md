@@ -274,3 +274,37 @@
 - 集成测试：`DB_PASSWORD=1234 mvn test` → **89 用例全绿**（67 基线 + `ProductSearchApiTest` 7 + `OrderDetailApiTest` 5 + `ProfileApiTest` 5 + `UploadAndSecurityApiTest` 5）
 - 前端 `npm run build` 通过，依赖未变
 - E2E 临时账号 `e2e_tmp_user` 已从演示库清除，提货点改动已复原，种子数据保持纯净
+
+---
+
+## 十、移动端适配实测（2026-10-25 · 变更 mobile-adaptation）
+
+- **范围**：FR-10-5——<768px 底部导航、团购详情固定操作栏、弹窗不溢出、触摸目标
+- **方法**：浏览器实测（Chromium，390×844 与 1280×800 视口对照，真实前后端），布局断言取自 `getComputedStyle` / `getBoundingClientRect` 实时值；`npm run build` 通过
+
+### 10.1 390×844（手机视口）
+
+| # | 断言 | 实测结果 |
+| --- | --- | --- |
+| 1 | 用户登录后底部导航出现：首页 / 广场 / 订单 / 消息(未读角标 5) / 我的 | ✅ |
+| 2 | 点击「广场」Tab → 路由 `/user/groups`，高亮跟随 | ✅ activeTab=广场 |
+| 3 | 侧边栏 `display:none`、无横向滚动（scrollWidth ≤ innerWidth） | ✅ |
+| 4 | TabBar `position:fixed` 贴底（bottom = innerHeight = 844） | ✅ |
+| 5 | 团购详情固定操作栏：fixed 可见、拼团价 + 「立即参团 · 还差 3 人」 | ✅ |
+| 6 | **操作栏与 TabBar 无重叠**：CTA bottom=780 ≤ TabBar top=795（首版同贴底被盖，已修复为叠加布局并复测） | ✅ |
+| 7 | 参团弹窗宽 359px ≤ 390（92% 规则生效），主按钮高 44px | ✅ |
+| 8 | 团长 TabBar：首页 / 广场 / 我的团购 / 核销台 / 我的 | ✅ |
+| 9 | 管理员 TabBar：首页 / 看板 / 商品 / 订单 / 我的 | ✅ |
+
+### 10.2 1280×800（桌面回归）
+
+| # | 断言 | 实测结果 |
+| --- | --- | --- |
+| 10 | 侧边栏 `display:flex` 恢复，TabBar 与固定操作栏均 `display:none` | ✅ |
+| 11 | 无横向滚动 | ✅ |
+
+### 10.3 过程发现并修复的缺陷
+
+| # | 问题 | 修复 |
+| --- | --- | --- |
+| 1 | 团购详情固定操作栏与 TabBar 同贴底（z-index 90 vs 100），操作栏被完全遮挡 | 操作栏 `bottom` 抬至 `calc(64px + safe-area)`（TabBar 高度之上），详情页内容区预留 140px；复测无重叠 |

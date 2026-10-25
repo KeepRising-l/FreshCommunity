@@ -72,6 +72,23 @@
       <main class="app-body">
         <router-view />
       </main>
+
+      <!-- ============ 移动端底部导航（≤768px，桌面隐藏） ============ -->
+      <nav class="tabbar">
+        <router-link
+          v-for="t in tabbarItems"
+          :key="t.path"
+          :to="t.path"
+          class="tab"
+          :class="{ on: isActive(t.path) }"
+        >
+          <el-icon><component :is="t.icon" /></el-icon>
+          <span>{{ t.label }}</span>
+          <i v-if="t.key === 'notifications' && unreadStore.unread > 0" class="tab-badge">
+            {{ unreadStore.unread > 99 ? '99+' : unreadStore.unread }}
+          </i>
+        </router-link>
+      </nav>
     </div>
   </div>
 </template>
@@ -80,7 +97,7 @@
 import { computed, onMounted, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import {
-  ArrowRight, Bell, Box, Checked, DataAnalysis, Goods, MagicStick,
+  ArrowRight, Bell, Box, Checked, DataAnalysis, Goods, House, MagicStick,
   Search, Sell, SwitchButton, Tickets, User
 } from '@element-plus/icons-vue'
 import { useUserStore } from '../stores/user'
@@ -151,6 +168,36 @@ const MENUS = {
 }
 
 const menus = computed(() => MENUS[store.role] || MENUS.USER)
+
+/**
+ * 移动端底部导航（≤5 个入口，按角色取最常用项）。
+ * 桌面端由侧边栏承担完整导航，这里只做手机上的"够用"。
+ */
+const TABBAR = {
+  USER: [
+    { key: 'home', label: '首页', path: '/dashboard', icon: House },
+    { key: 'groups', label: '广场', path: '/user/groups', icon: Sell },
+    { key: 'orders', label: '订单', path: '/user/orders', icon: Tickets },
+    { key: 'notifications', label: '消息', path: '/notifications', icon: Bell },
+    { key: 'profile', label: '我的', path: '/profile', icon: User }
+  ],
+  LEADER: [
+    { key: 'home', label: '首页', path: '/dashboard', icon: House },
+    { key: 'groups', label: '广场', path: '/user/groups', icon: Sell },
+    { key: 'my-groups', label: '我的团购', path: '/leader/groups', icon: Box },
+    { key: 'verify', label: '核销台', path: '/leader/verify', icon: Checked },
+    { key: 'profile', label: '我的', path: '/profile', icon: User }
+  ],
+  ADMIN: [
+    { key: 'home', label: '首页', path: '/dashboard', icon: House },
+    { key: 'dashboard', label: '看板', path: '/admin/dashboard', icon: DataAnalysis },
+    { key: 'admin-products', label: '商品', path: '/admin/products', icon: Box },
+    { key: 'admin-orders', label: '订单', path: '/admin/orders', icon: Tickets },
+    { key: 'profile', label: '我的', path: '/profile', icon: User }
+  ]
+}
+
+const tabbarItems = computed(() => TABBAR[store.role] || TABBAR.USER)
 
 /** 扁平化菜单，用于反查当前页面标题 */
 const flatItems = computed(() => menus.value.flatMap((g) => g.items))
@@ -536,6 +583,92 @@ watch(() => route.path, () => unreadStore.refresh())
   flex: 1;
   overflow-y: auto;
   padding: 24px 28px 40px;
+}
+
+/* ---------------- 移动端底部导航（桌面隐藏） ---------------- */
+.tabbar {
+  display: none;
+}
+
+@media (max-width: 768px) {
+  .app-side {
+    display: none;
+  }
+
+  .crumb-root,
+  .crumb-sep,
+  .top-search {
+    display: none;
+  }
+
+  .app-top {
+    padding: 0 16px;
+  }
+
+  .crumb b {
+    font-size: 16px;
+  }
+
+  .app-body {
+    padding: 16px 14px calc(64px + env(safe-area-inset-bottom, 0px));
+  }
+
+  .tabbar {
+    position: fixed;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 100;
+    display: flex;
+    background: #fff;
+    border-top: 1px solid var(--fc-line);
+    padding: 4px 4px env(safe-area-inset-bottom, 0px);
+    box-shadow: 0 -4px 16px rgba(15, 26, 20, .06);
+  }
+
+  .tab {
+    position: relative;
+    flex: 1;
+    min-height: 44px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 2px;
+    text-decoration: none;
+    color: var(--fc-ink-400);
+    font-size: 10.5px;
+    font-weight: 600;
+    border-radius: var(--fc-r-sm);
+    transition: color .15s ease;
+  }
+
+  .tab .el-icon {
+    font-size: 21px;
+  }
+
+  .tab.on {
+    color: var(--fc-brand-700);
+  }
+
+  .tab-badge {
+    position: absolute;
+    top: 2px;
+    right: calc(50% - 22px);
+    min-width: 16px;
+    height: 16px;
+    padding: 0 4px;
+    border-radius: 8px;
+    background: var(--fc-danger);
+    color: #fff;
+    font-size: 9.5px;
+    font-weight: 700;
+    font-style: normal;
+    display: grid;
+    place-items: center;
+    line-height: 1;
+    border: 2px solid #fff;
+  }
 }
 
 /* ---------------- 响应式：窄屏收起文字，只留图标 ---------------- */

@@ -257,3 +257,31 @@ body {
 .el-menu {
   border-right: none;
 }
+
+/* ---------- 移动端全局层（≤768px）：弹窗不溢出 + 触摸目标达标 ---------- */
+/* 桌面布局不受影响：全部规则都在 max-width 媒体查询内 */
+@media (max-width: 768px) {
+  .el-dialog {
+    width: 92% !important;
+    max-width: 92vw;
+    margin-top: 8vh !important;
+  }
+
+  .el-message-box {
+    width: 88% !important;
+    max-width: 88vw;
+  }
+
+  /* 主操作按钮触摸目标 ≥44px；small（表格内）保持 38px 密度 */
+  .el-button:not(.el-button--small) {
+    min-height: 44px;
+  }
+
+  .el-button--small {
+    min-height: 38px;
+  }
+
+  .el-input-number {
+    height: 44px;
+  }
+}

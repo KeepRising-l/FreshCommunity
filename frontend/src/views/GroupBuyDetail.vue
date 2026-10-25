@@ -199,6 +199,25 @@
         <el-button type="primary" :loading="submitting" @click="submit">确认下单</el-button>
       </template>
     </el-dialog>
+
+    <!-- 移动端固定操作栏（≤768px，桌面隐藏）：滚动时拼团价与参团按钮始终可达 -->
+    <div class="mobile-cta">
+      <div class="m-price">
+        <b class="fc-price"><i>¥</i>{{ formatMoney(detail.price) }}</b>
+        <span>拼团价</span>
+      </div>
+      <el-button
+        type="primary"
+        size="large"
+        class="m-btn"
+        :disabled="left.expired || detail.status !== 'ONGOING'"
+        @click="openJoin"
+      >
+        <template v-if="left.expired">已截止</template>
+        <template v-else-if="detail.status !== 'ONGOING'">已成团 · 查取货码</template>
+        <template v-else>立即参团{{ gap > 0 ? ' · 还差 ' + gap + ' 人' : '' }}</template>
+      </el-button>
+    </div>
   </div>
 </template>
 
@@ -743,6 +762,55 @@ watch(() => route.params.id, load)
 
   .bottom {
     grid-template-columns: 1fr;
+  }
+}
+
+/* ---------- 移动端固定操作栏：桌面隐藏，≤768px 固定底部 ---------- */
+.mobile-cta {
+  display: none;
+}
+
+@media (max-width: 768px) {
+  /* 底部同时有 TabBar（约 64px + safe-area），操作栏必须叠在其上方；
+     内容区预留 = 操作栏 74px + TabBar 64px + safe-area */
+  .gbd {
+    padding-bottom: calc(140px + env(safe-area-inset-bottom, 0px));
+  }
+
+  .mobile-cta {
+    position: fixed;
+    left: 0;
+    right: 0;
+    bottom: calc(64px + env(safe-area-inset-bottom, 0px));
+    z-index: 90;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 10px 16px;
+    background: #fff;
+    border-top: 1px solid var(--fc-line);
+    box-shadow: 0 -4px 16px rgba(15, 26, 20, .06);
+  }
+
+  .m-price {
+    display: flex;
+    flex-direction: column;
+    line-height: 1.2;
+  }
+
+  .m-price b {
+    font-size: 21px;
+  }
+
+  .m-price span {
+    font-size: 11px;
+    color: var(--fc-ink-400);
+  }
+
+  .m-btn {
+    flex: 1;
+    min-height: 46px;
+    font-size: 15px;
   }
 }
 </style>

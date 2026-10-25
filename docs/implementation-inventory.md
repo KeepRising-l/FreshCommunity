@@ -10,13 +10,13 @@
 
 | 维度 | 数量 | 说明 |
 | --- | --- | --- |
-| 功能能力（capability） | **11 个基线能力已交付** | 现行基线 58 条 requirement / 128 个 scenario（2026-10-23 归档并入 +7 req / +21 scenario；2026-10-25 归档并入 +10 req / +30 scenario，含改写） |
+| 功能能力（capability） | **11 个基线能力已交付** | 现行基线 60 条 requirement / 133 个 scenario（2026-10-23 归档并入 +7 req / +21 scenario；2026-10-25 归档并入 +12 req / +33 scenario，含改写） |
 | 后端接口 | **43 个** | 10 个 Controller，统一 `{code, msg, data}` 返回；本轮无新接口（可靠性为内部机制 + 通知字段增量） |
 | 数据库表 | **9 张** | 7 张交易与配套表 + `user_subscription` + `review_analysis` |
 | 前端页面 | **19 个** | 含订单详情 / 个人中心 / 订单管理 / 404 页；另有 7 个公共组件 |
 | 自动化测试 | **94 个测试方法** | 14 个测试类；最近一次实测（2026-10-25）`mvn test` 全绿 |
 | 规格实测 | **48 项断言 + AI 导购端到端 + 看板/团长端 16 项 + 目录检索/订单/个人中心 33 项 + 订阅匹配可靠性 10 项** | `docs/verification-report.md`（§一～五 为 MVP 基线；§六 AI 导购；§七 看板与团长端；§八 目录检索与订单/个人中心/管理端；§九 订阅匹配可靠性） |
-| 待实施 / 待验证 | **P2 并发匹配可靠性已收尾（2026-10-25）** | 剩余为 P4 移动端断点适配与 JWT 主动失效 |
+| 待实施 / 待验证 | **P2 匹配可靠性与 P4 移动端适配均已收尾（2026-10-25）** | 剩余仅 JWT 主动失效（黑名单 / refresh token，毕设口径可接受） |
 
 ---
 
@@ -122,7 +122,7 @@
 
 > **P2 匹配可靠性**（并发创建订阅与团购可能漏提醒）属 design.md 记录的首版已知缺口，明确不在本变更范围，留待后续演进。
 
-### FR-10 界面与交互（UI）—— 除移动端断点外全部交付
+### FR-10 界面与交互（UI）—— 全部交付（含 2026-10-25 移动端适配）
 
 | 编号 | 功能点 | 状态 | 实现位置 | 验证证据 |
 | --- | --- | --- | --- | --- |
@@ -134,7 +134,7 @@
 | FR-10-7 | 管理端订单管理（全量列表 / 状态筛选 / 订单号与买家搜索 / 退款入口） | ✅ | `AdminOrders.vue` + `GET /api/admin/orders` | `OrderDetailApiTest.adminOrders*`（3 用例）+ verification-report §八 |
 | FR-10-8 | 个人中心（账号信息 / 修改密码 / 团长提货点维护） | ✅ | `Profile.vue` + `AuthController` 两个新接口 | `ProfileApiTest`（5 用例）+ verification-report §八 |
 | FR-10-9 | 前端角色路由守卫 + 404 页 + 登录回跳 | ✅ | `router/index.js`（meta.roles 守卫 / catch-all / redirect query）+ `NotFound.vue` | `npm run build` 通过；user1 直达 /admin/** 被弹回 /dashboard |
-| FR-10-5 | 响应式移动端（<768px / Tab Bar / ≥44px 触摸目标） | ⬜ | 11 屏设计稿就绪（`prototype-mobile.html`）；本轮已为商品详情/个人中心补窄屏适配，整站 Tab Bar 仍未做 | — |
+| FR-10-5 | 响应式移动端（<768px / Tab Bar / ≥44px 触摸目标） | ✅ | `Dashboard.vue` 底部导航（按角色 ≤5 项）+ `GroupBuyDetail.vue` 固定操作栏 + `tokens.css` 移动层（弹窗 92% / 按钮触摸目标） | 浏览器 390×844 实测 9 项断言 + 1280 桌面回归（verification-report §十） |
 
 ---
 
