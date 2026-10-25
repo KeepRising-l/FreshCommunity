@@ -419,12 +419,17 @@ onMounted(async () => {
 
 .thumb {
   position: relative;
-  height: 150px;
+  height: 160px;
   display: grid;
   place-items: center;
+  overflow: hidden;
 }
 
 .thumb img {
+  /* 绝对定位铺满：height:100% 作为 grid item 会参照内容行高解析失败，
+     导致高图溢出盖住卡身——参照物必须是定高的 .thumb */
+  position: absolute;
+  inset: 0;
   width: 100%;
   height: 100%;
   object-fit: cover;

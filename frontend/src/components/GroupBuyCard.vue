@@ -168,6 +168,7 @@ defineExpose({ left })
   position: relative;
   display: grid;
   place-items: center;
+  overflow: hidden;
 }
 
 .v-card .emoji {
@@ -175,6 +176,10 @@ defineExpose({ left })
 }
 
 .cover {
+  /* 绝对定位铺满：grid item 的 height:100% 会参照隐式行高（内容）解析，
+     高图会撑破容器盖住下方内容——参照物必须是定高的 .media 容器 */
+  position: absolute;
+  inset: 0;
   width: 100%;
   height: 100%;
   object-fit: cover;
@@ -193,6 +198,7 @@ defineExpose({ left })
   display: grid;
   place-items: center;
   position: relative;
+  overflow: hidden;
 }
 
 .v-row .emoji {

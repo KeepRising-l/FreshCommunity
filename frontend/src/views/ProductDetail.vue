@@ -182,6 +182,7 @@ onMounted(async () => {
 }
 
 .visual {
+  position: relative;
   width: 300px;
   height: 260px;
   flex: none;
@@ -192,6 +193,8 @@ onMounted(async () => {
 }
 
 .visual img {
+  position: absolute;
+  inset: 0;
   width: 100%;
   height: 100%;
   object-fit: cover;

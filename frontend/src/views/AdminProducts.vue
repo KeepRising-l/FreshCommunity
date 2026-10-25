@@ -398,6 +398,7 @@ onMounted(load)
 }
 
 .thumb {
+  position: relative;
   width: 46px;
   height: 46px;
   border-radius: 11px;
@@ -409,6 +410,8 @@ onMounted(load)
 }
 
 .thumb img {
+  position: absolute;
+  inset: 0;
   width: 100%;
   height: 100%;
   object-fit: cover;
@@ -445,6 +448,7 @@ onMounted(load)
 }
 
 .preview {
+  position: relative;
   width: 84px;
   height: 84px;
   border-radius: var(--fc-r);
@@ -457,6 +461,8 @@ onMounted(load)
 }
 
 .preview img {
+  position: absolute;
+  inset: 0;
   width: 100%;
   height: 100%;
   object-fit: cover;
