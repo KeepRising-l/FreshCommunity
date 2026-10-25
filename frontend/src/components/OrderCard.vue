@@ -55,7 +55,7 @@
 </template>
 
 <script setup>
-import { computed } from 'vue'
+import { computed, onUnmounted, ref, watch } from 'vue'
 import { LocationInformation } from '@element-plus/icons-vue'
 import StatusBadge from './StatusBadge.vue'
 import { useNow } from '../composables/useNow'
@@ -74,6 +74,30 @@ const props = defineProps({
 defineEmits(['pay', 'cancel', 'review', 'show-code', 'open'])
 
 const now = useNow()
+
+/**
+ * 待支付订单的局部秒级时钟：全局 now 是 30 秒粒度（省电），倒计时最后 1 分钟
+ * 若仍按 30 秒跳会像卡死——卡片在自己处于 PENDING_PAYMENT 时改用本地 1 秒 tick。
+ */
+const localNow = ref(Date.now())
+let fastTimer = null
+watch(
+  () => props.order.status === 'PENDING_PAYMENT',
+  (pending) => {
+    if (pending && !fastTimer) {
+      fastTimer = setInterval(() => (localNow.value = Date.now()), 1000)
+    } else if (!pending && fastTimer) {
+      clearInterval(fastTimer)
+      fastTimer = null
+    }
+  },
+  { immediate: true }
+)
+onUnmounted(() => fastTimer && clearInterval(fastTimer))
+
+const effNow = computed(() =>
+  props.order.status === 'PENDING_PAYMENT' ? localNow.value : now.value
+)
 
 /** 订单超时关单窗口（与后端 ScheduledJobs 的 30 分钟一致） */
 const PAY_WINDOW_MS = 30 * 60 * 1000
@@ -107,7 +131,7 @@ const hint = computed(() => {
   if (s === 'PENDING_PAYMENT') {
     const created = new Date(props.order.createdAt).getTime()
     if (Number.isFinite(created)) {
-      const left = created + PAY_WINDOW_MS - now.value
+      const left = created + PAY_WINDOW_MS - effNow.value
       if (left > 0) {
         const mins = Math.floor(left / 60000)
         const secs = Math.floor((left % 60000) / 1000)

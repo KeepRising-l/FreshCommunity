@@ -123,4 +123,12 @@ class NotificationApiTest extends ApiTestBase {
         perform(post("/api/notifications/read-all"), u1, null);
         assertThat(unread(u1)).isZero();
     }
+
+    @Test
+    @DisplayName("推送流端点要求登录（未登录 401 统一 JSON）")
+    void streamRequiresLogin() throws Exception {
+        ApiResult r = perform(get("/api/notifications/stream"), null, null);
+        assertThat(r.status()).isEqualTo(401);
+        assertThat(r.code()).isEqualTo(401);
+    }
 }

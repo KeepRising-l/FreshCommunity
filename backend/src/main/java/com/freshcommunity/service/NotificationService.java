@@ -4,6 +4,8 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.freshcommunity.entity.Notification;
 import com.freshcommunity.mapper.NotificationMapper;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.support.TransactionSynchronization;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
 
 import java.util.List;
 
@@ -19,13 +21,17 @@ public class NotificationService {
     public static final String TYPE_SUBSCRIPTION_MATCH = "SUBSCRIPTION_MATCH";
 
     private final NotificationMapper notificationMapper;
+    private final NotificationPushService pushService;
 
-    public NotificationService(NotificationMapper notificationMapper) {
+    public NotificationService(NotificationMapper notificationMapper, NotificationPushService pushService) {
         this.notificationMapper = notificationMapper;
+        this.pushService = pushService;
     }
 
     /**
      * 统一通知入口。由各订单事件在业务事务内调用，保证"状态变更"与"消息写入"原子。
+     * SSE 推送挂在事务提交后（afterCommit）——回滚时不推"幽灵消息"，
+     * 无事务上下文（如个别测试直调）时立即推送。
      */
     public void notify(Long userId, String type, String title, String content, Long refOrderId) {
         notify(userId, type, title, content, refOrderId, null);
@@ -50,6 +56,28 @@ public class NotificationService {
         n.setRefGroupBuyId(refGroupBuyId);
         n.setIsRead(0);
         notificationMapper.insert(n);
+
+        Notification event = new Notification();
+        event.setId(n.getId());
+        event.setUserId(userId);
+        event.setType(type);
+        event.setTitle(title);
+        event.setContent(content);
+        event.setRefOrderId(refOrderId);
+        event.setRefGroupBuyId(refGroupBuyId);
+        event.setIsRead(0);
+        event.setCreatedAt(n.getCreatedAt());
+
+        if (TransactionSynchronizationManager.isSynchronizationActive()) {
+            TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
+                @Override
+                public void afterCommit() {
+                    pushService.push(userId, event);
+                }
+            });
+        } else {
+            pushService.push(userId, event);
+        }
     }
 
     public List<Notification> listByUser(Long userId) {

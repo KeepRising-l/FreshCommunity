@@ -96,7 +96,7 @@
 </template>
 
 <script setup>
-import { computed, onMounted, ref, watch } from 'vue'
+import { computed, onMounted, onUnmounted, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import {
   ArrowRight, Bell, Box, Checked, DataAnalysis, Goods, House, MagicStick,
@@ -226,10 +226,16 @@ function doSearch() {
 
 function logout() {
   store.clearUser()
+  unreadStore.disconnect()
   router.push('/login')
 }
 
-onMounted(() => unreadStore.refresh())
+onMounted(() => {
+  unreadStore.refresh()
+  // SSE 实时推送：登录态建立长连接，消息事件即时更新未读角标
+  if (store.token) unreadStore.connect(store.token)
+})
+onUnmounted(() => unreadStore.disconnect())
 watch(() => route.path, () => unreadStore.refresh())
 </script>
 

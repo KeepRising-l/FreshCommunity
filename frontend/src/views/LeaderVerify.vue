@@ -78,6 +78,7 @@
 <script setup>
 import { nextTick, onMounted, ref } from 'vue'
 import { verifyPickupCode, listVerifyHistory } from '../api/order'
+import { playSuccessSound, playErrorSound } from '../utils/sound'
 import EmptyState from '../components/EmptyState.vue'
 
 const inputRef = ref(null)
@@ -110,6 +111,7 @@ async function verify() {
       title: '核销成功',
       detail: `取货码 ${submitted} 对应订单已完成，买家会收到提货完成通知。`
     }
+    playSuccessSound()
     code.value = ''
     await loadHistory()
   } catch (e) {
@@ -118,6 +120,7 @@ async function verify() {
       title: '核销失败',
       detail: e?.response?.data?.msg || e?.message || '核销失败，请重试'
     }
+    playErrorSound()
   } finally {
     submitting.value = false
     await nextTick()

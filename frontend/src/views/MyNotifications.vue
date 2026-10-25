@@ -57,7 +57,7 @@
 </template>
 
 <script setup>
-import { computed, onMounted, ref } from 'vue'
+import { computed, onMounted, onUnmounted, ref } from 'vue'
 import { ElMessage } from 'element-plus'
 import { useRouter } from 'vue-router'
 import SkeletonList from '../components/SkeletonList.vue'
@@ -161,7 +161,11 @@ async function readAll() {
   await load()
 }
 
+// 停留在消息中心时，新消息经 SSE 推送自动刷新列表（角标由 store 统一处理）
+const offEvent = unreadStore.onEvent('MyNotifications', () => load())
+
 onMounted(load)
+onUnmounted(() => offEvent && offEvent())
 </script>
 
 <style scoped>

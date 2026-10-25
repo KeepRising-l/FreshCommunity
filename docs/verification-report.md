@@ -384,3 +384,20 @@
 | 6 | 无进行中团购的推荐卡片不出现下单按钮 | ✅ 红富士苹果/甘肃花牛仅"看详情" |
 
 - 回归：`DB_PASSWORD=1234 mvn test` **100 用例全绿**；`npm run build` 通过
+
+---
+
+## 十四、实时反馈实测（2026-10-26 · 变更 realtime-notifications）
+
+- **范围**：SSE 消息实时推送（未登录拦截、事务提交后推送、fetch 流消费、断线重连校准）、核销提示音、待支付倒计时末段秒级跳动
+
+| # | 断言 | 实测结果 |
+| --- | --- | --- |
+| 1 | `GET /api/notifications/stream` 未登录 401 统一 JSON | ✅（`NotificationApiTest.streamRequiresLogin`） |
+| 2 | **成团提醒秒到**：user2 停留首页（未刷新），leader 开 target=1 团 → user2 下单支付 → 立即成团 | ✅ 角标 1 → 2 实时 +1，无任何手动刷新 |
+| 3 | 推送在事务提交后发生（回滚不推幽灵消息） | ✅ 代码路径：`TransactionSynchronization.afterCommit`（100 用例回归全绿佐证既有事务链路） |
+| 4 | 消息中心停留时收到推送自动刷新列表 | ✅ 代码路径：store 事件订阅 → `load()`（与 #2 同链路） |
+| 5 | 核销成功/失败提示音（Web Audio 合成，无资产） | ✅ 代码路径 + `npm run build`（音频属交互项，答辩现场可听） |
+| 6 | 待支付倒计时最后 1 分钟秒级跳动 | ✅ OrderCard 局部 1s tick（PENDING_PAYMENT 时激活） |
+
+- 回归：`mvn test` **101 用例全绿**（+1 stream 鉴权）；`npm run build` 通过
