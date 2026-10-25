@@ -75,9 +75,18 @@
                 <span v-for="tag in item.insightTags.slice(0, 3)" :key="tag">{{ tag }}</span>
               </div>
             </div>
-            <span class="rec-go">
-              {{ item.groupBuyId ? '去看团 ›' : '看详情 ›' }}
-            </span>
+            <div class="rec-side">
+              <span class="rec-go">{{ item.groupBuyId ? '去看团 ›' : '看详情 ›' }}</span>
+              <el-button
+                v-if="item.groupBuyId"
+                type="primary"
+                size="small"
+                class="rec-order-btn"
+                @click.stop="openOrder(item)"
+              >
+                立即参团
+              </el-button>
+            </div>
           </article>
         </div>
 
@@ -86,6 +95,51 @@
         </div>
       </div>
     </section>
+
+    <!-- 参团下单弹窗：从推荐卡片直接成交 -->
+    <el-dialog v-model="orderVisible" title="参团下单" width="420px">
+      <div v-if="orderTarget" class="order-body">
+        <div class="order-prod">
+          <div class="order-thumb">
+            <img v-if="orderTarget.imageUrl" :src="orderTarget.imageUrl" :alt="orderTarget.name" />
+            <span v-else>{{ (orderTarget.name || '🧺').slice(0, 1) }}</span>
+          </div>
+          <div class="order-info">
+            <b>{{ orderTarget.name }}</b>
+            <span class="fc-muted">{{ orderTarget.groupTitle }}</span>
+            <div class="fc-price" style="font-size: 18px">
+              <i>¥</i>{{ formatMoney(orderTarget.price) }}
+              <s v-if="orderTarget.originalPrice && orderTarget.originalPrice > orderTarget.price"
+                 style="font-size: 11px; color: var(--fc-ink-300); font-weight: 400; margin-left: 6px;">
+                ¥{{ formatMoney(orderTarget.originalPrice) }}
+              </s>
+            </div>
+          </div>
+        </div>
+
+        <div class="order-row">
+          <span class="order-label">数量</span>
+          <el-input-number v-model="orderQuantity" :min="1" :max="99" />
+        </div>
+        <div class="order-row">
+          <span class="order-label">提货点</span>
+          <span class="order-value">{{ orderTarget.pickupPointName || '以团购详情为准' }}</span>
+        </div>
+        <div class="order-row total">
+          <span class="order-label">应付</span>
+          <span class="fc-price" style="font-size: 20px">
+            <i>¥</i>{{ formatMoney(orderTarget.price * orderQuantity) }}
+          </span>
+        </div>
+        <div class="order-note">
+          🛡️ 下单后进入「待支付」，30 分钟内完成支付即参团；截止前未成团自动全额退款。
+        </div>
+      </div>
+      <template #footer>
+        <el-button @click="orderVisible = false">再想想</el-button>
+        <el-button type="primary" :loading="ordering" @click="submitOrder">确认下单</el-button>
+      </template>
+    </el-dialog>
 
     <!-- 02 订阅提醒 -->
     <section class="compose card">
@@ -207,6 +261,7 @@ import { useRouter } from 'vue-router'
 import EmptyState from '../components/EmptyState.vue'
 import SkeletonList from '../components/SkeletonList.vue'
 import { aiRecommend } from '../api/ai'
+import { createOrder, payOrder } from '../api/order'
 import {
   cancelSubscription,
   createSubscription,
@@ -226,6 +281,12 @@ const asking = ref(false)
 const answer = ref('')
 const answerItems = ref([])
 const recommendError = ref('')
+
+// 推荐卡片直接参团下单
+const orderVisible = ref(false)
+const orderTarget = ref(null)
+const orderQuantity = ref(1)
+const ordering = ref(false)
 
 // 02 订阅
 const text = ref('')
@@ -266,6 +327,53 @@ function selectAskExample(example) {
 
 function goItem(item) {
   router.push(item.groupBuyId ? '/user/groups/' + item.groupBuyId : '/user/products/' + item.productId)
+}
+
+/** 推荐卡片直接参团：确认数量与提货点后按拼团价下单 */
+function openOrder(item) {
+  orderTarget.value = item
+  orderQuantity.value = 1
+  orderVisible.value = true
+}
+
+async function submitOrder() {
+  const item = orderTarget.value
+  if (!item || !item.groupBuyId || ordering.value) return
+  ordering.value = true
+  try {
+    await createOrder(item.groupBuyId, orderQuantity.value)
+    orderVisible.value = false
+    ElMessageBox.confirm(
+      `已下单「${item.name} × ${orderQuantity.value}」，订单进入待支付，30 分钟内支付即参团。`,
+      '下单成功',
+      { confirmButtonText: '去支付', cancelButtonText: '稍后去订单列表', type: 'success' }
+    )
+      .then(async () => {
+        // 支付需要订单 id：从我的订单取最新一笔该团的待支付单
+        const { listMyOrders } = await import('../api/order')
+        const res = await listMyOrders()
+        const mine = (res.data || []).find(
+          (o) => o.groupBuyId === item.groupBuyId && o.status === 'PENDING_PAYMENT'
+        )
+        if (!mine) {
+          ElMessage.warning('未找到待支付订单，请到我的订单查看')
+          return
+        }
+        await payOrder(mine.id)
+        ElMessage.success('支付成功！成团后凭取货码到提货点自提')
+        router.push('/user/orders')
+      })
+      .catch((reason) => {
+        // 取消/关闭弹窗不属于错误；支付失败由拦截器提示
+        if (reason !== 'cancel' && reason !== 'close') {
+          router.push('/user/orders')
+        }
+      })
+  } catch (e) {
+    // 错误提示已由请求拦截器统一处理（如库存不足）
+  } finally {
+    ordering.value = false
+  }
 }
 
 /** 把当前问句转为订阅（衔接 02 流程：填入并解析） */
@@ -427,6 +535,21 @@ onMounted(loadSubscriptions)
 .rec-tags { display: flex; gap: 5px; margin-top: 5px; flex-wrap: wrap; }
 .rec-tags span { font-size: 10.5px; color: var(--fc-brand-700); background: var(--fc-brand-50); border-radius: var(--fc-r-pill); padding: 1px 8px; }
 .rec-go { align-self: center; flex: none; color: var(--fc-brand-700); font-size: 12px; font-weight: 600; }
+.rec-side { display: flex; flex-direction: column; align-items: flex-end; justify-content: center; gap: 7px; flex: none; }
+.rec-order-btn { margin-left: 0 !important; }
+
+/* ---------- 参团下单弹窗 ---------- */
+.order-prod { display: flex; gap: 13px; margin-bottom: 16px; }
+.order-thumb { width: 62px; height: 62px; border-radius: 14px; flex: none; display: grid; place-items: center; overflow: hidden; background: var(--fc-brand-50); color: var(--fc-brand-700); font-size: 24px; font-weight: 700; }
+.order-thumb img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.order-info { flex: 1; min-width: 0; }
+.order-info b { display: block; font-size: 14.5px; color: var(--fc-ink-900); margin-bottom: 3px; }
+.order-info .fc-muted { display: block; font-size: 11.5px; margin-bottom: 5px; }
+.order-row { display: flex; align-items: center; justify-content: space-between; padding: 10px 0; border-bottom: 1px dashed var(--fc-line-soft); font-size: 13.5px; }
+.order-row .order-label { color: var(--fc-ink-400); }
+.order-row .order-value { color: var(--fc-ink-800); font-weight: 600; }
+.order-row.total { border-bottom: none; }
+.order-note { margin-top: 12px; padding: 10px 13px; border-radius: var(--fc-r); background: var(--fc-brand-50); color: var(--fc-brand-700); font-size: 12px; line-height: 1.7; }
 
 .answer-foot { margin-top: 14px; padding-top: 12px; border-top: 1px dashed var(--fc-line-soft); }
 

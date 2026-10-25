@@ -35,17 +35,20 @@ public class AiRecommendService {
     private final GroupBuyService groupBuyService;
     private final ReviewAnalysisService reviewAnalysisService;
     private final AiClient aiClient;
+    private final com.freshcommunity.mapper.UserMapper userMapper;
 
     public AiRecommendService(ProductMapper productMapper,
                               GroupBuyItemMapper groupBuyItemMapper,
                               GroupBuyService groupBuyService,
                               ReviewAnalysisService reviewAnalysisService,
-                              AiClient aiClient) {
+                              AiClient aiClient,
+                              com.freshcommunity.mapper.UserMapper userMapper) {
         this.productMapper = productMapper;
         this.groupBuyItemMapper = groupBuyItemMapper;
         this.groupBuyService = groupBuyService;
         this.reviewAnalysisService = reviewAnalysisService;
         this.aiClient = aiClient;
+        this.userMapper = userMapper;
     }
 
     public AiRecommendVO recommend(String text) {
@@ -63,6 +66,7 @@ public class AiRecommendService {
         Map<Long, GroupBuy> ongoingByProductId = ongoingByProductId(ongoing);
         Map<Long, List<String>> tagsByProduct = reviewAnalysisService
                 .topTags(products.stream().map(Product::getId).toList(), 3);
+        Map<Long, com.freshcommunity.entity.User> leadersByGroupId = leadersOf(ongoing);
 
         String candidateText = buildCandidates(products, ongoingByProductId, tagsByProduct);
         String reply = aiClient.chat(SYSTEM_PROMPT, "用户需求：" + text + "\n\n候选商品清单：\n" + candidateText, false);
@@ -73,7 +77,7 @@ public class AiRecommendService {
 
         AiRecommendVO vo = new AiRecommendVO();
         vo.setReply(reply.trim());
-        vo.setItems(pickMentionedItems(reply, products, ongoingByProductId, tagsByProduct));
+        vo.setItems(pickMentionedItems(reply, products, ongoingByProductId, tagsByProduct, leadersByGroupId));
         return vo;
     }
 
@@ -133,6 +137,17 @@ public class AiRecommendService {
         return result;
     }
 
+    /** 进行中团购的团长资料（提货点展示用），一次批量查询。 */
+    private Map<Long, com.freshcommunity.entity.User> leadersOf(List<GroupBuy> ongoing) {
+        List<Long> leaderIds = ongoing.stream().map(GroupBuy::getLeaderId).distinct().toList();
+        if (leaderIds.isEmpty()) {
+            return Map.of();
+        }
+        return userMapper.selectBatchIds(leaderIds).stream()
+                .collect(java.util.stream.Collectors.toMap(
+                        com.freshcommunity.entity.User::getId, u -> u));
+    }
+
     /**
      * 名称回扫：找出回答中被点名的商品，按首次出现位置排序（LLM 的首选排最前）。
      * 长名优先只用于匹配去歧义（防将来出现"苹果"短名商品在"红富士苹果"位置被误命中），
@@ -140,7 +155,8 @@ public class AiRecommendService {
      */
     private List<AiRecommendVO.ItemVO> pickMentionedItems(String reply, List<Product> products,
                                                           Map<Long, GroupBuy> ongoingByProductId,
-                                                          Map<Long, List<String>> tagsByProduct) {
+                                                          Map<Long, List<String>> tagsByProduct,
+                                                          Map<Long, com.freshcommunity.entity.User> leadersByGroupId) {
         List<Product> sorted = new ArrayList<>(products);
         sorted.sort((a, b) -> Integer.compare(b.getName().length(), a.getName().length()));
 
@@ -167,6 +183,10 @@ public class AiRecommendService {
                 item.setMemberCount(gb.getMemberCount());
                 item.setTargetCount(gb.getTargetCount());
                 item.setPrice(gb.getItemPrice());
+                com.freshcommunity.entity.User leader = leadersByGroupId.get(gb.getLeaderId());
+                if (leader != null) {
+                    item.setPickupPointName(leader.getPickupPointName());
+                }
             }
             byPosition.put(pos, item);
             if (byPosition.size() >= MAX_ITEMS) {

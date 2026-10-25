@@ -32,5 +32,7 @@ public class AiRecommendVO {
         private String groupTitle;
         private Integer memberCount;
         private Integer targetCount;
+        /** 提货点名称（团长资料），下单确认展示 */
+        private String pickupPointName;
     }
 }

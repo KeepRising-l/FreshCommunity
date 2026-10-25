@@ -46,6 +46,8 @@ class AiRecommendServiceTest {
     private ProductMapper productMapper;
     @Mock
     private GroupBuyItemMapper groupBuyItemMapper;
+    @Mock
+    private com.freshcommunity.mapper.UserMapper userMapper;
 
     private AiRecommendService service;
 
@@ -56,7 +58,7 @@ class AiRecommendServiceTest {
     @BeforeEach
     void setUp() {
         service = new AiRecommendService(productMapper, groupBuyItemMapper,
-                groupBuyService, reviewAnalysisService, aiClient);
+                groupBuyService, reviewAnalysisService, aiClient, userMapper);
     }
 
     private Product product(long id, String name, String price) {
@@ -74,11 +76,16 @@ class AiRecommendServiceTest {
         when(productMapper.selectList(any())).thenReturn(List.of(fuji, giant, spinach));
         GroupBuy gb = new GroupBuy();
         gb.setId(100L);
+        gb.setLeaderId(2L);
         gb.setTitle("红富士苹果 · 产地直发");
         gb.setTargetCount(3);
         gb.setMemberCount(2);
         gb.setDeadline(LocalDateTime.now().plusHours(2));
         when(groupBuyService.listOngoing()).thenReturn(List.of(gb));
+        com.freshcommunity.entity.User leader = new com.freshcommunity.entity.User();
+        leader.setId(2L);
+        leader.setPickupPointName("幸福小区便利店");
+        when(userMapper.selectBatchIds(any())).thenReturn(List.of(leader));
         GroupBuyItem item = new GroupBuyItem();
         item.setGroupBuyId(100L);
         item.setProductId(17L);
