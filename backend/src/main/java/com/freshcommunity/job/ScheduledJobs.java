@@ -7,6 +7,7 @@ import com.freshcommunity.mapper.ProductMapper;
 import com.freshcommunity.service.GroupBuyService;
 import com.freshcommunity.service.NotificationService;
 import com.freshcommunity.service.ReviewAnalysisService;
+import com.freshcommunity.service.SubscriptionService;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
@@ -21,15 +22,18 @@ public class ScheduledJobs {
     private final ProductMapper productMapper;
     private final NotificationService notificationService;
     private final ReviewAnalysisService reviewAnalysisService;
+    private final SubscriptionService subscriptionService;
 
     public ScheduledJobs(GroupBuyService groupBuyService, OrderMapper orderMapper,
                          ProductMapper productMapper, NotificationService notificationService,
-                         ReviewAnalysisService reviewAnalysisService) {
+                         ReviewAnalysisService reviewAnalysisService,
+                         SubscriptionService subscriptionService) {
         this.groupBuyService = groupBuyService;
         this.orderMapper = orderMapper;
         this.productMapper = productMapper;
         this.notificationService = notificationService;
         this.reviewAnalysisService = reviewAnalysisService;
+        this.subscriptionService = subscriptionService;
     }
 
     /**
@@ -60,5 +64,15 @@ public class ScheduledJobs {
     @Transactional
     public void analyzePendingReviews() {
         reviewAnalysisService.analyzePending();
+    }
+
+    /**
+     * 订阅匹配补偿：关闭"建订阅 × 开团"并发互相错过导致的漏提醒窗口。
+     * 幂等——重复扫描对已发送的组合只是 INSERT IGNORE 空转，不会重复提醒。
+     */
+    @Scheduled(fixedDelay = 60000, initialDelayString = "${scheduling.initial-delay-ms:0}")
+    @Transactional
+    public void compensateSubscriptionMatches() {
+        subscriptionService.compensateMissed();
     }
 }

@@ -28,6 +28,16 @@ public class NotificationService {
      * 统一通知入口。由各订单事件在业务事务内调用，保证"状态变更"与"消息写入"原子。
      */
     public void notify(Long userId, String type, String title, String content, Long refOrderId) {
+        notify(userId, type, title, content, refOrderId, null);
+    }
+
+    /** 团购级事件入口（订阅命中提醒）：携带团购引用供前端直达团购详情。 */
+    public void notifyGroupEvent(Long userId, String type, String title, String content, Long refGroupBuyId) {
+        notify(userId, type, title, content, null, refGroupBuyId);
+    }
+
+    private void notify(Long userId, String type, String title, String content,
+                        Long refOrderId, Long refGroupBuyId) {
         if (userId == null) {
             return;
         }
@@ -37,6 +47,7 @@ public class NotificationService {
         n.setTitle(title);
         n.setContent(content);
         n.setRefOrderId(refOrderId);
+        n.setRefGroupBuyId(refGroupBuyId);
         n.setIsRead(0);
         notificationMapper.insert(n);
     }

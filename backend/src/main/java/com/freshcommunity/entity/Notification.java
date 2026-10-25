@@ -19,6 +19,8 @@ public class Notification {
     private String title;
     private String content;
     private Long refOrderId;
+    /** 订阅命中提醒关联的团购（点击直达团购详情），订单类事件为 null */
+    private Long refGroupBuyId;
     private Integer isRead;
     private LocalDateTime createdAt;
     @TableLogic

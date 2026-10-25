@@ -4,6 +4,7 @@ CREATE DATABASE IF NOT EXISTS freshcommunity
 
 USE freshcommunity;
 
+DROP TABLE IF EXISTS subscription_match;
 DROP TABLE IF EXISTS review_analysis;
 DROP TABLE IF EXISTS user_subscription;
 DROP TABLE IF EXISTS review;
@@ -106,7 +107,8 @@ CREATE TABLE notification (
     type VARCHAR(32) NOT NULL COMMENT 'GROUP_SUCCESS/GROUP_FAILED/ORDER_TIMEOUT/PICKUP_DONE/REFUNDED/SUBSCRIPTION_MATCH',
     title VARCHAR(128) NOT NULL,
     content VARCHAR(500),
-    ref_order_id BIGINT COMMENT '关联订单',
+    ref_order_id BIGINT COMMENT '关联订单（订单类事件）',
+    ref_group_buy_id BIGINT COMMENT '关联团购（订阅命中提醒）',
     is_read TINYINT NOT NULL DEFAULT 0,
     created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     deleted TINYINT NOT NULL DEFAULT 0,
@@ -123,6 +125,19 @@ CREATE TABLE user_subscription (
     created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     deleted TINYINT NOT NULL DEFAULT 0,
     INDEX idx_user (user_id)
+);
+
+-- AI 导购：订阅×团购匹配记录。(subscription_id, group_buy_id) 唯一键是
+-- "同一订阅对同一团购只提醒一次"的数据库级闸门：所有匹配路径以 INSERT IGNORE
+-- 抢占记录，插入成功（首占）才发提醒；并发创建漏配的由定时补偿扫描补齐。
+CREATE TABLE subscription_match (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    subscription_id BIGINT NOT NULL,
+    group_buy_id BIGINT NOT NULL,
+    created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    deleted TINYINT NOT NULL DEFAULT 0,
+    UNIQUE KEY uk_sub_group (subscription_id, group_buy_id),
+    INDEX idx_group (group_buy_id)
 );
 
 -- AI 导购：评价洞察（每条评价一行，定时批量分析生成）

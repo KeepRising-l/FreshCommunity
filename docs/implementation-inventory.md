@@ -2,7 +2,7 @@
 
 > **用途**：答辩展示「做了什么、怎么做、还差什么」；与 `docs/requirements-analysis.md` 的功能编号逐条对应。
 > **状态口径**：✅ 已交付（功能可用且有验证）｜🔸 已交付 · 视觉简版｜🛠️ 代码已写、验证待补｜⬜ 待实施（已规划未开发）
-> **数据截至**：2026-10-25（源码数量按当前目录统计；测试运行结果为最近一次 `mvn test` 实测：89 用例全绿）
+> **数据截至**：2026-10-25（源码数量按当前目录统计；测试运行结果为最近一次 `mvn test` 实测：94 用例全绿）
 
 ---
 
@@ -10,13 +10,13 @@
 
 | 维度 | 数量 | 说明 |
 | --- | --- | --- |
-| 功能能力（capability） | **11 个基线能力已交付** | 现行基线 56 条 requirement / 122 个 scenario（2026-10-23 归档并入 +7 req / +21 scenario；2026-10-25 归档并入 +7 req / +24 scenario，含 2 条改写） |
-| 后端接口 | **43 个** | 10 个 Controller，统一 `{code, msg, data}` 返回 |
+| 功能能力（capability） | **11 个基线能力已交付** | 现行基线 58 条 requirement / 128 个 scenario（2026-10-23 归档并入 +7 req / +21 scenario；2026-10-25 归档并入 +10 req / +30 scenario，含改写） |
+| 后端接口 | **43 个** | 10 个 Controller，统一 `{code, msg, data}` 返回；本轮无新接口（可靠性为内部机制 + 通知字段增量） |
 | 数据库表 | **9 张** | 7 张交易与配套表 + `user_subscription` + `review_analysis` |
 | 前端页面 | **19 个** | 含订单详情 / 个人中心 / 订单管理 / 404 页；另有 7 个公共组件 |
-| 自动化测试 | **89 个测试方法** | 13 个测试类；最近一次实测（2026-10-25）`mvn test` 全绿 |
-| 规格实测 | **48 项断言 + AI 导购端到端 + 看板/团长端 16 项 + 目录检索/订单/个人中心 33 项** | `docs/verification-report.md`（§一～五 为 MVP 基线；§六 AI 导购；§七 2026-10-23 看板与团长端；§八 2026-10-25 目录检索与订单/个人中心/管理端） |
-| 待实施 / 待验证 | **目录检索与订单/个人中心/管理端已收尾** | 剩余为 P2 并发匹配可靠性（下一变更）与 P4 移动端断点适配 |
+| 自动化测试 | **94 个测试方法** | 14 个测试类；最近一次实测（2026-10-25）`mvn test` 全绿 |
+| 规格实测 | **48 项断言 + AI 导购端到端 + 看板/团长端 16 项 + 目录检索/订单/个人中心 33 项 + 订阅匹配可靠性 10 项** | `docs/verification-report.md`（§一～五 为 MVP 基线；§六 AI 导购；§七 看板与团长端；§八 目录检索与订单/个人中心/管理端；§九 订阅匹配可靠性） |
+| 待实施 / 待验证 | **P2 并发匹配可靠性已收尾（2026-10-25）** | 剩余为 P4 移动端断点适配与 JWT 主动失效 |
 
 ---
 
@@ -118,6 +118,7 @@
 | FR-11-5 | LLM 优先与规则降级 | ✅ | `AiClient`（OpenAI 兼容客户端）、`LlmParseService`（`@Primary`，LLM 优先→规则回落）、`AiProperties` | `LlmParseServiceTest`：noKeyFallsBackToRule / noKeyUnparseable / noKeyNoPrice |
 | FR-11-6 | 评价情感与标签洞察 | ✅ | `ReviewAnalysisService`、`review_analysis` 表、`ScheduledJobs.analyzePendingReviews` | `ReviewInsightsTest`：analyzeOnceIdempotent / analyzeNegative / pendingBatchSkipsBlank / productDetailExposesTags / notifyIncludesInsightSummary / neutralReviewProducesNoTags |
 | FR-11-7 | 开团指定拼团价（订阅价格匹配的真实输入） | ✅ | `GroupBuyCreateRequest.price` + `GroupBuyService.resolvePrice` + `LeaderGroups.vue` | `GroupBuyFlowApiTest`：createGroupBuyWithCustomPrice / customPriceValidation；`vite build` 通过 |
+| FR-11-X | 匹配可靠性与提醒跳转（唯一闸门 / 补偿扫描 / refGroupBuyId） | ✅ | `subscription_match` 表 + `SubscriptionService.tryMatchAndNotify` + `ScheduledJobs.compensateSubscriptionMatches` + `MyNotifications.vue` 跳转 | `SubscriptionMatchReliabilityTest`（5 用例）+ verification-report §九（含真实后端 75 秒内补偿补齐与幂等实测） |
 
 > **P2 匹配可靠性**（并发创建订阅与团购可能漏提醒）属 design.md 记录的首版已知缺口，明确不在本变更范围，留待后续演进。
 
@@ -217,7 +218,7 @@
 - **P1 LLM 解析链**：`AiClient`（OpenAI 兼容）+ `LlmParseService`（LLM 优先、规则降级）+ `ai.*` 配置 —— 已完成，无密钥环境仍可订阅。
 - **P3 评价洞察**：`review_analysis` 表 + 批量分析任务 + 详情标签 + 提醒摘要 —— 已完成。
 - **收尾（2026-10-17）**：端到端演示脚本在「无 key / LLM mock / LLM 不可达」三种模式下实测通过；期间修掉 5 个真实缺陷（演示脚本无对应商品、开团无法指定拼团价、中性评价写成口碑标签、规则词典单字误伤、否定表达被记成正面），均已补回归用例。
-- **遗留（P2）**：并发"创建订阅 / 创建团购"存在漏提醒窗口，且通知不含团购跳转引用；需引入唯一键匹配记录与补偿扫描。此项明确不在本变更范围，作为下一个变更推进。
+- ~~**遗留（P2）**：并发"创建订阅 / 创建团购"存在漏提醒窗口，且通知不含团购跳转引用~~ —— 已完成（2026-10-25 变更：`subscription_match` 唯一键闸门 + 60 秒补偿扫描 + `refGroupBuyId` 跳转引用，verification-report §九）
 
 ### P4：界面与容量扩展
 
@@ -237,7 +238,7 @@
 
 | 资产 | 内容 | 位置 |
 | --- | --- | --- |
-| 自动化测试 | 13 个测试类 / 89 个测试方法 | `backend/src/test/` |
+| 自动化测试 | 14 个测试类 / 94 个测试方法 | `backend/src/test/` |
 | 规格实测报告 | MVP 基线 48 项断言 + AI 导购端到端（2026-10-17）+ 看板与团长端 16 项（2026-10-23）+ 目录检索/订单/个人中心/管理端 33 项（2026-10-25）；累计 9 个真实缺陷已修复转回归 | `docs/verification-report.md` |
 | 需求基线 | 11 capability / 42 req / 77 scenario | `openspec/specs/` |
 | 变更归档 | 4 个已归档变更（最新：`2026-10-23-admin-dashboard-and-leader-ui`） | `openspec/changes/` |

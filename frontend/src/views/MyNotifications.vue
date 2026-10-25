@@ -48,6 +48,7 @@
             <span class="time">{{ fromNow(n.createdAt, now) }}</span>
           </div>
           <p>{{ n.content }}</p>
+          <span v-if="jumpTarget(n)" class="jump-hint">查看 ›</span>
         </div>
         <span v-if="n.isRead === 0" class="undot" />
       </div>
@@ -58,6 +59,7 @@
 <script setup>
 import { computed, onMounted, ref } from 'vue'
 import { ElMessage } from 'element-plus'
+import { useRouter } from 'vue-router'
 import SkeletonList from '../components/SkeletonList.vue'
 import EmptyState from '../components/EmptyState.vue'
 import {
@@ -70,6 +72,7 @@ import { useNow } from '../composables/useNow'
 import { notificationType } from '../constants/status'
 import { fromNow } from '../utils/format'
 
+const router = useRouter()
 const unreadStore = useNotificationStore()
 const now = useNow()
 
@@ -122,9 +125,25 @@ async function load() {
   }
 }
 
-/** 点击消息即标记已读（比单独的按钮更符合习惯） */
+/**
+ * 消息携带引用时可直达：订单类事件 → 订单详情，订阅命中 → 团购详情。
+ * 无引用（或历史消息没有该字段）返回空，点击仅标记已读。
+ */
+const ORDER_TYPES = ['GROUP_SUCCESS', 'GROUP_FAILED', 'ORDER_TIMEOUT', 'PICKUP_DONE', 'REFUNDED']
+
+function jumpTarget(n) {
+  if (n.type === 'SUBSCRIPTION_MATCH' && n.refGroupBuyId) return '/user/groups/' + n.refGroupBuyId
+  if (ORDER_TYPES.includes(n.type) && n.refOrderId) return '/user/orders/' + n.refOrderId
+  return ''
+}
+
+/** 点击消息：标记已读 + 按引用跳转（无引用则停留原处） */
 async function readOne(n) {
-  if (n.isRead !== 0) return
+  if (n.isRead !== 0) {
+    const target = jumpTarget(n)
+    if (target) router.push(target)
+    return
+  }
   try {
     await markNotificationRead(n.id)
     n.isRead = 1
@@ -132,6 +151,8 @@ async function readOne(n) {
   } catch (e) {
     // 错误提示已由请求拦截器统一处理
   }
+  const target = jumpTarget(n)
+  if (target) router.push(target)
 }
 
 async function readAll() {
@@ -246,6 +267,14 @@ onMounted(load)
 .msg .body {
   flex: 1;
   min-width: 0;
+}
+
+.jump-hint {
+  display: inline-block;
+  margin-top: 6px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--fc-brand-700);
 }
 
 .r1 {
