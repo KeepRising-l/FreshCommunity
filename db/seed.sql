@@ -23,6 +23,7 @@ USE freshcommunity;
 SET NAMES utf8mb4;
 
 -- ---------------------------------------------------------------- 清空业务数据
+DELETE FROM product_image;
 DELETE FROM review_analysis;
 DELETE FROM user_subscription;
 DELETE FROM review;

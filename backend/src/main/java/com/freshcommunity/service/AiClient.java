@@ -132,6 +132,20 @@ public class AiClient {
         if (restClient == null) {
             return null;
         }
+        // 共两次尝试：LLM 网关偶发抖动（连接重置/瞬时超时）自动恢复，
+        // 两次都失败才判不可用——对上层仍是"成功或 null"，无语义变化
+        String last = null;
+        for (int attempt = 0; attempt < 2; attempt++) {
+            last = chatOnce(messages, jsonMode);
+            if (last != null) {
+                return last;
+            }
+        }
+        return null;
+    }
+
+    @SuppressWarnings("unchecked")
+    private String chatOnce(List<Map<String, String>> messages, boolean jsonMode) {
         try {
             Map<String, Object> resp = restClient.post()
                     .uri("/chat/completions")
