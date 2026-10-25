@@ -206,4 +206,18 @@ class SubscriptionApiTest extends ApiTestBase {
         }
         return count;
     }
+
+    @Test
+    @DisplayName("AI 即时推荐在无 key 环境明确报不可用（测试环境不外呼、不做假推荐）")
+    void aiRecommendUnavailableWithoutKey() throws Exception {
+        // application-test.yml 覆盖 ai.api-key=""：AiClient 不可用 → 400 + 明确提示
+        var r = perform(post("/api/ai/recommend"), login("user1", "123456"),
+                Map.of("text", "性价比高的苹果"));
+        assertThat(r.status()).isEqualTo(400);
+        assertThat(r.msg()).contains("AI 服务暂时不可用");
+
+        var blank = perform(post("/api/ai/recommend"), login("user1", "123456"),
+                Map.of("text", "  "));
+        assertThat(blank.status()).isEqualTo(400);
+    }
 }

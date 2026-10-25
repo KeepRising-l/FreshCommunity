@@ -2,32 +2,110 @@
   <div class="ai-page">
     <section class="hero">
       <div class="hero-copy">
-        <span class="eyebrow">AI 导购 · 需求订阅</span>
-        <h1>告诉我想买什么，<em>有合适的团就提醒你</em></h1>
-        <p>用一句话描述商品和预算。系统会先查看正在进行的团购，也会持续留意新开团。</p>
+        <span class="eyebrow">AI 导购</span>
+        <h1>想要什么<em>问一句</em>，AI 帮你挑好</h1>
+        <p>描述你的需求，AI 会对比所有在售商品和正在进行的团购，直接推荐最合适的，并说明理由。</p>
       </div>
-      <div class="hero-mark" aria-hidden="true">🥬</div>
+      <div class="hero-mark" aria-hidden="true">🤖</div>
     </section>
 
+    <!-- 01 即时推荐 -->
     <section class="compose card">
       <div class="section-heading">
         <div>
           <span class="step">01</span>
-          <h2>写下你的需求</h2>
+          <h2>AI 帮我挑</h2>
         </div>
-        <span class="hint">例如：想要 10 元以内的苹果，有货叫我</span>
+        <span class="hint">例如：帮我找性价比比较高的苹果</span>
       </div>
 
       <el-input
-        v-model="text"
+        v-model="askText"
         type="textarea"
         :rows="3"
         maxlength="255"
         show-word-limit
         resize="none"
-        placeholder="说说你想买什么，价格有没有上限……"
+        placeholder="说说你想买什么、在意什么（价格 / 性价比 / 新鲜度）……"
+        @keydown.ctrl.enter.prevent="ask"
+      />
+
+      <div class="compose-footer">
+        <div class="examples">
+          <span>试试：</span>
+          <button v-for="example in askExamples" :key="example" type="button" @click="selectAskExample(example)">
+            {{ example }}
+          </button>
+        </div>
+        <el-button type="primary" :loading="asking" :disabled="!askText.trim()" @click="ask">
+          {{ asking ? '正在对比在售商品…' : '问 AI' }}
+        </el-button>
+      </div>
+    </section>
+
+    <!-- 推荐结果 -->
+    <section v-if="answer || recommendError" class="answer card" aria-live="polite">
+      <div class="answer-icon">{{ recommendError ? '⚠️' : '🤖' }}</div>
+      <div class="answer-body">
+        <h3>{{ recommendError ? '这次没答上来' : 'AI 的推荐' }}</h3>
+        <p v-if="recommendError" class="answer-text">{{ recommendError }}</p>
+        <p v-else class="answer-text">{{ answer }}</p>
+
+        <div v-if="answerItems.length" class="answer-items">
+          <article
+            v-for="item in answerItems"
+            :key="item.productId"
+            class="rec-card"
+            @click="goItem(item)"
+          >
+            <div class="rec-thumb">
+              <img v-if="item.imageUrl" :src="item.imageUrl" :alt="item.name" loading="lazy" />
+              <span v-else>{{ (item.name || '🧺').slice(0, 1) }}</span>
+            </div>
+            <div class="rec-info">
+              <b>{{ item.name }}</b>
+              <span v-if="item.groupTitle" class="rec-group">{{ item.groupTitle }}</span>
+              <div class="rec-price">
+                <em class="fc-price"><i>¥</i>{{ formatMoney(item.price) }}</em>
+                <s v-if="item.originalPrice && item.originalPrice > item.price">
+                  ¥{{ formatMoney(item.originalPrice) }}
+                </s>
+              </div>
+              <div v-if="item.insightTags && item.insightTags.length" class="rec-tags">
+                <span v-for="tag in item.insightTags.slice(0, 3)" :key="tag">{{ tag }}</span>
+              </div>
+            </div>
+            <span class="rec-go">
+              {{ item.groupBuyId ? '去看团 ›' : '看详情 ›' }}
+            </span>
+          </article>
+        </div>
+
+        <div v-if="!recommendError && answerItems.length" class="answer-foot">
+          <el-button size="small" @click="subscribeFromAnswer">没抢到？订阅这个需求，有货提醒我</el-button>
+        </div>
+      </div>
+    </section>
+
+    <!-- 02 订阅提醒 -->
+    <section class="compose card">
+      <div class="section-heading">
+        <div>
+          <span class="step">02</span>
+          <h2>订阅提醒</h2>
+        </div>
+        <span class="hint">现在没有合适的？留下需求，新开团自动叫你</span>
+      </div>
+
+      <el-input
+        v-model="text"
+        type="textarea"
+        :rows="2"
+        maxlength="255"
+        show-word-limit
+        resize="none"
+        placeholder="例如：想要 10 元以内的苹果，有货叫我"
         @input="clearPreview"
-        @keydown.ctrl.enter.prevent="parseDemand"
       />
 
       <div class="compose-footer">
@@ -86,7 +164,7 @@
     <section class="subscriptions">
       <div class="section-heading list-heading">
         <div>
-          <span class="step">02</span>
+          <span class="step">03</span>
           <h2>我的关注</h2>
           <span class="count">{{ subscriptions.length }}</span>
         </div>
@@ -125,16 +203,31 @@
 <script setup>
 import { onMounted, ref } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
+import { useRouter } from 'vue-router'
 import EmptyState from '../components/EmptyState.vue'
 import SkeletonList from '../components/SkeletonList.vue'
+import { aiRecommend } from '../api/ai'
 import {
   cancelSubscription,
   createSubscription,
   listSubscriptions,
   previewSubscription
 } from '../api/subscription'
+import { formatMoney } from '../utils/format'
 
+const router = useRouter()
+
+const askExamples = ['帮我找性价比比较高的苹果', '20 元以内有什么水果', '想买新鲜的水产']
 const examples = ['10 元以内的苹果', '想买便宜的草莓']
+
+// 01 即时推荐
+const askText = ref('')
+const asking = ref(false)
+const answer = ref('')
+const answerItems = ref([])
+const recommendError = ref('')
+
+// 02 订阅
 const text = ref('')
 const subscriptions = ref([])
 const preview = ref(null)
@@ -143,6 +236,44 @@ const loading = ref(true)
 const previewing = ref(false)
 const confirming = ref(false)
 const cancellingId = ref(null)
+
+async function ask() {
+  const demand = askText.value.trim()
+  if (!demand || asking.value) return
+
+  asking.value = true
+  answer.value = ''
+  answerItems.value = []
+  recommendError.value = ''
+  try {
+    const result = await aiRecommend({ text: demand })
+    answer.value = result.data?.reply || ''
+    answerItems.value = result.data?.items || []
+  } catch (e) {
+    // 拦截器已 toast；页面内再留一条可读的失败说明（LLM 不可用是预期场景）
+    recommendError.value = e?.message || 'AI 服务暂时不可用，请稍后重试'
+  } finally {
+    asking.value = false
+  }
+}
+
+function selectAskExample(example) {
+  askText.value = example
+  answer.value = ''
+  answerItems.value = []
+  recommendError.value = ''
+}
+
+function goItem(item) {
+  router.push(item.groupBuyId ? '/user/groups/' + item.groupBuyId : '/user/products/' + item.productId)
+}
+
+/** 把当前问句转为订阅（衔接 02 流程：填入并解析） */
+function subscribeFromAnswer() {
+  text.value = askText.value.trim()
+  clearPreview()
+  parseDemand()
+}
 
 async function loadSubscriptions() {
   loading.value = true
@@ -274,6 +405,31 @@ onMounted(loadSubscriptions)
 .examples button:hover { border-color: var(--fc-brand-100); background: var(--fc-brand-50); color: var(--fc-brand-700); }
 .compose-footer :deep(.el-button) { min-height: 38px; padding-inline: 18px; }
 
+/* ---------- AI 回答区 ---------- */
+.answer { display: flex; align-items: flex-start; gap: 14px; padding: 20px 22px; border-color: #d8eee0; background: #fbfefc; }
+.answer-icon { display: grid; place-items: center; width: 36px; height: 36px; flex: none; border-radius: 50%; background: var(--fc-brand-50); font-size: 19px; }
+.answer-body { flex: 1; min-width: 0; }
+.answer h3 { margin: 1px 0 7px; color: var(--fc-ink-900); font-size: 15px; }
+.answer-text { margin: 0 !important; white-space: pre-line; color: var(--fc-ink-800) !important; font-size: 13.5px !important; line-height: 1.9 !important; }
+
+.answer-items { display: grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); gap: 12px; margin-top: 14px; }
+.rec-card { display: flex; gap: 11px; padding: 11px; border: 1px solid var(--fc-line); border-radius: var(--fc-r); background: #fff; cursor: pointer; transition: all .15s ease; }
+.rec-card:hover { border-color: var(--fc-brand-100); box-shadow: var(--fc-sh-1); transform: translateY(-1px); }
+.rec-thumb { width: 54px; height: 54px; border-radius: 12px; flex: none; display: grid; place-items: center; overflow: hidden; background: var(--fc-brand-50); color: var(--fc-brand-700); font-size: 20px; font-weight: 700; }
+.rec-thumb img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.rec-info { flex: 1; min-width: 0; }
+.rec-info b { display: block; font-size: 13.5px; color: var(--fc-ink-900); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.rec-group { display: block; font-size: 11px; color: var(--fc-ink-400); margin: 2px 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.rec-price { display: flex; align-items: baseline; gap: 7px; }
+.rec-price em { font-style: normal; font-weight: 750; color: var(--fc-accent-600); font-size: 15px; }
+.rec-price em i { font-style: normal; font-size: .7em; margin-right: 1px; }
+.rec-price s { color: var(--fc-ink-300); font-size: 11px; }
+.rec-tags { display: flex; gap: 5px; margin-top: 5px; flex-wrap: wrap; }
+.rec-tags span { font-size: 10.5px; color: var(--fc-brand-700); background: var(--fc-brand-50); border-radius: var(--fc-r-pill); padding: 1px 8px; }
+.rec-go { align-self: center; flex: none; color: var(--fc-brand-700); font-size: 12px; font-weight: 600; }
+
+.answer-foot { margin-top: 14px; padding-top: 12px; border-top: 1px dashed var(--fc-line-soft); }
+
 .result { display: flex; align-items: flex-start; gap: 14px; padding: 18px 20px; border-color: #d8eee0; background: #fbfefc; }
 .result-icon { display: grid; place-items: center; width: 34px; height: 34px; flex: none; border-radius: 50%; background: var(--fc-brand-50); color: var(--fc-brand-700); font-size: 18px; font-weight: 700; }
 .result-copy { flex: 1; min-width: 0; }
@@ -311,6 +467,8 @@ onMounted(loadSubscriptions)
   .result { flex-wrap: wrap; }
   .message-link { margin-left: 48px; }
   .result-actions { width: 100%; justify-content: flex-end; }
+  .answer { flex-wrap: wrap; }
+  .answer-items { grid-template-columns: 1fr; }
   .subscription { align-items: flex-start; padding: 14px; }
   .subscription-icon { width: 36px; height: 36px; }
   .subscription :deep(.el-button) { padding-inline: 5px; }

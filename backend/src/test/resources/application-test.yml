@@ -21,3 +21,8 @@ mybatis-plus:
 # 测试期间把首次执行推迟到测试结束之后，用例仍可显式调用 job 方法。
 scheduling:
   initial-delay-ms: 3600000
+
+# 测试环境禁用真实 LLM：AiClient 不可用（订阅解析回落规则、即时推荐报不可用）
+ai:
+  api-key: ""
+  timeout-seconds: 2

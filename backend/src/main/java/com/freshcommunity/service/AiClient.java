@@ -56,10 +56,18 @@ public class AiClient {
             List<Map<String, String>> messages = List.of(
                     Map.of("role", "system", "content", systemPrompt),
                     Map.of("role", "user", "content", userPrompt));
-            Map<String, Object> body = jsonMode
-                    ? Map.of("model", aiProperties.getModel(), "temperature", 0,
-                            "response_format", Map.of("type", "json_object"), "messages", messages)
-                    : Map.of("model", aiProperties.getModel(), "temperature", 0, "messages", messages);
+            java.util.HashMap<String, Object> body = new java.util.HashMap<>();
+            body.put("model", aiProperties.getModel());
+            body.put("temperature", 0);
+            body.put("messages", messages);
+            if (jsonMode) {
+                body.put("response_format", Map.of("type", "json_object"));
+            }
+            if (!aiProperties.isThinkingEnabled()) {
+                // DeepSeek 思考模式标准关闭参数（思考内容在独立 reasoning_content 字段，
+                // 本方法只取 content，最终回答不受影响）
+                body.put("chat_template_kwargs", Map.of("thinking", false));
+            }
 
             Map<String, Object> resp = restClient.post()
                     .uri("/chat/completions")

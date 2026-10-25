@@ -20,7 +20,9 @@ public class AiProperties {
     /** 模型名，如 deepseek-chat */
     private String model = "deepseek-chat";
     /** 单次调用超时（秒） */
-    private long timeoutSeconds = 5;
+    private long timeoutSeconds = 60;
+    /** 思考模式开关：false 时请求携带 DeepSeek 标准关闭参数（思考内容不进入最终回答） */
+    private boolean thinkingEnabled = false;
 
     public boolean isAvailable() {
         return apiKey != null && !apiKey.isBlank();
@@ -34,4 +36,6 @@ public class AiProperties {
     public void setModel(String model) { this.model = model; }
     public long getTimeoutSeconds() { return timeoutSeconds; }
     public void setTimeoutSeconds(long timeoutSeconds) { this.timeoutSeconds = timeoutSeconds; }
+    public boolean isThinkingEnabled() { return thinkingEnabled; }
+    public void setThinkingEnabled(boolean thinkingEnabled) { this.thinkingEnabled = thinkingEnabled; }
 }

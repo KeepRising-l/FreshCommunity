@@ -26,12 +26,17 @@ jwt:
   secret: freshcommunity-secret-key-change-in-production
   expiration: 86400000
 
-# AI 需求解析（OpenAI 兼容接口）。不配置 api-key 时走规则解析，应用正常可用。
+# AI 导购（OpenAI 兼容接口）：即时推荐 + 需求解析。
+# 默认指向演示网关并写入演示 key（环境变量 AI_API_KEY / AI_BASE_URL / AI_MODEL 可覆盖，
+# 生产请轮换 key 并从环境变量注入）；不配置 key 时订阅解析回落规则、即时推荐明确报不可用。
 ai:
-  base-url: ${AI_BASE_URL:https://api.deepseek.com/v1}
-  api-key: ${AI_API_KEY:}
-  model: ${AI_MODEL:deepseek-chat}
-  timeout-seconds: 5
+  base-url: ${AI_BASE_URL:https://rayagent.cloud:2026/v1}
+  api-key: ${AI_API_KEY:sk-a2a-27b5abe8e7312cd326358d1c5762adcd}
+  model: ${AI_MODEL:deepseek-v4.1-flash}
+  timeout-seconds: ${AI_TIMEOUT:60}
+  # DeepSeek 思考模式开关：false 时请求携带标准关闭参数
+  # （chat_template_kwargs.thinking=false；思考内容在独立字段，不进入最终回答）
+  thinking-enabled: false
 
 upload:
   path: ${user.dir}/uploads
