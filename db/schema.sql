@@ -29,9 +29,11 @@ CREATE TABLE user (
 CREATE TABLE product (
     id BIGINT AUTO_INCREMENT PRIMARY KEY,
     name VARCHAR(128) NOT NULL,
+    category VARCHAR(32) NOT NULL DEFAULT '其他' COMMENT '分类（自由文本）',
     price DECIMAL(10,2) NOT NULL,
     stock INT NOT NULL DEFAULT 0,
     image_url VARCHAR(255),
+    description VARCHAR(500) COMMENT '一句话介绍',
     status TINYINT NOT NULL DEFAULT 1 COMMENT '0下架 1上架',
     created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
@@ -144,7 +146,7 @@ INSERT INTO user (username, password, role) VALUES
 
 UPDATE user SET pickup_point_name='幸福小区便利店', pickup_point_address='幸福小区东门 101 号' WHERE username='leader1';
 
-INSERT INTO product (name, price, stock, image_url, status) VALUES
-('红颜草莓', 29.90, 100, '', 1),
-('烟台红富士', 19.90, 200, '', 1),
-('新鲜菠菜', 4.50, 150, '', 1);
+INSERT INTO product (name, category, price, stock, image_url, description, status) VALUES
+('红颜草莓', '水果', 29.90, 100, '', '奶香浓郁的红颜草莓，现摘现发', 1),
+('烟台红富士', '水果', 19.90, 200, '', '山东烟台红富士，脆甜多汁', 1),
+('新鲜菠菜', '蔬菜', 4.50, 150, '', '基地直采嫩菠菜，当天现摘', 1);

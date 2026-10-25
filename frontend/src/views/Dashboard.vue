@@ -30,13 +30,13 @@
       </nav>
 
       <div class="side-foot">
-        <div class="side-user">
+        <div class="side-user clickable" title="个人中心" @click="router.push('/profile')">
           <div class="avatar">{{ avatarChar }}</div>
           <div class="user-text">
             <b>{{ store.user?.username || '未登录' }}</b>
             <small>{{ roleText }}</small>
           </div>
-          <button class="logout-btn" title="退出登录" @click="logout">
+          <button class="logout-btn" title="退出登录" @click.stop="logout">
             <el-icon><SwitchButton /></el-icon>
           </button>
         </div>
@@ -81,7 +81,7 @@ import { computed, onMounted, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import {
   ArrowRight, Bell, Box, Checked, DataAnalysis, Goods, MagicStick,
-  Search, Sell, SwitchButton, Tickets
+  Search, Sell, SwitchButton, Tickets, User
 } from '@element-plus/icons-vue'
 import { useUserStore } from '../stores/user'
 import { useNotificationStore } from '../stores/notification'
@@ -113,7 +113,8 @@ const MINE_GROUP = {
   group: '我的',
   items: [
     { key: 'orders', label: '我的订单', path: '/user/orders', icon: Tickets },
-    { key: 'notifications', label: '消息中心', path: '/notifications', icon: Bell }
+    { key: 'notifications', label: '消息中心', path: '/notifications', icon: Bell },
+    { key: 'profile', label: '个人中心', path: '/profile', icon: User }
   ]
 }
 
@@ -135,12 +136,16 @@ const MENUS = {
       group: '平台管理',
       items: [
         { key: 'dashboard', label: '数据看板', path: '/admin/dashboard', icon: DataAnalysis },
-        { key: 'admin-products', label: '商品管理', path: '/admin/products', icon: Box }
+        { key: 'admin-products', label: '商品管理', path: '/admin/products', icon: Box },
+        { key: 'admin-orders', label: '订单管理', path: '/admin/orders', icon: Tickets }
       ]
     },
     {
       group: '我的',
-      items: [{ key: 'notifications', label: '消息中心', path: '/notifications', icon: Bell }]
+      items: [
+        { key: 'notifications', label: '消息中心', path: '/notifications', icon: Bell },
+        { key: 'profile', label: '个人中心', path: '/profile', icon: User }
+      ]
     }
   ]
 }
@@ -152,7 +157,9 @@ const flatItems = computed(() => menus.value.flatMap((g) => g.items))
 
 const pageTitle = computed(() => {
   const hit = flatItems.value.find((i) => matchPath(i.path))
-  return hit ? hit.label : '概览'
+  if (hit) return hit.label
+  // 不在菜单里的页面（订单/商品详情、个人中心、404 等）用路由 meta.title 兜底
+  return route.meta?.title || '概览'
 })
 
 function matchPath(path) {
@@ -330,6 +337,16 @@ watch(() => route.path, () => unreadStore.refresh())
   border-radius: 11px;
   background: var(--fc-card-2);
   border: 1px solid var(--fc-line-soft);
+}
+
+.side-user.clickable {
+  cursor: pointer;
+  transition: border-color .15s ease, box-shadow .15s ease;
+}
+
+.side-user.clickable:hover {
+  border-color: var(--fc-brand-100);
+  box-shadow: var(--fc-sh-1);
 }
 
 .avatar {

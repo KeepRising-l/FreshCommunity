@@ -178,7 +178,9 @@ class SubscriptionApiTest extends ApiTestBase {
     }
 
     private long productIdByName(String token, String keyword) throws Exception {
-        for (JsonNode p : perform(get("/api/products"), token, null).data()) {
+        // 直接用检索接口的 keyword 参数（服务端模糊匹配），取命中结果的第一个
+        for (JsonNode p : perform(get("/api/products").param("keyword", keyword), token, null)
+                .data().path("records")) {
             if (p.path("name").asText().contains(keyword)) {
                 return p.path("id").asLong();
             }

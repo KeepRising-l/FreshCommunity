@@ -212,3 +212,65 @@
 - `cd backend && DB_PASSWORD=1234 mvn test`：**67 用例全绿**（52 基线 + `DashboardApiTest` 7 + `LeaderConsoleApiTest` 8）
 - `cd frontend && npm run build`：通过；主包 1.27MB，依赖未变
 - 本轮 E2E 在开发库留下团购 13/14、订单 31/32 作为演示数据；需要干净状态时重跑 `db/schema.sql` + `db/seed.sql`
+
+---
+
+## 八、目录检索·订单详情·个人中心·管理端实测（2026-10-25）
+
+- **变更**：`2026-10-25-catalog-retrieval-user-center-admin`（商品检索分页 / 订单详情与信息补全 / 修改密码与提货点维护 / 管理端订单列表与商品管理改造 / 平台修复清单）
+- **方法**：与 §四 相同——重建演示库（`schema.sql` + `seed.sql`，17 商品 / 6 分类 / 30 订单）→ 启动后端 → 对真实 HTTP 接口逐项断言（脚本为一次性工具，未入库）
+- **环境**：Spring Boot 8080 + MySQL `freshcommunity`，2026-10-25 实测
+
+### 8.1 商品检索（product-catalog）
+
+| # | 断言 | 实测结果 |
+| --- | --- | --- |
+| 1 | `GET /api/products?keyword=苹果` 只返回名称含「苹果」的在售商品 | ✅ total=1，红富士苹果 |
+| 2 | `?category=水果` 只返回该分类 | ✅ total=6，全部 category=水果 |
+| 3 | `?sort=price_asc` 首条为全场最低价 | ✅ 山东大葱 ¥5.50，且首条 ≤ 次条 |
+| 4 | `?page=2&size=5` 分页结构正确 | ✅ records=5、total=17、pages=4 |
+| 5 | `GET /api/products/categories` 与库内 DISTINCT 一致且升序 | ✅ 6 类升序 |
+| 6 | `GET /api/products/admin-list` 管理员可见全量 17 件 | ✅ total=17 |
+| 7 | 普通用户访问 admin-list | ✅ HTTP 403 + 统一 JSON（code=403） |
+
+### 8.2 订单详情与信息补全（order-lifecycle）
+
+| # | 断言 | 实测结果 |
+| --- | --- | --- |
+| 8 | `/api/orders/mine` 每单自带商品名与提货点 | ✅ D0001 → 红颜草莓 / 幸福小区便利店 / 红颜草莓 · 现摘现发 |
+| 9 | 本人查 `/api/orders/{id}` 含团长与提货点地址 | ✅ leader1 / 幸福小区东门 101 号 |
+| 10 | 他人订单 | ✅ HTTP 400「订单不存在」（不区分 404/403 防探测） |
+| 11 | 管理员查任意订单 | ✅ 200，orderNo=D0001 |
+| 12 | `/api/admin/orders?keyword=订单号` | ✅ total=1，含 buyerName=user1 与商品名 |
+| 13 | `?keyword=user1` 按买家搜索 | ✅ total=5（D0001/D0006/D0010/D0025/D0028） |
+| 14 | `?status=REFUNDED` 状态筛选 | ✅ total=5 且全部 REFUNDED |
+| 15 | 非管理员访问管理订单列表 | ✅ 403 |
+
+### 8.3 个人中心（user-roles）
+
+| # | 断言 | 实测结果 |
+| --- | --- | --- |
+| 16 | change-password 成功后旧密码登录 401、新密码 200 | ✅ |
+| 17 | 旧密码错误被拒 | ✅ 400「旧密码错误」 |
+| 18 | 团长改提货点后团购详情即时生效 | ✅ 改「E2E 临时提货点」→ 团购 4 详情同步；断言后已复原 |
+| 19 | 普通用户维护提货点被拒 | ✅ 400「仅团长可维护提货点信息」 |
+| 20 | `/api/auth/me` 返回注册时间 | ✅ 含 createdAt 字段 |
+
+### 8.4 上传加固与统一 401/403（修复回归）
+
+| # | 断言 | 实测结果 |
+| --- | --- | --- |
+| 21 | 上传 `.txt` | ✅ 400（旧实现会 500/落盘任意文件） |
+| 22 | 上传无扩展名文件 | ✅ 400（旧实现 `substring(-1)` 越界崩溃） |
+| 23 | 假 `.png` 扩展名 + text/plain 类型 | ✅ 400（双重校验生效） |
+| 24 | 合法 PNG | ✅ 200，返回 `/uploads/…` 路径 |
+| 25 | 无 token 访问受保护接口 | ✅ HTTP 401 + `{code:401,msg:未登录或登录已过期}`（旧为空体 403） |
+| 26 | 坏 token | ✅ 同样统一 401 |
+| 27 | 已登录无权限 | ✅ HTTP 403 + `{code:403}` |
+
+### 8.5 回归
+
+- `GET /api/group-buys` 列表结构正常，口碑标签批量查询（`topTagsBatch`）替代逐商品 N+1 后行为等价：每条记录均含 `insightTags` 列表字段 ✅
+- 集成测试：`DB_PASSWORD=1234 mvn test` → **89 用例全绿**（67 基线 + `ProductSearchApiTest` 7 + `OrderDetailApiTest` 5 + `ProfileApiTest` 5 + `UploadAndSecurityApiTest` 5）
+- 前端 `npm run build` 通过，依赖未变
+- E2E 临时账号 `e2e_tmp_user` 已从演示库清除，提货点改动已复原，种子数据保持纯净

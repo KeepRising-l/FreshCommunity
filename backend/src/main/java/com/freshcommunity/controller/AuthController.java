@@ -3,8 +3,10 @@ package com.freshcommunity.controller;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.freshcommunity.common.Result;
 import com.freshcommunity.common.UnauthorizedException;
+import com.freshcommunity.dto.ChangePasswordRequest;
 import com.freshcommunity.dto.LoginRequest;
 import com.freshcommunity.dto.LoginResponse;
+import com.freshcommunity.dto.ProfileUpdateRequest;
 import com.freshcommunity.dto.RegisterRequest;
 import com.freshcommunity.dto.UserVO;
 import com.freshcommunity.entity.User;
@@ -83,8 +85,65 @@ public class AuthController {
     @PreAuthorize("isAuthenticated()")
     public Result<UserVO> me(@RequestAttribute("userId") Long userId) {
         User user = userMapper.selectById(userId);
+        if (user == null) {
+            // 账号被逻辑删除后旧 token 仍在 24h 有效期内：明确 401 让前端走重新登录，而非 500
+            throw new UnauthorizedException("账号不存在或已注销");
+        }
         UserVO vo = new UserVO();
         BeanUtils.copyProperties(user, vo);
+        return Result.success(vo);
+    }
+
+    /**
+     * 修改密码：旧密码必须匹配，新密码合规（长度 6-32）且不得与旧密码相同。
+     * JWT 无黑名单，修改成功后旧 token 仍有效至过期——毕设口径，前端提示牢记新密码。
+     */
+    @PostMapping("/change-password")
+    @PreAuthorize("isAuthenticated()")
+    public Result<Void> changePassword(@RequestAttribute("userId") Long userId,
+                                       @Valid @RequestBody ChangePasswordRequest req) {
+        User user = userMapper.selectById(userId);
+        if (user == null) {
+            throw new UnauthorizedException("账号不存在或已注销");
+        }
+        if (!passwordEncoder.matches(req.getOldPassword(), user.getPassword())) {
+            throw new IllegalArgumentException("旧密码错误");
+        }
+        if (req.getOldPassword().equals(req.getNewPassword())) {
+            throw new IllegalArgumentException("新密码不能与旧密码相同");
+        }
+        User update = new User();
+        update.setId(userId);
+        update.setPassword(passwordEncoder.encode(req.getNewPassword()));
+        userMapper.updateById(update);
+        return Result.success();
+    }
+
+    /**
+     * 个人资料维护：当前仅团长有可维护字段（提货点名称/地址），
+     * 修改即时生效于其名下团购详情（详情读时实时取 user 表）。
+     */
+    @PutMapping("/profile")
+    @PreAuthorize("isAuthenticated()")
+    public Result<UserVO> updateProfile(@RequestAttribute("userId") Long userId,
+                                        @RequestAttribute("role") String role,
+                                        @Valid @RequestBody ProfileUpdateRequest req) {
+        if (!"LEADER".equals(role)) {
+            throw new IllegalArgumentException("仅团长可维护提货点信息");
+        }
+        String name = req.getPickupPointName() == null ? null : req.getPickupPointName().trim();
+        if (name == null || name.isEmpty()) {
+            throw new IllegalArgumentException("提货点名称不能为空");
+        }
+
+        User update = new User();
+        update.setId(userId);
+        update.setPickupPointName(name);
+        update.setPickupPointAddress(req.getPickupPointAddress() == null ? null : req.getPickupPointAddress().trim());
+        userMapper.updateById(update);
+
+        UserVO vo = new UserVO();
+        BeanUtils.copyProperties(userMapper.selectById(userId), vo);
         return Result.success(vo);
     }
 }

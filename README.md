@@ -10,9 +10,9 @@
 
 | 角色 | 能做什么 |
 | --- | --- |
-| 用户 | 自助注册/登录、浏览商品与评分、参加团购下单、模拟支付、取消未成团订单、查看订单与取货码、评价已完成订单、查看站内消息、AI 导购订阅 |
-| 团长 | 发起团购（选商品 + 设拼团价 / 成团人数 / 截止时间）、查看自己开的团与经营概览、输入取货码核销并查看最近核销记录 |
-| 管理员 | 商品增删改查（名称/价格/库存/图片）、数据看板（KPI + 订单状态分布 + 近 7 日趋势）、订单退款兜底 |
+| 用户 | 自助注册/登录、修改密码、按关键词/分类/排序/分页检索商品、浏览商品详情与评分、参加团购下单、模拟支付、取消未成团订单、查看订单列表与订单详情（含取货码）、评价已完成订单、查看站内消息、AI 导购订阅 |
+| 团长 | 发起团购（选商品 + 设拼团价 / 成团人数 / 截止时间）、查看自己开的团与经营概览、维护本人提货点、输入取货码核销并查看最近核销记录 |
+| 管理员 | 商品增删改查（名称/分类/描述/价格/库存/图片上传/上下架开关）、全量订单管理（状态筛选 + 订单号/买家搜索 + 退款兜底入口）、数据看板（KPI + 订单状态分布 + 近 7 日趋势） |
 
 **核心机制**
 
@@ -28,6 +28,11 @@
 - **站内消息**：六类事件自动发站内信 —— 成团、解散退款、待支付超时关单、核销成功、管理员退款、需求订阅命中；与状态变更同事务写入，含未读计数与标记已读
 - **AI 导购 · 需求订阅**：用户用一句话订阅商品与价格意向（如「10 元以内的苹果」）；解析为结构化条件（关键词 + 价格上限）→ 用户确认后创建订阅 → 匹配已有团与新开团，命中即发站内信（含口碑摘要）。解析走「LLM 优先、规则兜底」：配置了 OpenAI 兼容密钥则调用大模型并把口语词归一映射到在售商品名，无密钥或调用失败时自动回落正则规则解析，因此**默认无需任何外部服务即可运行演示**
 - **AI 导购 · 评价洞察**：定时任务（每 60 秒）扫描有文字、尚无分析记录的评价，生成情感倾向（正面/负面/中性）与关键词标签，写入 `review_analysis`；商品详情与团购详情返回高频口碑标签（`insightTags`），订阅命中提醒附「已有 N 人评价都说…」摘要。同样「LLM 优先、规则词典兜底」
+
+- **商品检索与分页**：商品带分类与描述属性；列表接口支持关键词（名称模糊）、分类、排序（最新/价格升降，白名单校验）与分页（`PageResult{records,total,current,size,pages}`），首次启用 MyBatis-Plus 分页拦截器；管理端另有含下架商品的全量列表
+- **订单信息补全**：「我的订单」/ 订单详情 / 管理端订单列表的 VO 由后端批量补全商品名、商品图、团购标题、团长与提货点（批量查询，无 N+1），前端不再自行拉商品做映射
+- **账号自助维护**：修改密码（旧密码校验 + 6-32 位 + 不得与旧密码相同）、团长维护提货点（即时生效于其名下团购）
+- **统一错误返回**：安全过滤链的 401/403 也走 `{code,msg,data}` JSON（未登录 401、无权限 403），500 兜底固定文案不泄漏内部异常；上传接口扩展名 + contentType 双重白名单校验
 
 **明确不做**：商家入驻、配送骑手、佣金结算、真实支付、限购/优惠券/秒杀、评价审核/敏感词、团长回复评价、外部推送通道（短信/App 推送）、App/小程序。支付为 `MockPayServiceImpl` 模拟实现，通过 `PayService` 接口预留了接真实支付的扩展点。
 
@@ -76,10 +81,11 @@ FreshCommunity/
 ├── frontend/                      # Vue 3 前端
 │   └── src/
 │       ├── views/                 # 认证：Login / Register；布局：Dashboard / Home；AI 导购：AiShoppingAssistant
-│       │                          # 用户：UserGroups / GroupBuyDetail / UserOrders /
+│       │                          # 用户：UserGroups / GroupBuyDetail / UserOrders / OrderDetail /
 │       │                          #       ProductList / ProductDetail / MyNotifications
 │       │                          # 团长：LeaderGroups / LeaderVerify
-│       │                          # 管理：AdminProducts / AdminDashboard
+│       │                          # 管理：AdminProducts / AdminOrders / AdminDashboard
+│       │                          # 通用：Profile（个人中心）/ NotFound（404）
 │       ├── components/            # 公共组件（StatusBadge / GroupBuyCard / OrderCard / StatCard 等）
 │       ├── styles/tokens.css      # 设计 token（品牌色，含 Element Plus 变量覆盖）
 │       ├── api/                   # 按模块拆分的接口封装（含 subscription.js）
@@ -88,7 +94,8 @@ FreshCommunity/
 │       └── utils/request.js       # Axios 实例
 ├── db/
 │   ├── schema.sql                 # 建库建表（9 张）+ 三个基础账号 + 3 个商品
-│   └── seed.sql                   # 丰富的演示数据集（可重复执行）
+│   ├── seed.sql                   # 丰富的演示数据集（可重复执行，商品含分类与描述）
+│   └── migrate-2026-10-25.sql     # 增量迁移：product 表补 category/description（已有库升级用）
 └── openspec/                      # 需求与设计文档（capability 规格、任务清单）
 ```
 
@@ -187,9 +194,14 @@ npm run dev
 | GET | `/api/health` | 健康检查 | 公开 |
 | POST | `/api/auth/register` | 自助注册（用户/团长），返回 JWT | 公开 |
 | POST | `/api/auth/login` | 登录，返回 JWT | 公开 |
-| GET | `/api/auth/me` | 当前用户信息 | 登录 |
-| GET | `/api/products` · `/api/products/{id}` | 商品列表 / 详情（详情含评分汇总） | 登录 |
-| POST/PUT/DELETE | `/api/products/**` | 商品增删改 | 管理员 |
+| GET | `/api/auth/me` | 当前用户信息（含注册时间） | 登录 |
+| POST | `/api/auth/change-password` | 修改密码（旧密码校验 + 6-32 位） | 登录 |
+| PUT | `/api/auth/profile` | 维护个人资料（团长提货点名称/地址） | 团长 |
+| GET | `/api/products?keyword=&category=&sort=&page=&size=` | 在售商品检索（名称模糊 / 分类 / 排序白名单 / 分页） | 登录 |
+| GET | `/api/products/categories` | 在售商品分类去重列表 | 登录 |
+| GET | `/api/products/{id}` | 商品详情（含评分汇总与口碑标签） | 登录 |
+| GET | `/api/products/admin-list?keyword=&status=&page=&size=` | 管理端全量商品列表（含下架） | 管理员 |
+| POST/PUT/DELETE | `/api/products/**` | 商品增删改（含分类/描述；空分类落「其他」） | 管理员 |
 | GET | `/api/group-buys` | 团购列表 | 登录 |
 | GET | `/api/group-buys/mine` | 我发起的团购 | 团长 |
 | GET | `/api/group-buys/mine/summary` | 团长经营概览（进行中团数 / 待取货 / 已核销 / 累计成交额） | 团长 |
@@ -199,10 +211,12 @@ npm run dev
 | POST | `/api/orders?groupBuyId=&quantity=` | 下单（原子扣库存） | 登录 |
 | POST | `/api/orders/{id}/pay` | 模拟支付 | 登录 |
 | POST | `/api/orders/{id}/cancel` | 取消（仅未成团） | 登录 |
-| GET | `/api/orders/mine` | 我的订单 | 登录 |
+| GET | `/api/orders/mine` | 我的订单（VO 含商品名/团购/团长/提货点） | 登录 |
+| GET | `/api/orders/{id}` | 订单详情（本人或管理员） | 登录 |
 | POST | `/api/orders/verify?pickupCode=` | 取货码核销 | 团长 |
 | GET | `/api/orders/verify-history` | 本人最近核销记录（最多 10 条，不含买家身份） | 团长 |
-| POST | `/api/orders/{id}/refund` | 退款兜底 | 管理员 |
+| POST | `/api/orders/{id}/refund` | 退款兜底（订单管理页入口） | 管理员 |
+| GET | `/api/admin/orders?status=&keyword=&page=&size=` | 管理端全量订单（keyword 匹配订单号或买家） | 管理员 |
 | POST | `/api/reviews` | 提交评价（仅已完成订单，一单一评） | 登录 |
 | GET | `/api/reviews/mine` | 我的评价 | 登录 |
 | GET | `/api/reviews/product/{id}` | 商品评价列表与评分汇总 | 登录 |
@@ -231,7 +245,7 @@ DB_PASSWORD=<你的MySQL密码> mvn test
 - 测试库由 `db/schema.sql` 自动初始化（库名替换为 `freshcommunity_test`），**不会动开发库 `freshcommunity`**
 - 每个测试方法带事务，结束自动回滚，用例之间互不污染
 - 数据库账号可用 `DB_USER` / `DB_PASSWORD` 环境变量覆盖，默认 `root` / `1234`
-- 测试源码目前包含 **67 个用例**（9 个测试类），覆盖认证、团购生命周期与库存、拼团价设置与校验、订阅匹配、LLM 解析降级、评价洞察、退款状态守卫、评价、站内消息与权限隔离、看板聚合口径、团长经营概览与核销记录；运行结果以最近一次实测报告为准
+- 测试源码目前包含 **89 个用例**（13 个测试类），覆盖认证、商品检索分页与分类、订单详情与信息补全、修改密码与提货点维护、管理端订单列表、上传白名单与统一 401/403 口径、团购生命周期与库存、拼团价设置与校验、订阅匹配、LLM 解析降级、评价洞察、退款状态守卫、评价、站内消息与权限隔离、看板聚合口径、团长经营概览与核销记录；最近一次实测（2026-10-25）全绿
 
 ---
 
@@ -247,7 +261,7 @@ DB_PASSWORD=<你的MySQL密码> mvn test
 
 ## 需求文档
 
-`openspec/` 目录下有 **11 个 capability 基线**（49 条 Requirement / 98 个 Scenario）、**4 个已归档变更**。
+`openspec/` 目录下有 **11 个 capability 基线**（56 条 Requirement / 122 个 Scenario）、**5 个已归档变更**。
 
 ```
 openspec/
@@ -261,7 +275,8 @@ openspec/
         ├── 2026-10-11-mvp-group-buying/
         ├── 2026-10-11-reviews-and-notifications/
         ├── 2026-10-17-ai-shopping-assistant/
-        └── 2026-10-23-admin-dashboard-and-leader-ui/
+        ├── 2026-10-23-admin-dashboard-and-leader-ui/
+        └── 2026-10-25-catalog-retrieval-user-center-admin/
 ```
 
 每个变更目录含 `proposal.md`（为什么做、边界）、`specs/`（delta 增量规格）、`design.md`（技术方案与取舍）、`tasks.md`（任务清单）；归档时 delta 合并进基线。完整工作流说明见 [`docs/openspec-guide.md`](docs/openspec-guide.md)。

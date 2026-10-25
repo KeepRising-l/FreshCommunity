@@ -39,6 +39,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                 );
                 SecurityContextHolder.getContext().setAuthentication(auth);
                 request.setAttribute("userId", Long.valueOf(claims.getSubject()));
+                request.setAttribute("role", role);
             } catch (Exception ignored) {
             }
         }

@@ -7,8 +7,8 @@
       <StatusBadge class="st" kind="order" :status="order.status" />
     </header>
 
-    <!-- 主体：商品 + 金额 -->
-    <div class="main">
+    <!-- 主体：商品 + 金额（点击进入订单详情） -->
+    <div class="main clickable" title="查看订单详情" @click="$emit('open', order)">
       <div class="thumb" :class="visual.gradient">{{ visual.emoji }}</div>
       <div class="info">
         <h4>{{ title }}</h4>
@@ -63,15 +63,15 @@ import { productVisual } from '../utils/visual'
 import { formatPrice, formatDateTime, splitCode } from '../utils/format'
 
 const props = defineProps({
-  /** 后端 Order 实体：{ id, orderNo, quantity, amount, status, pickupCode, createdAt, reviewed, ... } */
+  /** 订单（OrderVO：{ id, orderNo, quantity, amount, status, pickupCode, createdAt, reviewed, ... }） */
   order: { type: Object, required: true },
-  /** 后端订单接口暂不返回商品名与提货点，由调用方按需传入 */
+  /** 商品名与提货点，直接取订单 VO 冗余字段（o.productName / o.pickupPointName） */
   productTitle: { type: String, default: '' },
   pickupPointName: { type: String, default: '' },
   showActions: { type: Boolean, default: true }
 })
 
-defineEmits(['pay', 'cancel', 'review', 'show-code'])
+defineEmits(['pay', 'cancel', 'review', 'show-code', 'open'])
 
 const now = useNow()
 
@@ -164,6 +164,15 @@ const hint = computed(() => {
   align-items: center;
   gap: 16px;
   padding: 17px 20px;
+}
+
+.main.clickable {
+  cursor: pointer;
+  transition: background .15s ease;
+}
+
+.main.clickable:hover {
+  background: var(--fc-card-2);
 }
 
 .thumb {

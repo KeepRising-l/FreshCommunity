@@ -40,7 +40,17 @@
         <b v-if="f.count">{{ f.count }}</b>
       </span>
       <span class="spacer" />
-      <span class="sort">按截止时间排序</span>
+      <span class="sort-group">
+        <button
+          v-for="s in SORTS"
+          :key="s.value"
+          class="sort-btn"
+          :class="{ on: sort === s.value }"
+          @click="sort = s.value"
+        >
+          {{ s.label }}
+        </button>
+      </span>
     </div>
 
     <!-- 列表 -->
@@ -125,6 +135,13 @@ const all = ref([])
 const loading = ref(true)
 const filter = ref('all')
 
+/** 列表排序：综合为接口默认顺序（新开团优先），截止时间按 deadline 升序（客户端排即可，数据集为进行中团） */
+const SORTS = [
+  { value: 'default', label: '综合' },
+  { value: 'deadline', label: '即将截止' }
+]
+const sort = ref('default')
+
 const dialogVisible = ref(false)
 const submitting = ref(false)
 const quantity = ref(1)
@@ -151,9 +168,13 @@ const FILTERS = computed(() => [
 ])
 
 const visible = computed(() => {
-  if (filter.value === 'urgent') return all.value.filter(isUrgent)
-  if (filter.value === 'almost') return all.value.filter(isAlmost)
-  return all.value
+  let list = all.value
+  if (filter.value === 'urgent') list = list.filter(isUrgent)
+  if (filter.value === 'almost') list = list.filter(isAlmost)
+  if (sort.value === 'deadline') {
+    list = [...list].sort((a, b) => new Date(a.deadline) - new Date(b.deadline))
+  }
+  return list
 })
 
 const joinVisual = computed(() => productVisual(current.value?.productName || current.value?.title || ''))
@@ -380,16 +401,34 @@ onMounted(load)
   flex: 1;
 }
 
-.sort {
-  font-size: 12.5px;
-  color: var(--fc-ink-400);
+.sort-group {
+  display: inline-flex;
   border: 1px solid var(--fc-line);
   background: #fff;
   border-radius: var(--fc-r-pill);
+  overflow: hidden;
+}
+
+.sort-btn {
+  border: none;
+  background: none;
+  font-family: inherit;
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--fc-ink-400);
   height: 32px;
-  display: inline-flex;
-  align-items: center;
-  padding: 0 13px;
+  padding: 0 14px;
+  cursor: pointer;
+  transition: color .15s ease, background .15s ease;
+}
+
+.sort-btn:hover {
+  color: var(--fc-ink-700);
+}
+
+.sort-btn.on {
+  color: var(--fc-brand-700);
+  background: var(--fc-brand-50);
 }
 
 /* ---------- 网格 ---------- */

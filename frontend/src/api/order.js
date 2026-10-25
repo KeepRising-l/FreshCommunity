@@ -17,6 +17,14 @@ export function listMyOrders() {
 }
 
 /**
+ * 订单详情（本人或管理员）。VO 自带商品/团购/团长/提货点展示字段。
+ * @param {number|string} id 订单 id
+ */
+export function getOrder(id) {
+  return request.get('/orders/' + id)
+}
+
+/**
  * 核销取货码。
  * @param {string} code 6 位取货码
  * @param {{skipErrorToast?: boolean}} [options] 页面内自带结果条时传 skipErrorToast，
@@ -37,4 +45,12 @@ export function listVerifyHistory() {
 
 export function refundOrder(id) {
   return request.post('/orders/' + id + '/refund')
+}
+
+/**
+ * 管理端全量订单列表（ADMIN）：status 等值筛选，keyword 匹配订单号或买家用户名。
+ * @param {{status?: string, keyword?: string, page?: number, size?: number}} [params]
+ */
+export function listAdminOrders(params = {}) {
+  return request.get('/admin/orders', { params })
 }

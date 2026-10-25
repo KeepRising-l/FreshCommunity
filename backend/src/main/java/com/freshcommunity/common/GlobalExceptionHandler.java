@@ -1,5 +1,6 @@
 package com.freshcommunity.common;
 
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.dao.DuplicateKeyException;
 import org.springframework.http.HttpStatus;
@@ -12,6 +13,7 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.servlet.NoHandlerFoundException;
 import org.springframework.web.servlet.resource.NoResourceFoundException;
 
+@Slf4j
 @RestControllerAdvice
 public class GlobalExceptionHandler {
 
@@ -63,6 +65,8 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(Exception.class)
     @ResponseStatus(HttpStatus.INTERNAL_SERVER_ERROR)
     public Result<?> handleException(Exception e) {
-        return Result.error(500, e.getMessage());
+        // 完整堆栈进日志；对外固定文案，不外抛 e.getMessage()（可能含 SQL/路径等内部细节）
+        log.error("未预期异常：{} {}", e.getClass().getName(), e.getMessage(), e);
+        return Result.error(500, "服务开小差了，请稍后重试");
     }
 }

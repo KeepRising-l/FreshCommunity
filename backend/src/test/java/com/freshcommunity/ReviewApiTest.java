@@ -85,7 +85,8 @@ class ReviewApiTest extends ApiTestBase {
     @DisplayName("无评价时不返回误导性的 0 分")
     void noReviewMeansNoScore() throws Exception {
         String u1 = login("user1", "123456");
-        long otherProductId = perform(get("/api/products"), u1, null).data().get(1).path("id").asLong();
+        long otherProductId = perform(get("/api/products"), u1, null)
+                .data().path("records").get(1).path("id").asLong();
 
         JsonNode rating = perform(get("/api/reviews/product/" + otherProductId), u1, null)
                 .data().path("rating");

@@ -1,23 +1,33 @@
 package com.freshcommunity.service;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.core.metadata.IPage;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.freshcommunity.common.PageResult;
+import com.freshcommunity.dto.OrderVO;
 import com.freshcommunity.dto.VerifyRecordVO;
 import com.freshcommunity.entity.GroupBuy;
 import com.freshcommunity.entity.GroupBuyItem;
 import com.freshcommunity.entity.Order;
 import com.freshcommunity.entity.Product;
+import com.freshcommunity.entity.User;
 import com.freshcommunity.mapper.GroupBuyItemMapper;
 import com.freshcommunity.mapper.GroupBuyMapper;
 import com.freshcommunity.mapper.OrderMapper;
 import com.freshcommunity.mapper.ProductMapper;
+import com.freshcommunity.mapper.UserMapper;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.security.SecureRandom;
 import java.time.LocalDateTime;
+import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.Random;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 @Service
 public class OrderService {
@@ -28,16 +38,19 @@ public class OrderService {
     private final GroupBuyMapper groupBuyMapper;
     private final GroupBuyItemMapper groupBuyItemMapper;
     private final ProductMapper productMapper;
+    private final UserMapper userMapper;
     private final PayService payService;
     private final NotificationService notificationService;
 
     public OrderService(OrderMapper orderMapper, GroupBuyMapper groupBuyMapper,
                         GroupBuyItemMapper groupBuyItemMapper, ProductMapper productMapper,
-                        PayService payService, NotificationService notificationService) {
+                        UserMapper userMapper, PayService payService,
+                        NotificationService notificationService) {
         this.orderMapper = orderMapper;
         this.groupBuyMapper = groupBuyMapper;
         this.groupBuyItemMapper = groupBuyItemMapper;
         this.productMapper = productMapper;
+        this.userMapper = userMapper;
         this.payService = payService;
         this.notificationService = notificationService;
     }
@@ -201,12 +214,92 @@ public class OrderService {
                 new LambdaQueryWrapper<Order>().eq(Order::getGroupBuyId, groupBuyId).orderByDesc(Order::getCreatedAt));
     }
 
+    /**
+     * 订单详情：本人可查自己的，管理员可查任意一笔；其余一律按"订单不存在"拒绝，
+     * 不区分 404/403，避免越权探测。
+     */
+    public OrderVO detail(Long orderId, Long userId, String role) {
+        Order order = orderMapper.selectById(orderId);
+        if (order == null) {
+            throw new IllegalArgumentException("订单不存在");
+        }
+        boolean self = order.getUserId().equals(userId);
+        boolean admin = "ADMIN".equals(role);
+        if (!self && !admin) {
+            throw new IllegalArgumentException("订单不存在");
+        }
+        return enrich(List.of(order)).get(0);
+    }
+
+    /** 管理端订单分页列表（status 等值 + keyword 匹配订单号/买家用户名），join 直出补全字段。 */
+    public PageResult<OrderVO> pageForAdmin(String status, String keyword, long page, long size) {
+        IPage<OrderVO> result = orderMapper.pageForAdmin(
+                new Page<>(Math.max(page, 1), Math.min(Math.max(size, 1), 50)),
+                blankToNull(status), blankToNull(keyword));
+        return PageResult.from(result);
+    }
+
+    /**
+     * 批量补全订单展示字段（商品/团购/团长/提货点）：三类引用各一次 selectBatchIds，
+     * 在 Java 内组 map 回填——列表多大都是常数次查询，不做逐条 N+1。
+     * 关联数据被逻辑删除时字段留 null，前端回退占位展示。
+     */
+    public List<OrderVO> enrich(List<Order> orders) {
+        if (orders == null || orders.isEmpty()) {
+            return Collections.emptyList();
+        }
+        List<Long> productIds = orders.stream().map(Order::getProductId).distinct().toList();
+        List<Long> groupIds = orders.stream().map(Order::getGroupBuyId).distinct().toList();
+
+        Map<Long, Product> products = productIds.isEmpty() ? Collections.emptyMap()
+                : productMapper.selectBatchIds(productIds).stream()
+                        .collect(Collectors.toMap(Product::getId, Function.identity()));
+        Map<Long, GroupBuy> groups = groupIds.isEmpty() ? Collections.emptyMap()
+                : groupBuyMapper.selectBatchIds(groupIds).stream()
+                        .collect(Collectors.toMap(GroupBuy::getId, Function.identity()));
+
+        List<Long> leaderIds = groups.values().stream().map(GroupBuy::getLeaderId).distinct().toList();
+        Map<Long, User> leaders = leaderIds.isEmpty() ? Collections.emptyMap()
+                : userMapper.selectBatchIds(leaderIds).stream()
+                        .collect(Collectors.toMap(User::getId, Function.identity()));
+
+        return orders.stream().map(o -> {
+            OrderVO vo = OrderVO.from(o);
+            Product p = products.get(o.getProductId());
+            if (p != null) {
+                vo.setProductName(p.getName());
+                vo.setProductImage(p.getImageUrl());
+            }
+            GroupBuy gb = groups.get(o.getGroupBuyId());
+            if (gb != null) {
+                vo.setGroupBuyTitle(gb.getTitle());
+                User leader = leaders.get(gb.getLeaderId());
+                if (leader != null) {
+                    vo.setLeaderName(leader.getUsername());
+                    vo.setPickupPointName(leader.getPickupPointName());
+                    vo.setPickupPointAddress(leader.getPickupPointAddress());
+                }
+            }
+            return vo;
+        }).toList();
+    }
+
+    private String blankToNull(String s) {
+        if (s == null) {
+            return null;
+        }
+        String t = s.trim();
+        return t.isEmpty() ? null : t;
+    }
+
     public List<VerifyRecordVO> recentVerifiedByLeader(Long leaderId) {
         return orderMapper.findRecentVerifiedByLeader(leaderId);
     }
 
     private String generateOrderNo() {
-        return "O" + System.currentTimeMillis() + new Random().nextInt(1000);
+        // 毫秒时间戳 + 6 位随机数：同毫秒并发下碰撞概率 1/10^6，
+        // 撞上 order_no 唯一索引会落到 DuplicateKey 的 400 分支，量级上可忽略
+        return "O" + System.currentTimeMillis() + String.format("%06d", new Random().nextInt(1_000_000));
     }
 
     private String generatePickupCode() {

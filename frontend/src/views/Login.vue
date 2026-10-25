@@ -53,13 +53,14 @@
 
 <script setup>
 import { reactive, ref } from 'vue'
-import { useRouter } from 'vue-router'
+import { useRoute, useRouter } from 'vue-router'
 import { useUserStore } from '../stores/user'
 import { login as loginApi } from '../api/auth'
 
 const form = reactive({ username: '', password: '' })
 const loading = ref(false)
 const router = useRouter()
+const route = useRoute()
 const store = useUserStore()
 
 async function login() {
@@ -67,7 +68,9 @@ async function login() {
   try {
     const res = await loginApi(form)
     store.setUser(res.data.user, res.data.token)
-    router.push('/dashboard')
+    // 路由守卫未登录时会带上 redirect 来路，登录成功后优先回跳
+    const redirect = typeof route.query.redirect === 'string' ? route.query.redirect : ''
+    router.push(redirect && redirect.startsWith('/') ? redirect : '/dashboard')
   } catch (e) {
     // 错误提示已由请求拦截器统一处理
   } finally {

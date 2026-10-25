@@ -2,7 +2,7 @@
 
 > **用途**：答辩展示「做了什么、怎么做、还差什么」；与 `docs/requirements-analysis.md` 的功能编号逐条对应。
 > **状态口径**：✅ 已交付（功能可用且有验证）｜🔸 已交付 · 视觉简版｜🛠️ 代码已写、验证待补｜⬜ 待实施（已规划未开发）
-> **数据截至**：2026-10-23（源码数量按当前目录统计；测试运行结果为最近一次 `mvn test` 实测：67 用例全绿）
+> **数据截至**：2026-10-25（源码数量按当前目录统计；测试运行结果为最近一次 `mvn test` 实测：89 用例全绿）
 
 ---
 
@@ -10,13 +10,13 @@
 
 | 维度 | 数量 | 说明 |
 | --- | --- | --- |
-| 功能能力（capability） | **11 个基线能力已交付** | 现行基线 49 条 requirement / 98 个 scenario（`admin-dashboard-and-leader-ui` 归档并入 +7 req / +21 scenario） |
-| 后端接口 | **35 个** | 10 个 Controller，统一 `{code, msg, data}` 返回 |
+| 功能能力（capability） | **11 个基线能力已交付** | 现行基线 56 条 requirement / 122 个 scenario（2026-10-23 归档并入 +7 req / +21 scenario；2026-10-25 归档并入 +7 req / +24 scenario，含 2 条改写） |
+| 后端接口 | **43 个** | 10 个 Controller，统一 `{code, msg, data}` 返回 |
 | 数据库表 | **9 张** | 7 张交易与配套表 + `user_subscription` + `review_analysis` |
-| 前端页面 | **15 个** | 含 AI 导购页；另有 6 个公共组件 |
-| 自动化测试 | **67 个测试方法** | 9 个测试类；最近一次实测 `mvn test` 全绿 |
-| 规格实测 | **48 项断言 + AI 导购端到端 + 看板/团长端 16 项** | `docs/verification-report.md`（§一～五 为 MVP 基线；§六 AI 导购；§七 2026-10-23 看板与团长端） |
-| 待实施 / 待验证 | **看板与团长端已收尾** | 剩余为 P2 并发匹配可靠性（下一变更）与 P4 剩余界面（商品管理、移动端） |
+| 前端页面 | **19 个** | 含订单详情 / 个人中心 / 订单管理 / 404 页；另有 7 个公共组件 |
+| 自动化测试 | **89 个测试方法** | 13 个测试类；最近一次实测（2026-10-25）`mvn test` 全绿 |
+| 规格实测 | **48 项断言 + AI 导购端到端 + 看板/团长端 16 项 + 目录检索/订单/个人中心 33 项** | `docs/verification-report.md`（§一～五 为 MVP 基线；§六 AI 导购；§七 2026-10-23 看板与团长端；§八 2026-10-25 目录检索与订单/个人中心/管理端） |
+| 待实施 / 待验证 | **目录检索与订单/个人中心/管理端已收尾** | 剩余为 P2 并发匹配可靠性（下一变更）与 P4 移动端断点适配 |
 
 ---
 
@@ -29,7 +29,8 @@
 | FR-1-1 | 自助注册（用户名唯一 / BCrypt / 团长需提货点 / 拒绝 ADMIN） | ✅ | `AuthController.register` + `RegisterRequest` + `Register.vue` | `AuthApiTest`：registerSuccess / registerDuplicateUsernameRejected / registerAdminRejected / registerLeaderRequiresPickupPoint |
 | FR-1-2 | 登录与 JWT 身份识别 | ✅ | `AuthController.login` / `me` + `JwtUtil` | `AuthApiTest`：loginSuccess / loginWrongPasswordReturns401 |
 | FR-1-3 | 角色权限隔离 | ✅ | `SecurityConfig` + 各 Controller `@PreAuthorize` + 归属校验 | `GroupBuyFlowApiTest`：userCannotListGroupOrders / otherLeaderCannotListGroupOrders + verification-report §三 |
-| FR-1-4 | 团长提货点资料 | ✅ | `user` 表字段 + 团购详情 VO | `GroupBuyFlowApiTest.listContainsLeaderAndPickupPoint` |
+| FR-1-4 | 团长提货点资料（含本人维护） | ✅ | `user` 表字段 + 团购详情 VO + `PUT /api/auth/profile` + `Profile.vue` | `GroupBuyFlowApiTest.listContainsLeaderAndPickupPoint` + `ProfileApiTest.leaderUpdatesPickupPoint`（改后团购详情即时生效） |
+| FR-1-5 | 修改密码 | ✅ | `POST /api/auth/change-password` + `Profile.vue` | `ProfileApiTest`：改密成功后旧密码 401 / 新密码 200、旧密码错误 400、新旧相同 400 |
 
 ### FR-2 商品管理（product-catalog）—— 全部交付
 
@@ -37,8 +38,8 @@
 | --- | --- | --- | --- | --- |
 | FR-2-1 | 商品上架 | ✅ | `ProductController`（POST）+ `AdminProducts.vue` | verification-report §三（缺必填字段返回 400） |
 | FR-2-2 | 商品编辑（改价立即生效） | ✅ | `ProductController`（PUT / DELETE） | verification-report §三（改价立即生效） |
-| FR-2-3 | 商品浏览（列表 / 详情 / 搜索 / 评分汇总） | 🔸 | `ProductController`（GET）+ `ProductList.vue` / `ProductDetail.vue` | `ReviewApiTest.detailEndpointsExposeRating`；页面为功能简版（视觉未按设计稿精修） |
-| FR-2-4 | 商品图片上传（≤5MB，仅管理员） | ✅ | `FileController` + `application.yml`（max-file-size: 5MB） | verification-report §五（用户 403 / 管理员 200） |
+| FR-2-3 | 商品浏览（关键词 / 分类 / 排序 / 分页检索 + 详情 + 评分汇总） | ✅ | `ProductController`（GET 检索分页 + /categories + admin-list）+ `ProductList.vue` / `ProductDetail.vue`（按设计系统重做） | `ProductSearchApiTest`（7 用例：分页/关键词/分类/排序白名单/逻辑删除/管理端列表/默认分类）+ verification-report §八 |
+| FR-2-4 | 商品图片上传（≤5MB，仅管理员，图片白名单） | ✅ | `FileController`（扩展名+contentType 双校验）+ `AdminProducts.vue`（el-upload 接入） | `UploadAndSecurityApiTest`（txt 拒 / 无扩展名拒 / 假类型拒 / PNG 成功）+ verification-report §八 |
 
 ### FR-3 团购活动（group-buying）—— 全部交付
 
@@ -64,6 +65,7 @@
 | 编号 | 功能点 | 状态 | 实现位置 | 验证证据 |
 | --- | --- | --- | --- | --- |
 | FR-5-1 | 状态机合法流转 | ✅ | `OrderService` + `OrderMapper.updateStatus`（带预期状态条件） | verification-report §三（已成团不可取消等） |
+| FR-5-X | 订单详情与信息补全 | ✅ | `GET /api/orders/{id}`（本人或管理员）+ `OrderVO` 批量补全商品/团购/团长/提货点 + `OrderDetail.vue` | `OrderDetailApiTest`（5 用例：详情权限隔离/补全字段/删商品不报错/管理端搜索分页/权限） |
 | FR-5-2 | 待成团可取消（回补库存 / 递减人数 / 模拟退款） | ✅ | `OrderService.cancelOrder` | `GroupBuyFlowApiTest.cancelOrderRollsBackMemberCount` |
 | FR-5-3 | 成团后不可取消 | ✅ | `OrderService.cancelOrder` 状态守卫 | verification-report §三（已成团不可取消） |
 | FR-5-4 | 待支付 30 分钟超时关单 | ✅ | `ScheduledJobs.closePendingPaymentOrders` | `GroupBuyFlowApiTest.pendingPaymentOrderAutoClosed` |
@@ -119,7 +121,7 @@
 
 > **P2 匹配可靠性**（并发创建订阅与团购可能漏提醒）属 design.md 记录的首版已知缺口，明确不在本变更范围，留待后续演进。
 
-### FR-10 界面与交互（UI）—— 地基、用户端、团长端与管理看板已交付 / 商品管理与移动端待实施
+### FR-10 界面与交互（UI）—— 除移动端断点外全部交付
 
 | 编号 | 功能点 | 状态 | 实现位置 | 验证证据 |
 | --- | --- | --- | --- | --- |
@@ -127,12 +129,15 @@
 | FR-10-2 | 用户端主链路界面（广场 / 详情 / 订单 / 消息） | ✅ | `UserGroups` / `GroupBuyDetail` / `UserOrders` / `MyNotifications` 等 | 提交 `205f487`；预览图 `docs/ui-design/preview/` |
 | FR-10-3 | 团长端界面（我的团购经营 KPI / 差几人 / 核销进度；核销台专注模式 / 最近核销） | ✅ | `LeaderGroups.vue`、`LeaderVerify.vue` | `LeaderConsoleApiTest`（8 用例）+ verification-report §七 |
 | FR-10-4 | 管理端看板界面（KPI / 趋势 / 状态分布） | ✅ | `AdminDashboard.vue` | `DashboardApiTest` + verification-report §七 |
-| FR-10-6 | 管理端商品管理改良（搜索筛选 / 库存可视化；拆分自原 FR-10-4） | ⬜ | 现为裸 Element Plus（`AdminProducts.vue`） | — |
-| FR-10-5 | 响应式移动端（<768px / Tab Bar / ≥44px 触摸目标） | ⬜ | 11 屏设计稿就绪（`prototype-mobile.html`） | — |
+| FR-10-6 | 管理端商品管理（搜索筛选 / 校验 / 图片上传 / 上下架开关 / 分页） | ✅ | `AdminProducts.vue` 重做（tokens 设计系统） | verification-report §八（管理端列表与上传实测）；`npm run build` 通过 |
+| FR-10-7 | 管理端订单管理（全量列表 / 状态筛选 / 订单号与买家搜索 / 退款入口） | ✅ | `AdminOrders.vue` + `GET /api/admin/orders` | `OrderDetailApiTest.adminOrders*`（3 用例）+ verification-report §八 |
+| FR-10-8 | 个人中心（账号信息 / 修改密码 / 团长提货点维护） | ✅ | `Profile.vue` + `AuthController` 两个新接口 | `ProfileApiTest`（5 用例）+ verification-report §八 |
+| FR-10-9 | 前端角色路由守卫 + 404 页 + 登录回跳 | ✅ | `router/index.js`（meta.roles 守卫 / catch-all / redirect query）+ `NotFound.vue` | `npm run build` 通过；user1 直达 /admin/** 被弹回 /dashboard |
+| FR-10-5 | 响应式移动端（<768px / Tab Bar / ≥44px 触摸目标） | ⬜ | 11 屏设计稿就绪（`prototype-mobile.html`）；本轮已为商品详情/个人中心补窄屏适配，整站 Tab Bar 仍未做 | — |
 
 ---
 
-## 2. 后端接口清单（33 个）
+## 2. 后端接口清单（43 个：本轮 +8）
 
 > 权限三档：公开 / 登录 / 角色（LEADER、ADMIN）。「实现位置」为 Controller 文件；「验证」为自动化用例或实测断言来源。
 
@@ -176,27 +181,31 @@
 
 ---
 
-## 3. 前端页面清单（15 个）
+## 3. 前端页面清单（19 个：本轮 +4）
 
 | 页面 | 路由 | 视觉状态 | 说明 |
 | --- | --- | --- | --- |
 | Login.vue | `/login` | ✅ 设计系统 | 品牌叙事 + 表单，注册入口 |
-| Register.vue | `/register` | 🔸 待精修 | 功能完整（角色可选 / 团长须填提货点）；视觉为 EP 默认，未与登录页风格统一 |
+| Register.vue | `/register` | ✅ 设计系统 | 与登录页同款渐变背景 + 身份选择卡（团长须填提货点） |
 | Dashboard.vue | 布局 | ✅ 设计系统 | 按角色分组导航（一期），窄屏折叠 |
 | Home.vue | `/` | ✅ 设计系统 | 欢迎条 + 数据概览 + 快捷入口 |
 | UserGroups.vue | `/user/groups` | ✅ 设计系统 | 团购广场（二期） |
 | GroupBuyDetail.vue | `/user/groups/:id` | ✅ 设计系统 | 团购详情（二期，含口碑标签区） |
-| UserOrders.vue | `/user/orders` | ✅ 设计系统 | 我的订单：取货码票据 + 状态时间轴 + 评价入口 |
+| UserOrders.vue | `/user/orders` | ✅ 设计系统 | 我的订单：取货码票据 + 状态筛选 + 评价弹窗 + 卡片点击进详情（本轮消费订单 VO 冗余字段，弃用商品映射） |
 | MyNotifications.vue | `/user/notifications` | ✅ 设计系统 | 消息中心：六类图标 + 未读高亮 |
 | AiShoppingAssistant.vue | `/user/ai` | ✅ 设计系统 | 创建需求订阅、显示解析结果、查看与取消关注 |
-| ProductList.vue | `/user/products` | 🔸 简版 | 搜索筛选 + 空状态齐备；卡片样式未按设计稿精修 |
-| ProductDetail.vue | `/user/products/:id` | 🔸 简版 | 含评分展示与口碑标签区；视觉未精修 |
+| ProductList.vue | `/user/products` | ✅ 设计系统 | 服务端关键词/分类/排序检索 + 分页 + 骨架屏（本轮重做） |
+| ProductDetail.vue | `/user/products/:id` | ✅ 设计系统 | 大图区 + 价格卡 + 分类/描述 + 口碑标签（本轮重做） |
 | LeaderGroups.vue | `/leader/groups` | ✅ 设计系统 | 经营概览四卡 + 团购列表（还差几人 / 核销进度） |
 | LeaderVerify.vue | `/leader/verify` | ✅ 设计系统 | 核销台专注模式：大号等宽输入 + 常驻结果条 + 安全说明 + 最近核销记录 |
-| AdminProducts.vue | `/admin/products` | ⬜ 裸 EP | 功能可用，三期改造（搜索筛选 / 库存可视化） |
+| AdminProducts.vue | `/admin/products` | ✅ 设计系统 | 重做：表单校验 / 图片上传 / 上下架开关 / 分页（本轮）
+| OrderDetail.vue | `/user/orders/:id` | ✅ 设计系统 | 订单详情：状态卡 + 取货码票据 + 商品/团购/提货点信息（本轮新增）
+| Profile.vue | `/profile` | ✅ 设计系统 | 个人中心：账号信息 + 修改密码 + 团长提货点维护（本轮新增）
+| AdminOrders.vue | `/admin/orders` | ✅ 设计系统 | 管理端订单管理：筛选/搜索/分页/退款入口（本轮新增）
+| NotFound.vue | `/:pathMatch(.*)*` | ✅ 设计系统 | 404 友好页（本轮新增） |
 | AdminDashboard.vue | `/admin/dashboard` | ✅ 设计系统 | 5 张 KPI 卡 + 手绘 SVG 7 日趋势 + 订单状态分布条 + 空态 |
 
-公共组件（`src/components/`）：`StatusBadge` / `GroupBuyCard` / `OrderCard` / `StatCard` / `EmptyState` / `SkeletonList`。
+公共组件（`src/components/`）：`StatusBadge` / `GroupBuyCard` / `OrderCard` / `StatCard` / `EmptyState` / `SkeletonList` / `ReviewDialog`（评价弹窗，列表与详情页共用）。
 
 ---
 
@@ -215,11 +224,11 @@
 - ~~`LeaderGroups.vue`：经营 KPI、团购列表（差几人 / 核销数）~~ —— 已完成（2026-10-23 变更）
 - ~~`LeaderVerify.vue`：核销台专注模式（大输入框 / 大按钮 / 最近核销记录）~~ —— 已完成
 - ~~`AdminDashboard.vue`：KPI 卡 + 趋势折线 + 状态分布（落地 FR-7-3 看板扩展）~~ —— 已完成（最近订单列表未做）
-- `AdminProducts.vue`：搜索筛选、数据表格、库存可视化（低于 20% 转红）
+- ~~`AdminProducts.vue`：搜索筛选、数据表格、库存可视化~~ —— 已完成（2026-10-25 变更；库存可视化以低库存红字提示形式交付）
 - `<768px` 断点 + 底部 Tab Bar + 底部固定操作栏 + `env(safe-area-inset-bottom)`
 - 11 屏移动设计稿已就绪（`docs/ui-design/prototype-mobile.html`）：含取货码全屏票据、核销台自定义数字键盘
-- 登录 / 注册视觉统一；商品浏览 / 详情页视觉精修（对齐设计稿）
-- 列表分页（当前数据量小）、前端按需引入减包（当前主包约 1.27MB）
+- ~~登录 / 注册视觉统一；商品浏览 / 详情页视觉精修（对齐设计稿）~~ —— 已完成（2026-10-25 变更）
+- ~~列表分页（当前数据量小）~~ —— 商品/管理端订单/管理端商品已分页（2026-10-25 变更）；前端按需引入减包（当前主包约 1.27MB）待做
 - JWT 主动失效（黑名单 / refresh token）、取货码碰撞重试策略演进
 
 ---
@@ -228,8 +237,8 @@
 
 | 资产 | 内容 | 位置 |
 | --- | --- | --- |
-| 自动化测试 | 9 个测试类 / 67 个测试方法 | `backend/src/test/` |
-| 规格实测报告 | MVP 基线 48 项断言 + AI 导购端到端（2026-10-17）+ 看板与团长端 16 项（2026-10-23）；累计 9 个真实缺陷已修复转回归 | `docs/verification-report.md` |
+| 自动化测试 | 13 个测试类 / 89 个测试方法 | `backend/src/test/` |
+| 规格实测报告 | MVP 基线 48 项断言 + AI 导购端到端（2026-10-17）+ 看板与团长端 16 项（2026-10-23）+ 目录检索/订单/个人中心/管理端 33 项（2026-10-25）；累计 9 个真实缺陷已修复转回归 | `docs/verification-report.md` |
 | 需求基线 | 11 capability / 42 req / 77 scenario | `openspec/specs/` |
 | 变更归档 | 4 个已归档变更（最新：`2026-10-23-admin-dashboard-and-leader-ui`） | `openspec/changes/` |
 | 设计资产 | 设计规范 + 双端原型 + 31 张预览图 | `docs/ui-design/` |

@@ -1,6 +1,7 @@
 package com.freshcommunity.controller;
 
 import com.freshcommunity.common.Result;
+import com.freshcommunity.dto.OrderVO;
 import com.freshcommunity.dto.VerifyRecordVO;
 import com.freshcommunity.entity.Order;
 import com.freshcommunity.service.OrderService;
@@ -42,14 +43,24 @@ public class OrderController {
         return Result.success();
     }
 
+    /** 本人订单列表：VO 自带商品/团购/团长/提货点展示字段，前端无需再拉商品列表做映射。 */
     @GetMapping("/mine")
-    public Result<List<Order>> mine(@RequestAttribute("userId") Long userId) {
+    public Result<List<OrderVO>> mine(@RequestAttribute("userId") Long userId) {
         List<Order> orders = orderService.listByUser(userId);
         Set<Long> reviewedOrderIds = new HashSet<>(reviewService.reviewedOrderIds(userId));
-        for (Order o : orders) {
-            o.setReviewed(reviewedOrderIds.contains(o.getId()));
+        List<OrderVO> vos = orderService.enrich(orders);
+        for (OrderVO vo : vos) {
+            vo.setReviewed(reviewedOrderIds.contains(vo.getId()));
         }
-        return Result.success(orders);
+        return Result.success(vos);
+    }
+
+    /** 订单详情：本人或管理员可查（订单详情页数据源）。 */
+    @GetMapping("/{id}")
+    public Result<OrderVO> detail(@RequestAttribute("userId") Long userId,
+                                  @RequestAttribute("role") String role,
+                                  @PathVariable Long id) {
+        return Result.success(orderService.detail(id, userId, role));
     }
 
     @PostMapping("/verify")

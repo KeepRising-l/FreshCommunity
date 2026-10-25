@@ -11,6 +11,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -93,20 +94,41 @@ public class ReviewAnalysisService {
 
     /** 该商品高频口碑标签 top N（无数据返回空列表）。 */
     public List<String> topTags(Long productId, int limit) {
-        List<String> tagStrings = analysisMapper.findTagsByProduct(productId);
-        if (tagStrings.isEmpty()) {
-            return List.of();
+        return topTags(List.of(productId), limit).getOrDefault(productId, List.of());
+    }
+
+    /**
+     * 批量版口碑标签：一次 IN 查询取多个商品的标签串，内存分组聚合。
+     * 团购列表页对每个商品逐个调 topTags 会形成 N+1 查询，列表场景一律走这里。
+     */
+    public Map<Long, List<String>> topTags(List<Long> productIds, int limit) {
+        if (productIds == null || productIds.isEmpty()) {
+            return Map.of();
         }
-        Map<String, Long> freq = tagStrings.stream()
-                .flatMap(s -> List.of(s.split(",")).stream())
-                .map(String::trim)
-                .filter(s -> !s.isEmpty())
-                .collect(Collectors.groupingBy(s -> s, Collectors.counting()));
-        return freq.entrySet().stream()
-                .sorted(Map.Entry.<String, Long>comparingByValue().reversed())
-                .limit(limit)
-                .map(Map.Entry::getKey)
-                .toList();
+        Map<Long, List<String>> tagStringsByProduct = new HashMap<>();
+        for (Map<String, Object> row : analysisMapper.findTagRowsByProducts(productIds)) {
+            Long pid = ((Number) row.get("productId")).longValue();
+            tagStringsByProduct.computeIfAbsent(pid, k -> new ArrayList<>()).add((String) row.get("tags"));
+        }
+        Map<Long, List<String>> result = new LinkedHashMap<>();
+        for (Long productId : productIds) {
+            List<String> tagStrings = tagStringsByProduct.getOrDefault(productId, List.of());
+            if (tagStrings.isEmpty()) {
+                result.put(productId, List.of());
+                continue;
+            }
+            Map<String, Long> freq = tagStrings.stream()
+                    .flatMap(s -> List.of(s.split(",")).stream())
+                    .map(String::trim)
+                    .filter(s -> !s.isEmpty())
+                    .collect(Collectors.groupingBy(s -> s, Collectors.counting()));
+            result.put(productId, freq.entrySet().stream()
+                    .sorted(Map.Entry.<String, Long>comparingByValue().reversed())
+                    .limit(limit)
+                    .map(Map.Entry::getKey)
+                    .toList());
+        }
+        return result;
     }
 
     /** 该商品被分析的评价数（供提醒摘要"已有 N 人评价"）。 */

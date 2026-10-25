@@ -29,39 +29,18 @@
         v-for="o in visible"
         :key="o.id"
         :order="o"
-        :product-title="productName(o.productId)"
+        :product-title="o.productName || ''"
+        :pickup-point-name="o.pickupPointName || ''"
         @pay="pay"
         @cancel="cancel"
-        @review="openReview"
+        @review="openReview(o)"
         @show-code="showCode"
+        @open="goDetail"
       />
     </div>
 
-    <!-- 评价弹窗 -->
-    <el-dialog v-model="reviewVisible" title="评价订单" width="440px">
-      <el-form label-width="80px">
-        <el-form-item label="商品评分">
-          <el-rate v-model="reviewForm.productScore" />
-        </el-form-item>
-        <el-form-item label="团长评分">
-          <el-rate v-model="reviewForm.leaderScore" />
-        </el-form-item>
-        <el-form-item label="评论">
-          <el-input
-            v-model="reviewForm.content"
-            type="textarea"
-            :rows="3"
-            maxlength="500"
-            show-word-limit
-            placeholder="说点什么吧（选填）"
-          />
-        </el-form-item>
-      </el-form>
-      <template #footer>
-        <el-button @click="reviewVisible = false">取消</el-button>
-        <el-button type="primary" :loading="submitting" @click="submitReviewForm">提交评价</el-button>
-      </template>
-    </el-dialog>
+    <!-- 评价弹窗（公共组件，订单详情页共用） -->
+    <ReviewDialog v-model:visible="reviewVisible" :order="reviewTarget" @submitted="load" />
 
     <!-- 取货码弹窗 -->
     <el-dialog v-model="codeVisible" title="取货凭证" width="400px">
@@ -70,7 +49,7 @@
           <div class="ticket-ok">
             <el-icon><CircleCheckFilled /></el-icon>
           </div>
-          <b>{{ productName(codeOrder.productId) || '你的商品' }}</b>
+          <b>{{ codeOrder.productName || '你的商品' }}</b>
           <span>数量 × {{ codeOrder.quantity }}</span>
         </div>
 
@@ -105,32 +84,24 @@ import { useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
 import { CircleCheckFilled } from '@element-plus/icons-vue'
 import OrderCard from '../components/OrderCard.vue'
+import ReviewDialog from '../components/ReviewDialog.vue'
 import SkeletonList from '../components/SkeletonList.vue'
 import EmptyState from '../components/EmptyState.vue'
 import { listMyOrders, payOrder, cancelOrder } from '../api/order'
-import { listProducts } from '../api/product'
-import { submitReview } from '../api/review'
 import { ORDER_STATUS_TABS } from '../constants/status'
 import { formatPrice, formatDateTime, splitCode } from '../utils/format'
 
 const router = useRouter()
 
 const orders = ref([])
-const productMap = ref({})
 const loading = ref(true)
 const status = ref('')
 
 const reviewVisible = ref(false)
-const submitting = ref(false)
-const reviewForm = ref({ orderId: null, productScore: 0, leaderScore: 0, content: '' })
+const reviewTarget = ref(null)
 
 const codeVisible = ref(false)
 const codeOrder = ref(null)
-
-/** 订单接口不返回商品名，用商品列表做一次 productId → name 映射 */
-function productName(productId) {
-  return productMap.value[productId] || ''
-}
 
 const tabs = computed(() =>
   ORDER_STATUS_TABS.map((t) => ({
@@ -143,16 +114,12 @@ const visible = computed(() =>
   status.value ? orders.value.filter((o) => o.status === status.value) : orders.value
 )
 
+/** 订单 VO 已自带商品/提货点字段，不再拉全量商品做映射 */
 async function load() {
   loading.value = true
   try {
-    const [orderRes, productRes] = await Promise.all([listMyOrders(), listProducts()])
-    orders.value = orderRes.data || []
-    const map = {}
-    for (const p of productRes.data || []) {
-      map[p.id] = p.name
-    }
-    productMap.value = map
+    const res = await listMyOrders()
+    orders.value = res.data || []
   } catch (e) {
     orders.value = []
   } finally {
@@ -173,37 +140,17 @@ async function cancel(order) {
 }
 
 function openReview(order) {
-  reviewForm.value = { orderId: order.id, productScore: 0, leaderScore: 0, content: '' }
+  reviewTarget.value = order
   reviewVisible.value = true
-}
-
-async function submitReviewForm() {
-  const f = reviewForm.value
-  if (!f.productScore || !f.leaderScore) {
-    ElMessage.warning('商品评分与团长评分均为必填')
-    return
-  }
-  submitting.value = true
-  try {
-    await submitReview({
-      orderId: f.orderId,
-      productScore: f.productScore,
-      leaderScore: f.leaderScore,
-      content: f.content
-    })
-    ElMessage.success('评价成功')
-    reviewVisible.value = false
-    load()
-  } catch (e) {
-    // 错误提示已由请求拦截器统一处理
-  } finally {
-    submitting.value = false
-  }
 }
 
 function showCode(order) {
   codeOrder.value = order
   codeVisible.value = true
+}
+
+function goDetail(order) {
+  router.push('/user/orders/' + order.id)
 }
 
 onMounted(load)
@@ -214,6 +161,9 @@ onMounted(load)
   display: flex;
   flex-direction: column;
   gap: 18px;
+  max-width: 860px;
+  margin: 0 auto;
+  width: 100%;
 }
 
 .tabs {

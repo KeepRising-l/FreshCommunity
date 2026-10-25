@@ -124,8 +124,9 @@ public abstract class ApiTestBase {
 
     // ---------- 业务流程辅助 ----------
 
+    /** /api/products 已是分页结构（{records,total,...}），取第一页第一条 */
     protected long firstProductId(String token) throws Exception {
-        return perform(get("/api/products"), token, null).data().get(0).path("id").asLong();
+        return perform(get("/api/products"), token, null).data().path("records").get(0).path("id").asLong();
     }
 
     protected long productStock(String token, long productId) throws Exception {

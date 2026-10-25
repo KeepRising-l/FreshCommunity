@@ -8,6 +8,7 @@ import com.baomidou.mybatisplus.annotation.TableName;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Size;
 import lombok.Data;
 
 import java.math.BigDecimal;
@@ -22,6 +23,9 @@ public class Product {
     @NotBlank(message = "商品名称不能为空")
     private String name;
 
+    /** 分类（自由文本），为空时由服务端落默认「其他」 */
+    private String category;
+
     @NotNull(message = "价格不能为空")
     private BigDecimal price;
 
@@ -30,6 +34,9 @@ public class Product {
     private Integer stock;
 
     private String imageUrl;
+
+    @Size(max = 500, message = "商品描述不能超过 500 字")
+    private String description;
     private Integer status;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;

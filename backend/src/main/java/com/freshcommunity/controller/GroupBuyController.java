@@ -9,7 +9,6 @@ import com.freshcommunity.dto.RatingVO;
 import com.freshcommunity.dto.UserVO;
 import com.freshcommunity.entity.GroupBuy;
 import com.freshcommunity.entity.GroupBuyItem;
-import com.freshcommunity.entity.Order;
 import com.freshcommunity.entity.Product;
 import com.freshcommunity.entity.User;
 import com.freshcommunity.mapper.GroupBuyItemMapper;
@@ -42,17 +41,20 @@ public class GroupBuyController {
     private final ReviewAnalysisService reviewAnalysisService;
     private final GroupBuyItemMapper groupBuyItemMapper;
     private final ProductMapper productMapper;
+    private final com.freshcommunity.service.OrderService orderService;
 
     public GroupBuyController(GroupBuyService groupBuyService, UserMapper userMapper,
                               ReviewService reviewService, ReviewAnalysisService reviewAnalysisService,
                               GroupBuyItemMapper groupBuyItemMapper,
-                              ProductMapper productMapper) {
+                              ProductMapper productMapper,
+                              com.freshcommunity.service.OrderService orderService) {
         this.groupBuyService = groupBuyService;
         this.userMapper = userMapper;
         this.reviewService = reviewService;
         this.reviewAnalysisService = reviewAnalysisService;
         this.groupBuyItemMapper = groupBuyItemMapper;
         this.productMapper = productMapper;
+        this.orderService = orderService;
     }
 
     /**
@@ -97,9 +99,8 @@ public class GroupBuyController {
         if (!productIds.isEmpty()) {
             products = productMapper.selectBatchIds(productIds).stream()
                     .collect(Collectors.toMap(Product::getId, p -> p));
-            for (Long pid : productIds) {
-                tagsByProduct.put(pid, reviewAnalysisService.topTags(pid, 5));
-            }
+            // 一次 IN 查询取全部商品的口碑标签，替代逐商品 N+1
+            tagsByProduct = reviewAnalysisService.topTags(new ArrayList<>(productIds), 5);
         }
 
         List<GroupBuyListVO> vos = new ArrayList<>();
@@ -173,9 +174,10 @@ public class GroupBuyController {
 
     @GetMapping("/{id}/orders")
     @PreAuthorize("hasRole('LEADER')")
-    public Result<List<Order>> orders(@PathVariable Long id,
-                                      @RequestAttribute("userId") Long leaderId) {
-        return Result.success(groupBuyService.listOrdersForLeader(id, leaderId));
+    public Result<List<com.freshcommunity.dto.OrderVO>> orders(@PathVariable Long id,
+                                                               @RequestAttribute("userId") Long leaderId) {
+        // VO 补全商品/提货点等展示字段，团长端"查看订单"弹窗不再需要前端自行拼
+        return Result.success(orderService.enrich(groupBuyService.listOrdersForLeader(id, leaderId)));
     }
 
     /**

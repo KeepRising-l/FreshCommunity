@@ -1,7 +1,10 @@
 package com.freshcommunity.mapper;
 
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
+import com.baomidou.mybatisplus.core.metadata.IPage;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.freshcommunity.dto.AdminDashboardVO;
+import com.freshcommunity.dto.OrderVO;
 import com.freshcommunity.dto.VerifyRecordVO;
 import com.freshcommunity.entity.Order;
 import org.apache.ibatis.annotations.Mapper;
@@ -73,4 +76,33 @@ public interface OrderMapper extends BaseMapper<Order> {
             "AND o.deleted = 0 AND gb.deleted = 0 " +
             "ORDER BY o.updated_at DESC LIMIT 10")
     List<VerifyRecordVO> findRecentVerifiedByLeader(@Param("leaderId") Long leaderId);
+
+    // ---------- 管理端订单列表（join 直出 OrderVO 展示字段） ----------
+    // 手写 SQL 不自动追加逻辑删除条件：主表 o 显式带 deleted=0；
+    // join 侧把 deleted 条件放进 ON 而非 WHERE——商品/买家被删时 LEFT JOIN 得 null，订单行仍在。
+
+    /**
+     * 管理端全量订单分页：status 等值筛选、keyword 同时匹配订单号或买家用户名（均模糊）。
+     * MyBatis-Plus 分页插件按 Page 参数自动拼 LIMIT 并回填 total。
+     */
+    @Select("SELECT o.id, o.order_no AS orderNo, o.user_id AS userId, o.group_buy_id AS groupBuyId, " +
+            "o.product_id AS productId, o.quantity, o.amount, o.status, o.pickup_code AS pickupCode, " +
+            "o.pay_time AS payTime, o.created_at AS createdAt, o.updated_at AS updatedAt, " +
+            "p.name AS productName, p.image_url AS productImage, " +
+            "gb.title AS groupBuyTitle, u2.username AS leaderName, " +
+            "u2.pickup_point_name AS pickupPointName, u2.pickup_point_address AS pickupPointAddress, " +
+            "u.username AS buyerName " +
+            "FROM `order` o " +
+            "LEFT JOIN product p ON o.product_id = p.id AND p.deleted = 0 " +
+            "LEFT JOIN group_buy gb ON o.group_buy_id = gb.id AND gb.deleted = 0 " +
+            "LEFT JOIN `user` u2 ON gb.leader_id = u2.id AND u2.deleted = 0 " +
+            "LEFT JOIN `user` u ON o.user_id = u.id AND u.deleted = 0 " +
+            "WHERE o.deleted = 0 " +
+            "AND (#{status} IS NULL OR o.status = #{status}) " +
+            "AND (#{keyword} IS NULL OR o.order_no LIKE CONCAT('%', #{keyword}, '%') " +
+            "     OR u.username LIKE CONCAT('%', #{keyword}, '%')) " +
+            "ORDER BY o.created_at DESC")
+    IPage<OrderVO> pageForAdmin(Page<OrderVO> page,
+                                @Param("status") String status,
+                                @Param("keyword") String keyword);
 }
