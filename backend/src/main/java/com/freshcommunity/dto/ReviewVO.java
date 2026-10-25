@@ -13,6 +13,9 @@ public class ReviewVO {
     private Integer productScore;
     private Integer leaderScore;
     private String content;
+    /** 团长回复（一层，未回复为 null） */
+    private String leaderReply;
+    private LocalDateTime leaderRepliedAt;
     private String username;
     private LocalDateTime createdAt;
 }

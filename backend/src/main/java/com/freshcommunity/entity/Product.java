@@ -51,4 +51,7 @@ public class Product {
     /** 口碑标签（来自评价洞察），非数据库字段，仅详情接口填充 */
     @TableField(exist = false)
     private java.util.List<String> insightTags;
+    /** 图集（多图），非数据库字段，仅详情接口填充；首图即 imageUrl */
+    @TableField(exist = false)
+    private java.util.List<String> images;
 }

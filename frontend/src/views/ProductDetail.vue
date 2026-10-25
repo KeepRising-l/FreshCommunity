@@ -21,9 +21,23 @@
     <template v-else>
       <!-- 主信息区 -->
       <div class="hero fc-card">
-        <div class="visual" :class="visual.gradient">
-          <img v-if="product.imageUrl" :src="product.imageUrl" :alt="product.name" />
-          <span v-else class="emoji">{{ visual.emoji }}</span>
+        <div class="gallery">
+          <div class="visual" :class="visual.gradient">
+            <img v-if="gallery.length" :src="gallery[activeImage]" :alt="product.name" />
+            <span v-else class="emoji">{{ visual.emoji }}</span>
+          </div>
+          <div v-if="gallery.length > 1" class="thumbs">
+            <button
+              v-for="(img, i) in gallery"
+              :key="i"
+              class="thumb-btn"
+              :class="{ on: i === activeImage }"
+              @mouseenter="activeImage = i"
+              @click="activeImage = i"
+            >
+              <img :src="img" :alt="`${product.name} ${i + 1}`" loading="lazy" />
+            </button>
+          </div>
         </div>
 
         <div class="info">
@@ -96,8 +110,29 @@
               </div>
             </div>
             <p v-if="r.content" class="review-content">{{ r.content }}</p>
+            <div v-if="r.leaderReply" class="leader-reply">
+              <b>团长回复</b>
+              <span>{{ r.leaderReply }}</span>
+            </div>
           </li>
         </ul>
+      </section>
+
+      <!-- 同分类推荐：看了又看 -->
+      <section v-if="similar.length" class="fc-card similar">
+        <h3 class="fc-section-title">看了又看</h3>
+        <div class="similar-grid">
+          <article v-for="sp in similar" :key="sp.id" class="similar-card" @click="goProduct(sp.id)">
+            <div class="similar-thumb">
+              <img v-if="sp.imageUrl" :src="sp.imageUrl" :alt="sp.name" loading="lazy" />
+              <span v-else>{{ (sp.name || '🧺').slice(0, 1) }}</span>
+            </div>
+            <div class="similar-info">
+              <b>{{ sp.name }}</b>
+              <em class="fc-price"><i>¥</i>{{ formatMoney(sp.price) }}</em>
+            </div>
+          </article>
+        </div>
       </section>
     </template>
   </div>
@@ -107,7 +142,7 @@
 import { computed, onMounted, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { ArrowRight } from '@element-plus/icons-vue'
-import { getProduct } from '../api/product'
+import { getProduct, getSimilarProducts } from '../api/product'
 import { getProductReviews } from '../api/review'
 import EmptyState from '../components/EmptyState.vue'
 import SkeletonList from '../components/SkeletonList.vue'
@@ -119,6 +154,14 @@ const router = useRouter()
 
 const product = ref({})
 const reviews = ref([])
+const similar = ref([])
+const activeImage = ref(0)
+
+const gallery = computed(() => {
+  const imgs = product.value.images || []
+  if (imgs.length) return imgs
+  return product.value.imageUrl ? [product.value.imageUrl] : []
+})
 const loading = ref(true)
 
 const insightTags = computed(() => product.value.insightTags || [])
@@ -141,7 +184,15 @@ onMounted(async () => {
   } finally {
     loading.value = false
   }
+  // 同分类推荐：失败静默（区块直接隐藏）
+  getSimilarProducts(id, 4)
+    .then((res) => (similar.value = res.data || []))
+    .catch(() => (similar.value = []))
 })
+
+function goProduct(id) {
+  router.push('/user/products/' + id)
+}
 </script>
 
 <style scoped>
@@ -179,6 +230,126 @@ onMounted(async () => {
   gap: 28px;
   padding: 24px;
   margin-bottom: 16px;
+}
+
+.gallery {
+  width: 300px;
+  flex: none;
+  display: flex;
+  flex-direction: column;
+  gap: 9px;
+}
+
+.thumbs {
+  display: flex;
+  gap: 7px;
+  flex-wrap: wrap;
+}
+
+.thumb-btn {
+  width: 52px;
+  height: 52px;
+  border-radius: var(--fc-r-sm);
+  border: 2px solid transparent;
+  overflow: hidden;
+  padding: 0;
+  cursor: pointer;
+  background: var(--fc-card-2);
+  transition: border-color .15s ease;
+}
+
+.thumb-btn.on {
+  border-color: var(--fc-brand);
+}
+
+.thumb-btn img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.leader-reply {
+  margin: 8px 0 0 45px;
+  padding: 9px 13px;
+  background: var(--fc-brand-50);
+  border-left: 3px solid var(--fc-brand);
+  border-radius: 0 var(--fc-r-sm) var(--fc-r-sm) 0;
+  font-size: 12.5px;
+  line-height: 1.7;
+}
+
+.leader-reply b {
+  color: var(--fc-brand-700);
+  margin-right: 8px;
+}
+
+.leader-reply span {
+  color: var(--fc-ink-700);
+}
+
+.similar {
+  padding: 20px 24px;
+}
+
+.similar-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  gap: 12px;
+  margin-top: 14px;
+}
+
+.similar-card {
+  display: flex;
+  gap: 10px;
+  padding: 10px;
+  border: 1px solid var(--fc-line);
+  border-radius: var(--fc-r);
+  cursor: pointer;
+  transition: all .15s ease;
+}
+
+.similar-card:hover {
+  border-color: var(--fc-brand-100);
+  box-shadow: var(--fc-sh-1);
+}
+
+.similar-thumb {
+  width: 44px;
+  height: 44px;
+  border-radius: 10px;
+  flex: none;
+  display: grid;
+  place-items: center;
+  overflow: hidden;
+  background: var(--fc-brand-50);
+  color: var(--fc-brand-700);
+  font-weight: 700;
+}
+
+.similar-thumb img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.similar-info {
+  min-width: 0;
+}
+
+.similar-info b {
+  display: block;
+  font-size: 12.5px;
+  color: var(--fc-ink-900);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  margin-bottom: 4px;
+}
+
+.similar-info em {
+  font-style: normal;
+  font-size: 13.5px;
 }
 
 .visual {

@@ -103,6 +103,15 @@ INSERT INTO product (id, name, category, price, stock, image_url, description, s
 (40, '五常大米 5kg', '粮油调味', 39.90,  65, '/images/products/p40.jpg', '五常稻花香，米油厚润饭香扑鼻', 1),
 (41, '压榨花生油 1.8L', '粮油调味', 79.90, 50, '/images/products/p41.jpg', '物理压榨花生油，炒菜更香', 1);
 
+-- 明星商品补第二张图（图库演示）：草莓/红富士/花牛 各两张，第二张复用近邻素材
+INSERT INTO product_image (product_id, image_url, sort) VALUES
+(1,  '/images/products/p01.jpg', 0),
+(1,  '/images/products/p18.jpg', 1),
+(2,  '/images/products/p02.jpg', 0),
+(2,  '/images/products/p17.jpg', 1),
+(19, '/images/products/p19.jpg', 0),
+(19, '/images/products/p18.jpg', 1);
+
 -- -------------------------------------------------------------------- 团购活动
 -- 1-3   今日成团（updated_at = 今天 → 计入看板"今日成团数"）
 -- 4-7   进行中（其中 7 即将截止）

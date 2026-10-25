@@ -30,6 +30,15 @@ public interface ReviewMapper extends BaseMapper<Review> {
             + "ORDER BY r.created_at DESC")
     List<ReviewVO> listVOByProduct(@Param("productId") Long productId);
 
+    @Select("SELECT r.*, u.username AS username, p.name AS productName, o.order_no AS orderNo "
+            + "FROM review r "
+            + "LEFT JOIN user u ON u.id = r.user_id "
+            + "LEFT JOIN product p ON p.id = r.product_id "
+            + "LEFT JOIN `order` o ON o.id = r.order_id "
+            + "WHERE r.leader_id = #{leaderId} AND r.deleted = 0 "
+            + "ORDER BY r.created_at DESC")
+    List<com.freshcommunity.dto.LeaderReviewVO> listByLeader(@Param("leaderId") Long leaderId);
+
     @Select("SELECT order_id FROM review WHERE user_id = #{userId} AND deleted = 0")
     List<Long> findOrderIdsByUser(@Param("userId") Long userId);
 }

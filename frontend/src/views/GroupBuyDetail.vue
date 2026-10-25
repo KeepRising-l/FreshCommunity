@@ -173,6 +173,9 @@
                 </span>
               </div>
               <p v-if="r.content">{{ r.content }}</p>
+              <div v-if="r.leaderReply" class="leader-reply">
+                <b>团长回复</b><span>{{ r.leaderReply }}</span>
+              </div>
             </div>
           </div>
         </div>
@@ -681,6 +684,21 @@ watch(() => route.params.id, load)
   margin-left: 6px;
   color: var(--fc-danger);
   font-size: 12px;
+}
+
+.leader-reply {
+  margin-top: 8px;
+  padding: 8px 12px;
+  background: var(--fc-brand-50);
+  border-left: 3px solid var(--fc-brand);
+  border-radius: 0 var(--fc-r-sm) var(--fc-r-sm) 0;
+  font-size: 12.5px;
+  line-height: 1.7;
+}
+
+.leader-reply b {
+  color: var(--fc-brand-700);
+  margin-right: 8px;
 }
 
 .no-review {

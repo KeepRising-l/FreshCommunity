@@ -23,6 +23,11 @@ export function adminListProducts(params = {}) {
   return request.get('/products/admin-list', { params })
 }
 
+/** 同分类推荐（看了又看） */
+export function getSimilarProducts(id, size = 4) {
+  return request.get(`/products/${id}/similar`, { params: { size } })
+}
+
 export function getProduct(id) {
   return request.get('/products/' + id)
 }

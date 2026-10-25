@@ -100,7 +100,7 @@ import { computed, onMounted, onUnmounted, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import {
   ArrowRight, Bell, Box, Checked, DataAnalysis, Goods, House, MagicStick,
-  Search, Sell, SwitchButton, Tickets, User
+  Search, Sell, Star, SwitchButton, Tickets, User
 } from '@element-plus/icons-vue'
 import { useUserStore } from '../stores/user'
 import { useNotificationStore } from '../stores/notification'
@@ -144,7 +144,8 @@ const MENUS = {
       group: '经营',
       items: [
         { key: 'my-groups', label: '我的团购', path: '/leader/groups', icon: Box },
-        { key: 'verify', label: '核销台', path: '/leader/verify', icon: Checked }
+        { key: 'verify', label: '核销台', path: '/leader/verify', icon: Checked },
+        { key: 'reviews', label: '评价与回复', path: '/leader/reviews', icon: Star }
       ]
     },
     SHOP_GROUP,

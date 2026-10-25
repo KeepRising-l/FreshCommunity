@@ -24,6 +24,7 @@
         <el-option v-for="t in ORDER_STATUS_TABS" :key="t.value" :label="t.label || '全部状态'" :value="t.value" />
       </el-select>
       <el-button @click="search">查询</el-button>
+      <el-button :icon="Download" @click="exportCsv">导出 CSV</el-button>
     </div>
 
     <!-- 表格 -->
@@ -100,10 +101,10 @@
 <script setup>
 import { computed, onMounted, ref } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
-import { Search } from '@element-plus/icons-vue'
+import { Download, Search } from '@element-plus/icons-vue'
 import StatusBadge from '../components/StatusBadge.vue'
 import EmptyState from '../components/EmptyState.vue'
-import { listAdminOrders, refundOrder } from '../api/order'
+import { listAdminOrders, refundOrder, adminOrdersExportUrl } from '../api/order'
 import { ORDER_STATUS_TABS } from '../constants/status'
 import { formatMoney, formatDateTime } from '../utils/format'
 
@@ -154,6 +155,25 @@ function search() {
 function changePage(p) {
   page.value = p
   load()
+}
+
+/** 按当前筛选导出 CSV（后端带 BOM，Excel 直开；带 token 的下载） */
+async function exportCsv() {
+  const url = adminOrdersExportUrl(appliedStatus.value, appliedKeyword.value)
+  const token = localStorage.getItem('token')
+  try {
+    const resp = await fetch(url, { headers: { Authorization: 'Bearer ' + token } })
+    if (!resp.ok) throw new Error('导出失败')
+    const blob = await resp.blob()
+    const link = document.createElement('a')
+    link.href = URL.createObjectURL(blob)
+    link.download = `订单导出_${new Date().toISOString().slice(0, 10)}.csv`
+    link.click()
+    URL.revokeObjectURL(link.href)
+    ElMessage.success('CSV 已导出')
+  } catch (e) {
+    ElMessage.error(e?.message || '导出失败')
+  }
 }
 
 async function refund(row) {

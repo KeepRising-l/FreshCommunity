@@ -37,4 +37,22 @@ public class ReviewController {
                 reviewService.productRating(productId),
                 reviewService.listVOByProduct(productId)));
     }
+
+    /** 团长本人名下的评价列表（评价回复页数据源）。 */
+    @GetMapping("/leader/mine")
+    @org.springframework.security.access.prepost.PreAuthorize("hasRole('LEADER')")
+    public Result<List<com.freshcommunity.dto.LeaderReviewVO>> leaderMine(
+            @RequestAttribute("userId") Long leaderId) {
+        return Result.success(reviewService.listByLeader(leaderId));
+    }
+
+    /** 团长回复评价（一层，可修改；仅被评团长本人）。 */
+    @PostMapping("/{id}/reply")
+    @org.springframework.security.access.prepost.PreAuthorize("hasRole('LEADER')")
+    public Result<com.freshcommunity.dto.LeaderReviewVO> reply(
+            @RequestAttribute("userId") Long leaderId,
+            @PathVariable Long id,
+            @org.springframework.web.bind.annotation.RequestBody java.util.Map<String, String> body) {
+        return Result.success(reviewService.reply(leaderId, id, body.get("content")));
+    }
 }

@@ -28,12 +28,16 @@ public class ProductController {
     private static final Set<String> SORT_WHITELIST = Set.of("latest", "price_asc", "price_desc");
 
     private final ProductMapper productMapper;
+    private final com.freshcommunity.mapper.ProductImageMapper productImageMapper;
     private final ReviewService reviewService;
     private final ReviewAnalysisService reviewAnalysisService;
 
-    public ProductController(ProductMapper productMapper, ReviewService reviewService,
+    public ProductController(ProductMapper productMapper,
+                             com.freshcommunity.mapper.ProductImageMapper productImageMapper,
+                             ReviewService reviewService,
                              ReviewAnalysisService reviewAnalysisService) {
         this.productMapper = productMapper;
+        this.productImageMapper = productImageMapper;
         this.reviewService = reviewService;
         this.reviewAnalysisService = reviewAnalysisService;
     }
@@ -95,15 +99,38 @@ public class ProductController {
         p.setAvgScore(rating.getAvgScore());
         p.setReviewCount(rating.getCount());
         p.setInsightTags(reviewAnalysisService.topTags(id, 5));
+        fillImages(p);
         return Result.success(p);
+    }
+
+    /** 同分类推荐：在售、排除自身，按评分高→新建在前，取 size 条（默认 4）。 */
+    @GetMapping("/{id}/similar")
+    public Result<List<Product>> similar(@PathVariable Long id,
+                                         @RequestParam(required = false, defaultValue = "4") int size) {
+        Product self = productMapper.selectById(id);
+        if (self == null) {
+            throw new IllegalArgumentException("商品不存在");
+        }
+        int limit = Math.min(Math.max(size, 1), 8);
+        List<Product> same = productMapper.selectList(new LambdaQueryWrapper<Product>()
+                .eq(Product::getStatus, 1)
+                .eq(Product::getCategory, self.getCategory())
+                .ne(Product::getId, id)
+                .orderByDesc(Product::getCreatedAt));
+        if (same.size() > limit) {
+            same = same.subList(0, limit);
+        }
+        return Result.success(same);
     }
 
     @PostMapping
     @PreAuthorize("hasRole('ADMIN')")
     public Result<Void> create(@Valid @RequestBody Product product) {
         normalizeCategory(product);
+        syncFirstImage(product);
         product.setStatus(1);
         productMapper.insert(product);
+        saveImages(product.getId(), product.getImages());
         return Result.success();
     }
 
@@ -112,7 +139,9 @@ public class ProductController {
     public Result<Void> update(@PathVariable Long id, @Valid @RequestBody Product product) {
         normalizeCategory(product);
         product.setId(id);
+        syncFirstImage(product);
         productMapper.updateById(product);
+        saveImages(id, product.getImages());
         return Result.success();
     }
 
@@ -141,6 +170,50 @@ public class ProductController {
     private void normalizeCategory(Product product) {
         String c = trimToNull(product.getCategory());
         product.setCategory(c == null ? "其他" : c);
+    }
+
+    /** 详情图集：product_image 按 sort 升序；空表回落单图 [imageUrl]。 */
+    private void fillImages(Product p) {
+        List<String> images = productImageMapper.selectList(
+                        new LambdaQueryWrapper<com.freshcommunity.entity.ProductImage>()
+                                .eq(com.freshcommunity.entity.ProductImage::getProductId, p.getId())
+                                .orderByAsc(com.freshcommunity.entity.ProductImage::getSort))
+                .stream().map(com.freshcommunity.entity.ProductImage::getImageUrl).toList();
+        if (images.isEmpty() && p.getImageUrl() != null && !p.getImageUrl().isBlank()) {
+            images = List.of(p.getImageUrl());
+        }
+        p.setImages(images);
+    }
+
+    /** 首图一致性：图集非空时把 image_url 回写为首图（列表/卡片消费方只看 image_url）。 */
+    private void syncFirstImage(Product product) {
+        List<String> images = product.getImages();
+        if (images != null && !images.isEmpty()) {
+            String first = images.get(0);
+            if (first != null && !first.isBlank()) {
+                product.setImageUrl(first.trim());
+            }
+        }
+    }
+
+    /** 替换式保存图集：全删后按序插入；images 为 null 时不动（兼容旧客户端只改文字）。 */
+    private void saveImages(Long productId, List<String> images) {
+        if (images == null) {
+            return;
+        }
+        productImageMapper.delete(new LambdaQueryWrapper<com.freshcommunity.entity.ProductImage>()
+                .eq(com.freshcommunity.entity.ProductImage::getProductId, productId));
+        int sort = 0;
+        for (String url : images) {
+            if (url == null || url.isBlank()) {
+                continue;
+            }
+            com.freshcommunity.entity.ProductImage img = new com.freshcommunity.entity.ProductImage();
+            img.setProductId(productId);
+            img.setImageUrl(url.trim());
+            img.setSort(sort++);
+            productImageMapper.insert(img);
+        }
     }
 
     private String trimToNull(String s) {

@@ -24,6 +24,7 @@ const routes = [
       { path: '/user/products/:id', name: 'ProductDetail', component: () => import('../views/ProductDetail.vue'), meta: { title: '商品详情', roles: ['USER', 'LEADER'] } },
       { path: '/leader/groups', name: 'LeaderGroups', component: () => import('../views/LeaderGroups.vue'), meta: { title: '我的团购', roles: ['LEADER'] } },
       { path: '/leader/verify', name: 'LeaderVerify', component: () => import('../views/LeaderVerify.vue'), meta: { title: '核销台', roles: ['LEADER'] } },
+      { path: '/leader/reviews', name: 'LeaderReviews', component: () => import('../views/LeaderReviews.vue'), meta: { title: '评价与回复', roles: ['LEADER'] } },
       { path: '/admin/dashboard', name: 'AdminDashboard', component: () => import('../views/AdminDashboard.vue'), meta: { title: '数据看板', roles: ['ADMIN'] } },
       { path: '/admin/products', name: 'AdminProducts', component: () => import('../views/AdminProducts.vue'), meta: { title: '商品管理', roles: ['ADMIN'] } },
       { path: '/admin/orders', name: 'AdminOrders', component: () => import('../views/AdminOrders.vue'), meta: { title: '订单管理', roles: ['ADMIN'] } },

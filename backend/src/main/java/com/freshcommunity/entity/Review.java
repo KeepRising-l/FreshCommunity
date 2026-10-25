@@ -20,6 +20,9 @@ public class Review {
     private Integer productScore;
     private Integer leaderScore;
     private String content;
+    /** 团长回复（一层，仅被评团长本人可写，可修改） */
+    private String leaderReply;
+    private LocalDateTime leaderRepliedAt;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
     @TableLogic

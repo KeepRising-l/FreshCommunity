@@ -125,20 +125,26 @@
         <el-form-item label="商品图片">
           <div class="upload-row">
             <div class="preview" :class="visualOf(form).gradient">
-              <img v-if="form.imageUrl" :src="form.imageUrl" alt="预览" />
+              <img v-if="coverImage" :src="coverImage" alt="预览" />
               <span v-else>{{ visualOf(form).emoji }}</span>
             </div>
             <div class="upload-ops">
               <el-upload :show-file-list="false" accept="image/*" :http-request="doUpload">
                 <el-button :loading="uploading">{{ uploading ? '上传中…' : '上传图片' }}</el-button>
               </el-upload>
-              <el-input
-                v-model="form.imageUrl"
-                placeholder="或直接填图片地址"
-                class="url-input"
-                clearable
-              />
-              <p class="fc-muted">支持 jpg / png / gif / webp，不超过 5MB</p>
+              <p class="fc-muted">支持 jpg / png / gif / webp，不超过 5MB；首图为列表展示图</p>
+            </div>
+          </div>
+          <!-- 图集（多图）：首图即封面，可排序与删除 -->
+          <div v-if="form.images.length" class="images-strip">
+            <div v-for="(img, i) in form.images" :key="i" class="strip-item" :class="{ cover: i === 0 }">
+              <img :src="img" :alt="`图 ${i + 1}`" />
+              <span v-if="i === 0" class="cover-tag">封面</span>
+              <div class="strip-ops">
+                <button type="button" title="前移" :disabled="i === 0" @click="moveImage(i, -1)">←</button>
+                <button type="button" title="后移" :disabled="i === form.images.length - 1" @click="moveImage(i, 1)">→</button>
+                <button type="button" title="删除" class="del" @click="removeImage(i)">×</button>
+              </div>
             </div>
           </div>
         </el-form-item>
@@ -157,6 +163,7 @@ import { ElMessage, ElMessageBox } from 'element-plus'
 import { Plus, Search } from '@element-plus/icons-vue'
 import {
   adminListProducts,
+  getProduct,
   createProduct,
   updateProduct,
   deleteProduct,
@@ -195,8 +202,12 @@ const form = reactive({
   price: 0,
   stock: 0,
   description: '',
-  imageUrl: ''
+  imageUrl: '',
+  images: []
 })
+
+/** 封面（预览用）：图集首图优先，回落 imageUrl */
+const coverImage = computed(() => form.images[0] || form.imageUrl || '')
 
 const rules = {
   name: [
@@ -251,10 +262,18 @@ function openDialog(row) {
       price: Number(row.price),
       stock: row.stock,
       description: row.description || '',
-      imageUrl: row.imageUrl || ''
+      imageUrl: row.imageUrl || '',
+      images: [row.imageUrl].filter(Boolean)
     })
+    // 编辑时拉详情取完整图集（列表接口不含 images）
+    getProduct(row.id)
+      .then((res) => {
+        const imgs = res.data?.images || []
+        if (imgs.length) form.images = [...imgs]
+      })
+      .catch(() => {})
   } else {
-    Object.assign(form, { id: null, name: '', category: '', price: 0, stock: 0, description: '', imageUrl: '' })
+    Object.assign(form, { id: null, name: '', category: '', price: 0, stock: 0, description: '', imageUrl: '', images: [] })
   }
   dialogVisible.value = true
   // 分类下拉建议 = 平台已有分类 ∪ 常用分类
@@ -277,7 +296,8 @@ async function save() {
       price: form.price,
       stock: form.stock,
       description: form.description || '',
-      imageUrl: form.imageUrl || ''
+      imageUrl: form.imageUrl || '',
+      images: form.images.length ? [...form.images] : [form.imageUrl].filter(Boolean)
     }
     if (form.id) {
       await updateProduct(form.id, payload)
@@ -334,12 +354,25 @@ async function doUpload({ file }) {
   try {
     const res = await uploadFile(file)
     form.imageUrl = res.data
+    form.images.push(res.data)
     ElMessage.success('图片已上传')
   } catch (e) {
     // 错误提示已由请求拦截器统一处理
   } finally {
     uploading.value = false
   }
+}
+
+function moveImage(index, delta) {
+  const target = index + delta
+  if (target < 0 || target >= form.images.length) return
+  const list = [...form.images]
+  ;[list[index], list[target]] = [list[target], list[index]]
+  form.images = list
+}
+
+function removeImage(index) {
+  form.images = form.images.filter((_, i) => i !== index)
 }
 
 onMounted(load)
@@ -466,6 +499,72 @@ onMounted(load)
   width: 100%;
   height: 100%;
   object-fit: cover;
+}
+
+.images-strip {
+  display: flex;
+  gap: 9px;
+  flex-wrap: wrap;
+  margin-top: 10px;
+}
+
+.strip-item {
+  position: relative;
+  width: 64px;
+}
+
+.strip-item img {
+  width: 64px;
+  height: 64px;
+  border-radius: 9px;
+  object-fit: cover;
+  border: 2px solid var(--fc-line);
+  display: block;
+}
+
+.strip-item.cover img {
+  border-color: var(--fc-brand);
+}
+
+.cover-tag {
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  font-size: 9px;
+  font-weight: 700;
+  color: #fff;
+  background: var(--fc-brand);
+  border-radius: 4px;
+  padding: 1px 4px;
+}
+
+.strip-ops {
+  display: flex;
+  gap: 3px;
+  margin-top: 3px;
+}
+
+.strip-ops button {
+  flex: 1;
+  min-width: 0;
+  height: 18px;
+  border: 1px solid var(--fc-line);
+  background: #fff;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 10px;
+  line-height: 1;
+  color: var(--fc-ink-500);
+}
+
+.strip-ops button:disabled {
+  opacity: .4;
+  cursor: default;
+}
+
+.strip-ops button.del {
+  color: var(--fc-danger);
+  border-color: var(--fc-danger-50);
 }
 
 .upload-ops {

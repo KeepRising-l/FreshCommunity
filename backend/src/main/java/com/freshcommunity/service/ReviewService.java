@@ -83,6 +83,40 @@ public class ReviewService {
         return new RatingVO(count == 0 ? null : round1(reviewMapper.avgLeaderScore(leaderId)), count);
     }
 
+    /** 团长本人名下的评价列表（含商品名与订单号）。 */
+    public List<com.freshcommunity.dto.LeaderReviewVO> listByLeader(Long leaderId) {
+        return reviewMapper.listByLeader(leaderId);
+    }
+
+    /**
+     * 团长回复评价：仅被评团长本人可回复（一层，可修改），≤500 字。
+     */
+    @org.springframework.transaction.annotation.Transactional
+    public com.freshcommunity.dto.LeaderReviewVO reply(Long leaderId, Long reviewId, String content) {
+        Review review = reviewMapper.selectById(reviewId);
+        if (review == null) {
+            throw new IllegalArgumentException("评价不存在");
+        }
+        if (!review.getLeaderId().equals(leaderId)) {
+            throw new IllegalArgumentException("仅被评团长本人可回复该评价");
+        }
+        String text = content == null ? "" : content.trim();
+        if (text.isEmpty()) {
+            throw new IllegalArgumentException("回复内容不能为空");
+        }
+        if (text.length() > 500) {
+            throw new IllegalArgumentException("回复不能超过 500 字");
+        }
+        Review update = new Review();
+        update.setId(reviewId);
+        update.setLeaderReply(text);
+        update.setLeaderRepliedAt(java.time.LocalDateTime.now());
+        reviewMapper.updateById(update);
+        return reviewMapper.listByLeader(leaderId).stream()
+                .filter(vo -> vo.getId().equals(reviewId)).findFirst()
+                .orElseThrow(() -> new IllegalStateException("回复后未查到评价"));
+    }
+
     /** 供订单列表标记"是否已评价"，避免逐单查询。 */
     public List<Long> reviewedOrderIds(Long userId) {
         return reviewMapper.findOrderIdsByUser(userId);

@@ -10,6 +10,7 @@ DROP TABLE IF EXISTS user_subscription;
 DROP TABLE IF EXISTS review;
 DROP TABLE IF EXISTS notification;
 DROP TABLE IF EXISTS `order`;
+DROP TABLE IF EXISTS product_image;
 DROP TABLE IF EXISTS group_buy_item;
 DROP TABLE IF EXISTS group_buy;
 DROP TABLE IF EXISTS product;
@@ -41,6 +42,18 @@ CREATE TABLE product (
     created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     deleted TINYINT NOT NULL DEFAULT 0
+);
+
+-- 商品图集（多图）。首图冗余在 product.image_url 供列表/卡片直接使用；
+-- 本表按 sort 升序为详情页图库完整数据源，保存时同步首图。
+CREATE TABLE product_image (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    product_id BIGINT NOT NULL,
+    image_url VARCHAR(255) NOT NULL,
+    sort INT NOT NULL DEFAULT 0,
+    created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    deleted TINYINT NOT NULL DEFAULT 0,
+    INDEX idx_product (product_id)
 );
 
 CREATE TABLE group_buy (
@@ -95,6 +108,8 @@ CREATE TABLE review (
     product_score TINYINT NOT NULL COMMENT '商品评分 1-5',
     leader_score TINYINT NOT NULL COMMENT '团长评分 1-5',
     content VARCHAR(500) COMMENT '文字评论',
+    leader_reply VARCHAR(500) COMMENT '团长回复（一层，可修改）',
+    leader_replied_at DATETIME COMMENT '回复时间',
     created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     deleted TINYINT NOT NULL DEFAULT 0,

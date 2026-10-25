@@ -43,6 +43,15 @@ export function listVerifyHistory() {
   return request.get('/orders/verify-history')
 }
 
+/** 管理端订单 CSV 导出地址（带当前筛选，后端加 BOM，Excel 直开） */
+export function adminOrdersExportUrl(status, keyword) {
+  const params = new URLSearchParams()
+  if (status) params.set('status', status)
+  if (keyword) params.set('keyword', keyword)
+  const qs = params.toString()
+  return '/api/admin/orders/export' + (qs ? '?' + qs : '')
+}
+
 export function refundOrder(id) {
   return request.post('/orders/' + id + '/refund')
 }
