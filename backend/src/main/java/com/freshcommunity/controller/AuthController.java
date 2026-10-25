@@ -120,7 +120,8 @@ public class AuthController {
     }
 
     /**
-     * 个人资料维护：当前仅团长有可维护字段（提货点名称/地址），
+     * 个人资料维护：头像（avatarUrl）全角色可写；提货点三项（名称/地址/照片）仅团长。
+     * 图片地址必须是本站路径（/uploads/ 或 /images/ 前缀），防塞外链脚本。
      * 修改即时生效于其名下团购详情（详情读时实时取 user 表）。
      */
     @PutMapping("/profile")
@@ -128,22 +129,52 @@ public class AuthController {
     public Result<UserVO> updateProfile(@RequestAttribute("userId") Long userId,
                                         @RequestAttribute("role") String role,
                                         @Valid @RequestBody ProfileUpdateRequest req) {
-        if (!"LEADER".equals(role)) {
-            throw new IllegalArgumentException("仅团长可维护提货点信息");
-        }
-        String name = req.getPickupPointName() == null ? null : req.getPickupPointName().trim();
-        if (name == null || name.isEmpty()) {
-            throw new IllegalArgumentException("提货点名称不能为空");
-        }
-
         User update = new User();
         update.setId(userId);
-        update.setPickupPointName(name);
-        update.setPickupPointAddress(req.getPickupPointAddress() == null ? null : req.getPickupPointAddress().trim());
-        userMapper.updateById(update);
 
+        // 头像：全角色
+        String avatar = req.getAvatarUrl();
+        if (avatar != null && !avatar.isBlank()) {
+            avatar = avatar.trim();
+            requireSiteImagePath(avatar, "头像地址");
+            update.setAvatarUrl(avatar);
+        }
+
+        // 提货点三项：仅团长
+        boolean touchesPickup = req.getPickupPointName() != null
+                || req.getPickupPointAddress() != null || req.getPickupPointImageUrl() != null;
+        if (touchesPickup) {
+            if (!"LEADER".equals(role)) {
+                throw new IllegalArgumentException("仅团长可维护提货点信息");
+            }
+            String name = req.getPickupPointName() == null ? null : req.getPickupPointName().trim();
+            if (name != null) {
+                if (name.isEmpty()) {
+                    throw new IllegalArgumentException("提货点名称不能为空");
+                }
+                update.setPickupPointName(name);
+            }
+            if (req.getPickupPointAddress() != null) {
+                update.setPickupPointAddress(req.getPickupPointAddress().trim());
+            }
+            String photo = req.getPickupPointImageUrl();
+            if (photo != null && !photo.isBlank()) {
+                photo = photo.trim();
+                requireSiteImagePath(photo, "提货点照片地址");
+                update.setPickupPointImageUrl(photo);
+            }
+        }
+
+        userMapper.updateById(update);
         UserVO vo = new UserVO();
         BeanUtils.copyProperties(userMapper.selectById(userId), vo);
         return Result.success(vo);
+    }
+
+    /** 图片地址必须是本站静态路径，拒绝外链与非图片路径 */
+    private void requireSiteImagePath(String url, String fieldLabel) {
+        if (!url.startsWith("/uploads/") && !url.startsWith("/images/")) {
+            throw new IllegalArgumentException(fieldLabel + "必须是本站图片路径");
+        }
     }
 }

@@ -51,12 +51,18 @@ class UploadAndSecurityApiTest extends ApiTestBase {
     }
 
     @Test
-    @DisplayName("上传仅管理员可用：普通用户 403")
-    void uploadRequiresAdmin() throws Exception {
-        var r = perform(multipart("/api/upload").file(
+    @DisplayName("上传对所有登录用户开放：普通用户成功；未登录 401")
+    void uploadOpenToAuthenticatedUsers() throws Exception {
+        // 2026-10-25 起：上传能力放开到全部登录用户（头像/提货点照片场景）
+        var user = perform(multipart("/api/upload").file(
                 new MockMultipartFile("file", "a.png", "image/png", PNG_BYTES)),
                 login("user1", "123456"), null);
-        assertThat(r.status()).isEqualTo(403);
+        assertThat(user.ok()).isTrue();
+        assertThat(user.data().asText()).startsWith("/uploads/");
+
+        var anon = perform(multipart("/api/upload").file(
+                new MockMultipartFile("file", "a.png", "image/png", PNG_BYTES)), null, null);
+        assertThat(anon.status()).isEqualTo(401);
     }
 
     @Test

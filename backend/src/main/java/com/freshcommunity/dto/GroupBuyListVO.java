@@ -25,6 +25,8 @@ public class GroupBuyListVO {
     private String leaderName;
     private String pickupPointName;
     private String pickupPointAddress;
+    /** 提货点照片（团长资料），无图为 null */
+    private String pickupPointImageUrl;
 
     /** 所挂商品 */
     private Long productId;

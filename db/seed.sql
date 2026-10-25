@@ -34,47 +34,47 @@ DELETE FROM user;
 
 -- ---------------------------------------------------------------------- 用户
 -- 1 管理员 / 2-4 团长 / 5-16 普通用户，密码均为 123456
-INSERT INTO user (id, username, password, role, pickup_point_name, pickup_point_address) VALUES
-(1,  'admin',   '$2a$10$eYBgVzfZ/6nfpPiMGwzpq.LgZo3t3VMFs/5aJGVfJ718FKYswWaDi', 'ADMIN',  NULL, NULL),
-(2,  'leader1', '$2a$10$eYBgVzfZ/6nfpPiMGwzpq.LgZo3t3VMFs/5aJGVfJ718FKYswWaDi', 'LEADER', '幸福小区便利店',   '幸福小区东门 101 号'),
-(3,  'leader2', '$2a$10$eYBgVzfZ/6nfpPiMGwzpq.LgZo3t3VMFs/5aJGVfJ718FKYswWaDi', 'LEADER', '阳光花园快递驿站', '阳光花园 3 号楼底商'),
-(4,  'leader3', '$2a$10$eYBgVzfZ/6nfpPiMGwzpq.LgZo3t3VMFs/5aJGVfJ718FKYswWaDi', 'LEADER', '翠湖天地物业前台', '翠湖天地南门物业中心'),
-(5,  'user1',   '$2a$10$eYBgVzfZ/6nfpPiMGwzpq.LgZo3t3VMFs/5aJGVfJ718FKYswWaDi', 'USER',   NULL, NULL),
-(6,  'user2',   '$2a$10$eYBgVzfZ/6nfpPiMGwzpq.LgZo3t3VMFs/5aJGVfJ718FKYswWaDi', 'USER',   NULL, NULL),
-(7,  'user3',   '$2a$10$eYBgVzfZ/6nfpPiMGwzpq.LgZo3t3VMFs/5aJGVfJ718FKYswWaDi', 'USER',   NULL, NULL),
-(8,  'user4',   '$2a$10$eYBgVzfZ/6nfpPiMGwzpq.LgZo3t3VMFs/5aJGVfJ718FKYswWaDi', 'USER',   NULL, NULL),
-(9,  'user5',   '$2a$10$eYBgVzfZ/6nfpPiMGwzpq.LgZo3t3VMFs/5aJGVfJ718FKYswWaDi', 'USER',   NULL, NULL),
-(10, 'user6',   '$2a$10$eYBgVzfZ/6nfpPiMGwzpq.LgZo3t3VMFs/5aJGVfJ718FKYswWaDi', 'USER',   NULL, NULL),
-(11, 'user7',   '$2a$10$eYBgVzfZ/6nfpPiMGwzpq.LgZo3t3VMFs/5aJGVfJ718FKYswWaDi', 'USER',   NULL, NULL),
-(12, 'user8',   '$2a$10$eYBgVzfZ/6nfpPiMGwzpq.LgZo3t3VMFs/5aJGVfJ718FKYswWaDi', 'USER',   NULL, NULL),
-(13, 'user9',   '$2a$10$eYBgVzfZ/6nfpPiMGwzpq.LgZo3t3VMFs/5aJGVfJ718FKYswWaDi', 'USER',   NULL, NULL),
-(14, 'user10',  '$2a$10$eYBgVzfZ/6nfpPiMGwzpq.LgZo3t3VMFs/5aJGVfJ718FKYswWaDi', 'USER',   NULL, NULL),
-(15, 'user11',  '$2a$10$eYBgVzfZ/6nfpPiMGwzpq.LgZo3t3VMFs/5aJGVfJ718FKYswWaDi', 'USER',   NULL, NULL),
-(16, 'user12',  '$2a$10$eYBgVzfZ/6nfpPiMGwzpq.LgZo3t3VMFs/5aJGVfJ718FKYswWaDi', 'USER',   NULL, NULL);
+INSERT INTO user (id, username, password, role, pickup_point_name, pickup_point_address, pickup_point_image_url) VALUES
+(1,  'admin',   '$2a$10$eYBgVzfZ/6nfpPiMGwzpq.LgZo3t3VMFs/5aJGVfJ718FKYswWaDi', 'ADMIN',  NULL, NULL, NULL),
+(2,  'leader1', '$2a$10$eYBgVzfZ/6nfpPiMGwzpq.LgZo3t3VMFs/5aJGVfJ718FKYswWaDi', 'LEADER', '幸福小区便利店',   '幸福小区东门 101 号', '/images/pickup/pickup1.jpg'),
+(3,  'leader2', '$2a$10$eYBgVzfZ/6nfpPiMGwzpq.LgZo3t3VMFs/5aJGVfJ718FKYswWaDi', 'LEADER', '阳光花园快递驿站', '阳光花园 3 号楼底商', '/images/pickup/pickup2.jpg'),
+(4,  'leader3', '$2a$10$eYBgVzfZ/6nfpPiMGwzpq.LgZo3t3VMFs/5aJGVfJ718FKYswWaDi', 'LEADER', '翠湖天地物业前台', '翠湖天地南门物业中心', '/images/pickup/pickup3.jpg'),
+(5,  'user1',   '$2a$10$eYBgVzfZ/6nfpPiMGwzpq.LgZo3t3VMFs/5aJGVfJ718FKYswWaDi', 'USER',   NULL, NULL, NULL),
+(6,  'user2',   '$2a$10$eYBgVzfZ/6nfpPiMGwzpq.LgZo3t3VMFs/5aJGVfJ718FKYswWaDi', 'USER',   NULL, NULL, NULL),
+(7,  'user3',   '$2a$10$eYBgVzfZ/6nfpPiMGwzpq.LgZo3t3VMFs/5aJGVfJ718FKYswWaDi', 'USER',   NULL, NULL, NULL),
+(8,  'user4',   '$2a$10$eYBgVzfZ/6nfpPiMGwzpq.LgZo3t3VMFs/5aJGVfJ718FKYswWaDi', 'USER',   NULL, NULL, NULL),
+(9,  'user5',   '$2a$10$eYBgVzfZ/6nfpPiMGwzpq.LgZo3t3VMFs/5aJGVfJ718FKYswWaDi', 'USER',   NULL, NULL, NULL),
+(10, 'user6',   '$2a$10$eYBgVzfZ/6nfpPiMGwzpq.LgZo3t3VMFs/5aJGVfJ718FKYswWaDi', 'USER',   NULL, NULL, NULL),
+(11, 'user7',   '$2a$10$eYBgVzfZ/6nfpPiMGwzpq.LgZo3t3VMFs/5aJGVfJ718FKYswWaDi', 'USER',   NULL, NULL, NULL),
+(12, 'user8',   '$2a$10$eYBgVzfZ/6nfpPiMGwzpq.LgZo3t3VMFs/5aJGVfJ718FKYswWaDi', 'USER',   NULL, NULL, NULL),
+(13, 'user9',   '$2a$10$eYBgVzfZ/6nfpPiMGwzpq.LgZo3t3VMFs/5aJGVfJ718FKYswWaDi', 'USER',   NULL, NULL, NULL),
+(14, 'user10',  '$2a$10$eYBgVzfZ/6nfpPiMGwzpq.LgZo3t3VMFs/5aJGVfJ718FKYswWaDi', 'USER',   NULL, NULL, NULL),
+(15, 'user11',  '$2a$10$eYBgVzfZ/6nfpPiMGwzpq.LgZo3t3VMFs/5aJGVfJ718FKYswWaDi', 'USER',   NULL, NULL, NULL),
+(16, 'user12',  '$2a$10$eYBgVzfZ/6nfpPiMGwzpq.LgZo3t3VMFs/5aJGVfJ718FKYswWaDi', 'USER',   NULL, NULL, NULL);
 
 -- ---------------------------------------------------------------------- 商品
 -- price 是「零售价」。团购的「拼团价」存在 group_buy_item.price_snapshot（见下方），
 -- 两者刻意拉开差距，前端才能展示「立省 X 元」。订单金额一律按 price_snapshot 计算。
 INSERT INTO product (id, name, category, price, stock, image_url, description, status) VALUES
-(1,  '红颜草莓',     '水果',     39.90, 100, '', '奶香浓郁的红颜草莓，空运直达', 1),
-(2,  '烟台红富士',   '水果',     26.90, 200, '', '山东烟台红富士，脆甜多汁', 1),
-(3,  '新鲜菠菜',     '蔬菜',      6.90, 150, '', '基地直采嫩菠菜，当天现摘', 1),
-(4,  '海南贵妃芒',   '水果',     19.90, 120, '', '海南三亚贵妃芒，核薄肉厚', 1),
-(5,  '赣南脐橙',     '水果',     18.90, 180, '', '江西赣南脐橙，酸甜比例刚好', 1),
-(6,  '新西兰奇异果', '水果',     49.90,  60, '', '阳光金果奇异果，一箱 9 个装', 1),
-(7,  '本地小番茄',   '蔬菜',     12.90, 160, '', '沙瓤小番茄，生吃拌糖都合适', 1),
-(8,  '有机胡萝卜',   '蔬菜',      7.90, 140, '', '有机认证胡萝卜，脆甜多汁', 1),
-(9,  '云南紫皮蒜',   '粮油调味',  9.90, 130, '', '云南独头紫皮蒜，蒜香浓', 1),
-(10, '山东大葱',     '蔬菜',      5.50, 220, '', '章丘大葱，葱白长而甜', 1),
-(11, '鲜鸡蛋 30 枚', '蛋奶',     36.80,  90, '', '谷物喂养鲜鸡蛋，30 枚整箱', 1),
-(12, '散养土鸡',     '肉禽蛋',   89.00,  40, '', '林间散养土鸡，整只约 2.5 斤', 1),
-(13, '黑猪五花肉',   '肉禽蛋',   59.90,  50, '', '黑猪五花肉，肥瘦相间五层', 1),
-(14, '鲜活基围虾',   '水产',     79.90,  35, '', '今晨到货活虾，冰鲜直发', 1),
-(15, '深海带鱼段',   '水产',     42.00,  45, '', '东海带鱼中段，船冻锁鲜', 1),
-(16, '有机鲜牛奶',   '蛋奶',     16.80, 110, '', '每日期鲜牛奶，750ml×2 瓶', 1),
+(1,  '红颜草莓',     '水果',     39.90, 100, '/images/products/p01.jpg', '奶香浓郁的红颜草莓，空运直达', 1),
+(2,  '烟台红富士',   '水果',     26.90, 200, '/images/products/p02.jpg', '山东烟台红富士，脆甜多汁', 1),
+(3,  '新鲜菠菜',     '蔬菜',      6.90, 150, '/images/products/p03.jpg', '基地直采嫩菠菜，当天现摘', 1),
+(4,  '海南贵妃芒',   '水果',     19.90, 120, '/images/products/p04.jpg', '海南三亚贵妃芒，核薄肉厚', 1),
+(5,  '赣南脐橙',     '水果',     18.90, 180, '/images/products/p05.jpg', '江西赣南脐橙，酸甜比例刚好', 1),
+(6,  '新西兰奇异果', '水果',     49.90,  60, '/images/products/p06.jpg', '阳光金果奇异果，一箱 9 个装', 1),
+(7,  '本地小番茄',   '蔬菜',     12.90, 160, '/images/products/p07.jpg', '沙瓤小番茄，生吃拌糖都合适', 1),
+(8,  '有机胡萝卜',   '蔬菜',      7.90, 140, '/images/products/p08.jpg', '有机认证胡萝卜，脆甜多汁', 1),
+(9,  '云南紫皮蒜',   '粮油调味',  9.90, 130, '/images/products/p09.jpg', '云南独头紫皮蒜，蒜香浓', 1),
+(10, '山东大葱',     '蔬菜',      5.50, 220, '/images/products/p10.jpg', '章丘大葱，葱白长而甜', 1),
+(11, '鲜鸡蛋 30 枚', '蛋奶',     36.80,  90, '/images/products/p11.jpg', '谷物喂养鲜鸡蛋，30 枚整箱', 1),
+(12, '散养土鸡',     '肉禽蛋',   89.00,  40, '/images/products/p12.jpg', '林间散养土鸡，整只约 2.5 斤', 1),
+(13, '黑猪五花肉',   '肉禽蛋',   59.90,  50, '/images/products/p13.jpg', '黑猪五花肉，肥瘦相间五层', 1),
+(14, '鲜活基围虾',   '水产',     79.90,  35, '/images/products/p14.jpg', '今晨到货活虾，冰鲜直发', 1),
+(15, '深海带鱼段',   '水产',     42.00,  45, '/images/products/p15.jpg', '东海带鱼中段，船冻锁鲜', 1),
+(16, '有机鲜牛奶',   '蛋奶',     16.80, 110, '/images/products/p16.jpg', '每日期鲜牛奶，750ml×2 瓶', 1),
 -- 17 专为 AI 导购演示准备：演示脚本用的是「10 元以内的苹果」，
 -- 只有存在一个零售价够低、拼团价能压到 10 元以下的苹果，订阅才可能被命中。
-(17, '红富士苹果',   '水果',     12.90, 120, '', '红富士苹果，产地直发性价比之选', 1);
+(17, '红富士苹果',   '水果',     12.90, 120, '/images/products/p17.jpg', '红富士苹果，产地直发性价比之选', 1);
 
 -- -------------------------------------------------------------------- 团购活动
 -- 1-3   今日成团（updated_at = 今天 → 计入看板"今日成团数"）

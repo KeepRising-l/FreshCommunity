@@ -92,6 +92,41 @@ class ProfileApiTest extends ApiTestBase {
     }
 
     @Test
+    @DisplayName("头像全角色可维护：user1 上传并设置头像，/me 与登录响应带出；外链被拒")
+    void avatarMaintenance() throws Exception {
+        String token = login("user1", "123456");
+
+        var set = perform(put("/api/auth/profile"), token,
+                Map.of("avatarUrl", "/uploads/test-avatar.png"));
+        assertThat(set.ok()).isTrue();
+        assertThat(set.data().path("avatarUrl").asText()).isEqualTo("/uploads/test-avatar.png");
+
+        var me = perform(get("/api/auth/me"), token, null);
+        assertThat(me.data().path("avatarUrl").asText()).isEqualTo("/uploads/test-avatar.png");
+
+        var external = perform(put("/api/auth/profile"), token,
+                Map.of("avatarUrl", "https://evil.example.com/x.png"));
+        assertThat(external.status()).isEqualTo(400);
+        assertThat(external.msg()).contains("本站图片路径");
+    }
+
+    @Test
+    @DisplayName("团长提货点照片落库并透出到团购详情 VO")
+    void pickupPhotoMaintenance() throws Exception {
+        String leader = login("leader1", "123456");
+        String user = login("user1", "123456");
+        long gid = createGroupBuy(leader, firstProductId(user), 5);
+
+        var set = perform(put("/api/auth/profile"), leader,
+                Map.of("pickupPointImageUrl", "/uploads/test-pickup.jpg"));
+        assertThat(set.ok()).isTrue();
+        assertThat(set.data().path("pickupPointImageUrl").asText()).isEqualTo("/uploads/test-pickup.jpg");
+
+        var detail = perform(get("/api/group-buys/" + gid), user, null).data();
+        assertThat(detail.path("pickupPointImageUrl").asText()).isEqualTo("/uploads/test-pickup.jpg");
+    }
+
+    @Test
     @DisplayName("/me 对已删除账号返回 401 而非 500（回归：此前空指针）")
     void meReturns401ForDeletedUser() throws Exception {
         var reg = perform(post("/api/auth/register"), null,

@@ -22,6 +22,8 @@ CREATE TABLE user (
     role VARCHAR(20) NOT NULL COMMENT 'USER/LEADER/ADMIN',
     pickup_point_name VARCHAR(128) COMMENT '团长提货点名称',
     pickup_point_address VARCHAR(255) COMMENT '团长提货点地址',
+    avatar_url VARCHAR(255) COMMENT '头像（/uploads/ 或 /images/ 路径）',
+    pickup_point_image_url VARCHAR(255) COMMENT '团长提货点照片',
     created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     deleted TINYINT NOT NULL DEFAULT 0

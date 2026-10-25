@@ -2,7 +2,15 @@
   <div class="profile">
     <!-- 账号信息 -->
     <section class="fc-card account">
-      <div class="avatar">{{ avatarChar }}</div>
+      <div class="avatar-wrap">
+        <img v-if="me?.avatarUrl" class="avatar avatar-img" :src="me.avatarUrl" alt="头像" />
+        <div v-else class="avatar">{{ avatarChar }}</div>
+        <el-upload :show-file-list="false" accept="image/*" :http-request="uploadAvatar">
+          <el-button size="small" class="avatar-btn" :loading="avatarUploading">
+            {{ avatarUploading ? '上传中…' : '换头像' }}
+          </el-button>
+        </el-upload>
+      </div>
       <div class="account-info">
         <h2>
           {{ me?.username || store.user?.username || '…' }}
@@ -51,6 +59,19 @@
           <el-form-item label="提货点地址" prop="pickupPointAddress">
             <el-input v-model="pointForm.pickupPointAddress" maxlength="255" placeholder="如：幸福小区东门 101 号" />
           </el-form-item>
+          <el-form-item label="提货点照片">
+            <div class="photo-row">
+              <div class="photo-preview">
+                <img v-if="pointForm.pickupPointImageUrl" :src="pointForm.pickupPointImageUrl" alt="提货点照片" />
+                <span v-else class="fc-muted">未设置</span>
+              </div>
+              <el-upload :show-file-list="false" accept="image/*" :http-request="uploadPickupPhoto">
+                <el-button :loading="photoUploading">
+                  {{ photoUploading ? '上传中…' : (pointForm.pickupPointImageUrl ? '更换照片' : '上传照片') }}
+                </el-button>
+              </el-upload>
+            </div>
+          </el-form-item>
           <el-form-item>
             <el-button type="primary" :loading="pointSubmitting" @click="submitPoint">保存提货点</el-button>
           </el-form-item>
@@ -65,6 +86,7 @@ import { computed, onMounted, reactive, ref } from 'vue'
 import { ElMessage } from 'element-plus'
 import { useUserStore } from '../stores/user'
 import { getMe, changePassword, updateProfile } from '../api/auth'
+import { uploadFile } from '../api/upload'
 import { formatDate } from '../utils/format'
 
 const store = useUserStore()
@@ -74,6 +96,8 @@ const pwdFormRef = ref(null)
 const pointFormRef = ref(null)
 const pwdSubmitting = ref(false)
 const pointSubmitting = ref(false)
+const avatarUploading = ref(false)
+const photoUploading = ref(false)
 
 const isLeader = computed(() => (me.value?.role || store.role) === 'LEADER')
 const avatarChar = computed(() =>
@@ -103,7 +127,7 @@ const pwdRules = {
   ]
 }
 
-const pointForm = reactive({ pickupPointName: '', pickupPointAddress: '' })
+const pointForm = reactive({ pickupPointName: '', pickupPointAddress: '', pickupPointImageUrl: '' })
 
 const pointRules = {
   pickupPointName: [
@@ -120,9 +144,43 @@ async function loadMe() {
     if (me.value) {
       pointForm.pickupPointName = me.value.pickupPointName || ''
       pointForm.pickupPointAddress = me.value.pickupPointAddress || ''
+      pointForm.pickupPointImageUrl = me.value.pickupPointImageUrl || ''
     }
   } catch (e) {
     me.value = store.user
+  }
+}
+
+/** 上传并立即保存头像（全角色）；同步 store 让侧边栏/顶栏即时生效 */
+async function uploadAvatar({ file }) {
+  avatarUploading.value = true
+  try {
+    const up = await uploadFile(file)
+    const res = await updateProfile({ avatarUrl: up.data })
+    me.value = res.data || me.value
+    if (me.value) {
+      // store.user 里的旧字段覆盖：保留 token，只更新用户信息
+      store.setUser({ ...store.user, ...me.value }, store.token)
+    }
+    ElMessage.success('头像已更新')
+  } catch (e) {
+    // 错误提示已由请求拦截器统一处理
+  } finally {
+    avatarUploading.value = false
+  }
+}
+
+/** 上传提货点照片：先拿到 URL 回填表单，随「保存提货点」一起落库 */
+async function uploadPickupPhoto({ file }) {
+  photoUploading.value = true
+  try {
+    const up = await uploadFile(file)
+    pointForm.pickupPointImageUrl = up.data
+    ElMessage.success('照片已上传，记得点「保存提货点」')
+  } catch (e) {
+    // 错误提示已由请求拦截器统一处理
+  } finally {
+    photoUploading.value = false
   }
 }
 
@@ -154,7 +212,8 @@ async function submitPoint() {
   try {
     const res = await updateProfile({
       pickupPointName: pointForm.pickupPointName.trim(),
-      pickupPointAddress: pointForm.pickupPointAddress.trim()
+      pickupPointAddress: pointForm.pickupPointAddress.trim(),
+      pickupPointImageUrl: pointForm.pickupPointImageUrl || ''
     })
     ElMessage.success('提货点已更新')
     me.value = res.data || me.value
@@ -194,6 +253,46 @@ onMounted(loadMe)
   font-size: 22px;
   font-weight: 700;
   box-shadow: 0 4px 14px rgba(30, 158, 90, .3);
+}
+
+.avatar-img {
+  object-fit: cover;
+}
+
+.avatar-wrap {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 7px;
+  flex: none;
+}
+
+.avatar-btn {
+  font-size: 11px;
+}
+
+.photo-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.photo-preview {
+  width: 96px;
+  height: 68px;
+  border-radius: var(--fc-r);
+  border: 1px solid var(--fc-line);
+  background: var(--fc-card-2);
+  display: grid;
+  place-items: center;
+  overflow: hidden;
+  font-size: 11px;
+}
+
+.photo-preview img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
 }
 
 .account-info h2 {

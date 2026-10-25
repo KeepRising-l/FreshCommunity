@@ -31,7 +31,8 @@
 
       <div class="side-foot">
         <div class="side-user clickable" title="个人中心" @click="router.push('/profile')">
-          <div class="avatar">{{ avatarChar }}</div>
+          <img v-if="store.user?.avatarUrl" class="avatar avatar-img" :src="store.user.avatarUrl" alt="头像" />
+          <div v-else class="avatar">{{ avatarChar }}</div>
           <div class="user-text">
             <b>{{ store.user?.username || '未登录' }}</b>
             <small>{{ roleText }}</small>
@@ -66,7 +67,8 @@
           <span v-if="unreadStore.unread > 0" class="dot-badge">{{ unreadStore.unread }}</span>
         </router-link>
 
-        <div class="avatar top-avatar">{{ avatarChar }}</div>
+        <img v-if="store.user?.avatarUrl" class="avatar top-avatar avatar-img" :src="store.user.avatarUrl" alt="头像" />
+        <div v-else class="avatar top-avatar">{{ avatarChar }}</div>
       </header>
 
       <main class="app-body">
@@ -407,6 +409,12 @@ watch(() => route.path, () => unreadStore.refresh())
   color: #fff;
   font-size: 13px;
   font-weight: 600;
+  overflow: hidden;
+}
+
+.avatar-img {
+  object-fit: cover;
+  background: var(--fc-card-2);
 }
 
 .user-text {

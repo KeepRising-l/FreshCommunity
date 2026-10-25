@@ -28,7 +28,7 @@ public class FileController {
     private String uploadPath;
 
     @PostMapping
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("isAuthenticated()")
     public Result<String> upload(@RequestParam("file") MultipartFile file) throws IOException {
         String ext = safeExtension(file.getOriginalFilename());
         if (ext == null || !IMAGE_EXTENSIONS.contains(ext)) {

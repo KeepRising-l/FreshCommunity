@@ -2,7 +2,7 @@
 
 > **用途**：答辩展示「做了什么、怎么做、还差什么」；与 `docs/requirements-analysis.md` 的功能编号逐条对应。
 > **状态口径**：✅ 已交付（功能可用且有验证）｜🔸 已交付 · 视觉简版｜🛠️ 代码已写、验证待补｜⬜ 待实施（已规划未开发）
-> **数据截至**：2026-10-25（源码数量按当前目录统计；测试运行结果为最近一次 `mvn test` 实测：94 用例全绿）
+> **数据截至**：2026-10-25（源码数量按当前目录统计；测试运行结果为最近一次 `mvn test` 实测：96 用例全绿）
 
 ---
 
@@ -10,12 +10,12 @@
 
 | 维度 | 数量 | 说明 |
 | --- | --- | --- |
-| 功能能力（capability） | **11 个基线能力已交付** | 现行基线 60 条 requirement / 133 个 scenario（2026-10-23 归档并入 +7 req / +21 scenario；2026-10-25 归档并入 +12 req / +33 scenario，含改写） |
+| 功能能力（capability） | **11 个基线能力已交付** | 现行基线 62 条 requirement / 139 个 scenario（2026-10-23 归档并入 +7 req / +21 scenario；2026-10-25 归档并入 +14 req / +39 scenario，含改写） |
 | 后端接口 | **43 个** | 10 个 Controller，统一 `{code, msg, data}` 返回；本轮无新接口（可靠性为内部机制 + 通知字段增量） |
 | 数据库表 | **9 张** | 7 张交易与配套表 + `user_subscription` + `review_analysis` |
 | 前端页面 | **19 个** | 含订单详情 / 个人中心 / 订单管理 / 404 页；另有 7 个公共组件 |
-| 自动化测试 | **94 个测试方法** | 14 个测试类；最近一次实测（2026-10-25）`mvn test` 全绿 |
-| 规格实测 | **48 项断言 + AI 导购端到端 + 看板/团长端 16 项 + 目录检索/订单/个人中心 33 项 + 订阅匹配可靠性 10 项** | `docs/verification-report.md`（§一～五 为 MVP 基线；§六 AI 导购；§七 看板与团长端；§八 目录检索与订单/个人中心/管理端；§九 订阅匹配可靠性） |
+| 自动化测试 | **96 个测试方法** | 14 个测试类；最近一次实测（2026-10-25）`mvn test` 全绿 |
+| 规格实测 | **…+ 订阅匹配可靠性 10 项 + 真实图片与头像 12 项** | `docs/verification-report.md`（§一～五 为 MVP 基线；§六 AI 导购；§七 看板与团长端；§八 目录检索与订单/个人中心/管理端；§九 订阅匹配可靠性；§十 移动端；§十一 真实图片与头像） |
 | 待实施 / 待验证 | **P2 匹配可靠性与 P4 移动端适配均已收尾（2026-10-25）** | 剩余仅 JWT 主动失效（黑名单 / refresh token，毕设口径可接受） |
 
 ---
@@ -30,6 +30,7 @@
 | FR-1-2 | 登录与 JWT 身份识别 | ✅ | `AuthController.login` / `me` + `JwtUtil` | `AuthApiTest`：loginSuccess / loginWrongPasswordReturns401 |
 | FR-1-3 | 角色权限隔离 | ✅ | `SecurityConfig` + 各 Controller `@PreAuthorize` + 归属校验 | `GroupBuyFlowApiTest`：userCannotListGroupOrders / otherLeaderCannotListGroupOrders + verification-report §三 |
 | FR-1-4 | 团长提货点资料（含本人维护） | ✅ | `user` 表字段 + 团购详情 VO + `PUT /api/auth/profile` + `Profile.vue` | `GroupBuyFlowApiTest.listContainsLeaderAndPickupPoint` + `ProfileApiTest.leaderUpdatesPickupPoint`（改后团购详情即时生效） |
+| FR-1-6 | 用户头像（全角色）与团长提货点照片 | ✅ | `user` 表 `avatar_url` / `pickup_point_image_url` + `PUT /api/auth/profile`（URL 前缀校验）+ `Profile.vue` 上传 + `Dashboard.vue` / `GroupBuyDetail.vue` 渲染 | `ProfileApiTest.avatarMaintenance` / `pickupPhotoMaintenance` + verification-report §十一（10 项接口断言 + 浏览器截图） |
 | FR-1-5 | 修改密码 | ✅ | `POST /api/auth/change-password` + `Profile.vue` | `ProfileApiTest`：改密成功后旧密码 401 / 新密码 200、旧密码错误 400、新旧相同 400 |
 
 ### FR-2 商品管理（product-catalog）—— 全部交付
@@ -39,7 +40,7 @@
 | FR-2-1 | 商品上架 | ✅ | `ProductController`（POST）+ `AdminProducts.vue` | verification-report §三（缺必填字段返回 400） |
 | FR-2-2 | 商品编辑（改价立即生效） | ✅ | `ProductController`（PUT / DELETE） | verification-report §三（改价立即生效） |
 | FR-2-3 | 商品浏览（关键词 / 分类 / 排序 / 分页检索 + 详情 + 评分汇总） | ✅ | `ProductController`（GET 检索分页 + /categories + admin-list）+ `ProductList.vue` / `ProductDetail.vue`（按设计系统重做） | `ProductSearchApiTest`（7 用例：分页/关键词/分类/排序白名单/逻辑删除/管理端列表/默认分类）+ verification-report §八 |
-| FR-2-4 | 商品图片上传（≤5MB，仅管理员，图片白名单） | ✅ | `FileController`（扩展名+contentType 双校验）+ `AdminProducts.vue`（el-upload 接入） | `UploadAndSecurityApiTest`（txt 拒 / 无扩展名拒 / 假类型拒 / PNG 成功）+ verification-report §八 |
+| FR-2-4 | 图片上传（≤5MB，图片白名单，2026-10-25 起开放到全部登录用户） | ✅ | `FileController`（扩展名+contentType 双校验）+ `AdminProducts.vue`（商品图）/ `Profile.vue`（头像、提货点照片） | `UploadAndSecurityApiTest`（txt 拒 / 无扩展名拒 / 假类型拒 / PNG 成功 / 未登录 401）+ verification-report §八、§十一 |
 
 ### FR-3 团购活动（group-buying）—— 全部交付
 
@@ -238,7 +239,7 @@
 
 | 资产 | 内容 | 位置 |
 | --- | --- | --- |
-| 自动化测试 | 14 个测试类 / 94 个测试方法 | `backend/src/test/` |
+| 自动化测试 | 14 个测试类 / 96 个测试方法 | `backend/src/test/` |
 | 规格实测报告 | MVP 基线 48 项断言 + AI 导购端到端（2026-10-17）+ 看板与团长端 16 项（2026-10-23）+ 目录检索/订单/个人中心/管理端 33 项（2026-10-25）；累计 9 个真实缺陷已修复转回归 | `docs/verification-report.md` |
 | 需求基线 | 11 capability / 42 req / 77 scenario | `openspec/specs/` |
 | 变更归档 | 4 个已归档变更（最新：`2026-10-23-admin-dashboard-and-leader-ui`） | `openspec/changes/` |

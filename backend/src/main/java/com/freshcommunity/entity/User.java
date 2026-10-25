@@ -18,6 +18,10 @@ public class User {
     private String role;
     private String pickupPointName;
     private String pickupPointAddress;
+    /** 头像（/uploads/ 或 /images/ 路径），全角色可维护 */
+    private String avatarUrl;
+    /** 团长提货点照片，仅团长可维护 */
+    private String pickupPointImageUrl;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
     @TableLogic

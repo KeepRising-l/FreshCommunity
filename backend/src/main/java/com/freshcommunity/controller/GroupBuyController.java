@@ -112,6 +112,7 @@ public class GroupBuyController {
                 vo.setLeaderName(leader.getUsername());
                 vo.setPickupPointName(leader.getPickupPointName());
                 vo.setPickupPointAddress(leader.getPickupPointAddress());
+                vo.setPickupPointImageUrl(leader.getPickupPointImageUrl());
             }
             GroupBuyItem item = itemByGroup.get(g.getId());
             fillProduct(vo, item, item == null ? null : products.get(item.getProductId()));
@@ -148,6 +149,7 @@ public class GroupBuyController {
             vo.setLeaderName(leader.getUsername());
             vo.setPickupPointName(leader.getPickupPointName());
             vo.setPickupPointAddress(leader.getPickupPointAddress());
+            vo.setPickupPointImageUrl(leader.getPickupPointImageUrl());
             RatingVO rating = reviewService.leaderRating(gb.getLeaderId());
             vo.setLeaderAvgScore(rating.getAvgScore());
             vo.setLeaderReviewCount(rating.getCount());

@@ -89,6 +89,13 @@
               </span>
             </div>
             <StatusBadge kind="groupBuy" :status="detail.status" />
+            <img
+              v-if="detail.pickupPointImageUrl"
+              class="pickup-photo"
+              :src="detail.pickupPointImageUrl"
+              alt="提货点照片"
+              loading="lazy"
+            />
           </div>
 
           <!-- 下单 -->
@@ -537,6 +544,16 @@ watch(() => route.params.id, load)
   border: 1px solid var(--fc-line);
   box-shadow: var(--fc-sh-1);
   margin-bottom: 18px;
+}
+
+.pickup-photo {
+  margin-left: auto;
+  width: 88px;
+  height: 62px;
+  border-radius: var(--fc-r-sm);
+  object-fit: cover;
+  border: 1px solid var(--fc-line-soft);
+  flex: none;
 }
 
 .avatar {

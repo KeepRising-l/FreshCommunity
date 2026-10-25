@@ -33,6 +33,8 @@
 - **商品检索与分页**：商品带分类与描述属性；列表接口支持关键词（名称模糊）、分类、排序（最新/价格升降，白名单校验）与分页（`PageResult{records,total,current,size,pages}`），首次启用 MyBatis-Plus 分页拦截器；管理端另有含下架商品的全量列表
 - **订单信息补全**：「我的订单」/ 订单详情 / 管理端订单列表的 VO 由后端批量补全商品名、商品图、团购标题、团长与提货点（批量查询，无 N+1），前端不再自行拉商品做映射
 - **账号自助维护**：修改密码（旧密码校验 + 6-32 位 + 不得与旧密码相同）、团长维护提货点（即时生效于其名下团购）
+- **真实图片**：商品与提货点种子数据自带真实照片（Wikimedia Commons 免费授权，随仓库内置离线可用，`scripts/fetch-seed-images.py` 可刷新）；emoji 占位降级为无图兜底
+- **图片上传开放**：上传接口对所有登录用户可用（图片白名单 + 5MB 不变）——头像全角色可换、团长可传提货点照片、管理员维护商品图；个人中心上传头像后侧边栏/顶栏即时生效
 - **移动端适配**：<768px 底部导航（按角色 ≤5 项，含未读角标与 `safe-area-inset-bottom`）、团购详情固定参团操作栏、弹窗 92% 宽度防溢出、按钮触摸目标 ≥44px；桌面布局不受影响
 - **统一错误返回**：安全过滤链的 401/403 也走 `{code,msg,data}` JSON（未登录 401、无权限 403），500 兜底固定文案不泄漏内部异常；上传接口扩展名 + contentType 双重白名单校验
 
@@ -199,7 +201,7 @@ npm run dev
 | POST | `/api/auth/login` | 登录，返回 JWT | 公开 |
 | GET | `/api/auth/me` | 当前用户信息（含注册时间） | 登录 |
 | POST | `/api/auth/change-password` | 修改密码（旧密码校验 + 6-32 位） | 登录 |
-| PUT | `/api/auth/profile` | 维护个人资料（团长提货点名称/地址） | 团长 |
+| PUT | `/api/auth/profile` | 维护个人资料（头像全角色；团长提货点名称/地址/照片） | 登录用户 |
 | GET | `/api/products?keyword=&category=&sort=&page=&size=` | 在售商品检索（名称模糊 / 分类 / 排序白名单 / 分页） | 登录 |
 | GET | `/api/products/categories` | 在售商品分类去重列表 | 登录 |
 | GET | `/api/products/{id}` | 商品详情（含评分汇总与口碑标签） | 登录 |
@@ -232,7 +234,7 @@ npm run dev
 | POST | `/api/notifications/{id}/read` | 标记单条消息已读 | 登录 |
 | POST | `/api/notifications/read-all` | 全部消息标记已读 | 登录 |
 | GET | `/api/admin/dashboard` | 看板：今日订单/成团/成交额、注册用户、进行中团购、订单状态分布、近 7 日趋势 | 管理员 |
-| POST | `/api/upload` | 上传商品图片（≤5MB） | 管理员 |
+| POST | `/api/upload` | 上传图片（≤5MB，jpg/png/gif/webp）——商品图（管理页）、头像/提货点照片（个人中心） | 登录用户 |
 
 ---
 
@@ -248,7 +250,7 @@ DB_PASSWORD=<你的MySQL密码> mvn test
 - 测试库由 `db/schema.sql` 自动初始化（库名替换为 `freshcommunity_test`），**不会动开发库 `freshcommunity`**
 - 每个测试方法带事务，结束自动回滚，用例之间互不污染
 - 数据库账号可用 `DB_USER` / `DB_PASSWORD` 环境变量覆盖，默认 `root` / `1234`
-- 测试源码目前包含 **94 个用例**（14 个测试类），覆盖认证、商品检索分页与分类、订单详情与信息补全、修改密码与提货点维护、管理端订单列表、上传白名单与统一 401/403 口径、团购生命周期与库存、拼团价设置与校验、订阅匹配、LLM 解析降级、评价洞察、退款状态守卫、评价、站内消息与权限隔离、看板聚合口径、团长经营概览与核销记录；最近一次实测（2026-10-25）全绿
+- 测试源码目前包含 **96 个用例**（14 个测试类），覆盖认证、商品检索分页与分类、订单详情与信息补全、修改密码与提货点维护、管理端订单列表、上传白名单与统一 401/403 口径、团购生命周期与库存、拼团价设置与校验、订阅匹配、LLM 解析降级、评价洞察、退款状态守卫、评价、站内消息与权限隔离、看板聚合口径、团长经营概览与核销记录；最近一次实测（2026-10-25）全绿
 
 ---
 
@@ -264,7 +266,7 @@ DB_PASSWORD=<你的MySQL密码> mvn test
 
 ## 需求文档
 
-`openspec/` 目录下有 **12 个 capability 基线**（60 条 Requirement / 133 个 Scenario）、**7 个已归档变更**。
+`openspec/` 目录下有 **12 个 capability 基线**（62 条 Requirement / 139 个 Scenario）、**8 个已归档变更**。
 
 ```
 openspec/
@@ -281,7 +283,8 @@ openspec/
         ├── 2026-10-23-admin-dashboard-and-leader-ui/
         ├── 2026-10-25-catalog-retrieval-user-center-admin/
         ├── 2026-10-25-subscription-match-reliability/
-        └── 2026-10-25-mobile-adaptation/
+        ├── 2026-10-25-mobile-adaptation/
+        └── 2026-10-25-real-images-avatars/
 ```
 
 每个变更目录含 `proposal.md`（为什么做、边界）、`specs/`（delta 增量规格）、`design.md`（技术方案与取舍）、`tasks.md`（任务清单）；归档时 delta 合并进基线。完整工作流说明见 [`docs/openspec-guide.md`](docs/openspec-guide.md)。
