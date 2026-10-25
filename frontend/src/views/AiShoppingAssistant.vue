@@ -43,13 +43,37 @@
       </div>
     </section>
 
+    <!-- 追问输入：首轮回答完成后出现，携带上下文再问 -->
+    <section v-if="canFollowUp" class="compose card followup">
+      <div class="section-heading">
+        <div>
+          <span class="step">✎</span>
+          <h2>追问一句</h2>
+        </div>
+        <span class="hint">AI 记得刚才的推荐，可以继续问（最多再问两轮）</span>
+      </div>
+      <div class="followup-row">
+        <el-input
+          v-model="followUpText"
+          maxlength="255"
+          placeholder="例如：再便宜点有吗？ / 家里有老人，换个粉面的"
+          @keydown.enter.prevent="askFollowUp"
+        />
+        <el-button type="primary" :loading="asking" :disabled="!followUpText.trim()" @click="askFollowUp">
+          追问
+        </el-button>
+      </div>
+    </section>
+
     <!-- 推荐结果 -->
     <section v-if="answer || recommendError" class="answer card" aria-live="polite">
       <div class="answer-icon">{{ recommendError ? '⚠️' : '🤖' }}</div>
       <div class="answer-body">
         <h3>{{ recommendError ? '这次没答上来' : 'AI 的推荐' }}</h3>
         <p v-if="recommendError" class="answer-text">{{ recommendError }}</p>
-        <p v-else class="answer-text">{{ answer }}</p>
+        <p v-else class="answer-text">
+          {{ answer }}<span v-if="streaming" class="caret">▍</span>
+        </p>
 
         <div v-if="answerItems.length" class="answer-items">
           <article
@@ -255,13 +279,13 @@
 </template>
 
 <script setup>
-import { onMounted, ref } from 'vue'
+import { computed, onMounted, ref } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { useRouter } from 'vue-router'
 import EmptyState from '../components/EmptyState.vue'
 import SkeletonList from '../components/SkeletonList.vue'
-import { aiRecommend } from '../api/ai'
-import { createOrder, payOrder } from '../api/order'
+import { aiRecommendStream } from '../api/ai'
+import { createOrder, payOrder, listMyOrders } from '../api/order'
 import {
   cancelSubscription,
   createSubscription,
@@ -275,12 +299,72 @@ const router = useRouter()
 const askExamples = ['帮我找性价比比较高的苹果', '20 元以内有什么水果', '想买新鲜的水产']
 const examples = ['10 元以内的苹果', '想买便宜的草莓']
 
-// 01 即时推荐
+// 01 即时推荐（流式打字机 + 追问上下文）
 const askText = ref('')
 const asking = ref(false)
+const streaming = ref(false)
 const answer = ref('')
 const answerItems = ref([])
 const recommendError = ref('')
+/** 追问上下文（user/assistant 交替），最多两轮后引导重新开问 */
+const history = ref([])
+const followUpText = ref('')
+const canFollowUp = computed(() => !recommendError.value && !!answer.value && history.value.length < 4)
+let currentStream = null
+
+function resetAnswer() {
+  answer.value = ''
+  answerItems.value = []
+  recommendError.value = ''
+}
+
+/** 发起一轮问答（首轮或追问）；携带历史，流式渲染正文，完成后落卡片 */
+function runAsk(text) {
+  asking.value = true
+  streaming.value = true
+  resetAnswer()
+  currentStream = aiRecommendStream({
+    text,
+    history: history.value,
+    onDelta: (piece) => {
+      answer.value += piece
+    },
+    onDone: (vo) => {
+      answerItems.value = vo?.items || []
+      if (vo?.reply) answer.value = vo.reply
+      history.value.push({ role: 'user', content: text })
+      history.value.push({ role: 'assistant', content: answer.value })
+      asking.value = false
+      streaming.value = false
+    },
+    onError: (msg) => {
+      recommendError.value = msg
+      asking.value = false
+      streaming.value = false
+    }
+  })
+}
+
+async function ask() {
+  const demand = askText.value.trim()
+  if (!demand || asking.value) return
+  history.value = []
+  followUpText.value = ''
+  runAsk(demand)
+}
+
+function askFollowUp() {
+  const demand = followUpText.value.trim()
+  if (!demand || asking.value) return
+  followUpText.value = ''
+  runAsk(demand)
+}
+
+function selectAskExample(example) {
+  askText.value = example
+  resetAnswer()
+  history.value = []
+}
 
 // 推荐卡片直接参团下单
 const orderVisible = ref(false)
@@ -297,33 +381,6 @@ const loading = ref(true)
 const previewing = ref(false)
 const confirming = ref(false)
 const cancellingId = ref(null)
-
-async function ask() {
-  const demand = askText.value.trim()
-  if (!demand || asking.value) return
-
-  asking.value = true
-  answer.value = ''
-  answerItems.value = []
-  recommendError.value = ''
-  try {
-    const result = await aiRecommend({ text: demand })
-    answer.value = result.data?.reply || ''
-    answerItems.value = result.data?.items || []
-  } catch (e) {
-    // 拦截器已 toast；页面内再留一条可读的失败说明（LLM 不可用是预期场景）
-    recommendError.value = e?.message || 'AI 服务暂时不可用，请稍后重试'
-  } finally {
-    asking.value = false
-  }
-}
-
-function selectAskExample(example) {
-  askText.value = example
-  answer.value = ''
-  answerItems.value = []
-  recommendError.value = ''
-}
 
 function goItem(item) {
   router.push(item.groupBuyId ? '/user/groups/' + item.groupBuyId : '/user/products/' + item.productId)
@@ -349,8 +406,7 @@ async function submitOrder() {
       { confirmButtonText: '去支付', cancelButtonText: '稍后去订单列表', type: 'success' }
     )
       .then(async () => {
-        // 支付需要订单 id：从我的订单取最新一笔该团的待支付单
-        const { listMyOrders } = await import('../api/order')
+        // 支付需要订单 id：从我的订单取该团最新一笔待支付单
         const res = await listMyOrders()
         const mine = (res.data || []).find(
           (o) => o.groupBuyId === item.groupBuyId && o.status === 'PENDING_PAYMENT'
@@ -519,6 +575,13 @@ onMounted(loadSubscriptions)
 .answer-body { flex: 1; min-width: 0; }
 .answer h3 { margin: 1px 0 7px; color: var(--fc-ink-900); font-size: 15px; }
 .answer-text { margin: 0 !important; white-space: pre-line; color: var(--fc-ink-800) !important; font-size: 13.5px !important; line-height: 1.9 !important; }
+.caret { display: inline-block; color: var(--fc-brand); animation: caret-blink 1s step-start infinite; }
+@keyframes caret-blink { 50% { opacity: 0; } }
+
+.followup { padding: 16px 24px 18px; }
+.followup-row { display: flex; gap: 10px; }
+.followup-row .el-input { flex: 1; }
+@media (prefers-reduced-motion: reduce) { .caret { animation: none; } }
 
 .answer-items { display: grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); gap: 12px; margin-top: 14px; }
 .rec-card { display: flex; gap: 11px; padding: 11px; border: 1px solid var(--fc-line); border-radius: var(--fc-r); background: #fff; cursor: pointer; transition: all .15s ease; }

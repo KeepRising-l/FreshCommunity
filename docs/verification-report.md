@@ -401,3 +401,17 @@
 | 6 | 待支付倒计时最后 1 分钟秒级跳动 | ✅ OrderCard 局部 1s tick（PENDING_PAYMENT 时激活） |
 
 - 回归：`mvn test` **101 用例全绿**（+1 stream 鉴权）；`npm run build` 通过
+
+---
+
+## 十五、AI 流式输出与追问实测（2026-10-26 · 变更 ai-streaming-dialog）
+
+| # | 断言 | 实测结果 |
+| --- | --- | --- |
+| 1 | SSE 行解析只取 delta.content（思考/[DONE]/坏行返回 null） | ✅ `AiRecommendServiceTest.parsesStreamDeltaCorrectly` |
+| 2 | 流式端点无 key 前置 400（注册 emitter 前校验） | ✅ `SubscriptionApiTest` |
+| 3 | 打字机增量渲染：提交后 2.5s 正文 0 字（思考期）→ 5s 已 146 字 + 3 卡片，光标消失 | ✅ 浏览器实测 |
+| 4 | **追问延续上下文**：首轮"性价比高的苹果"后追问"再便宜点有吗？预算 10 元以内" | ✅ 回答"花牛拼团 8.50 是唯一 10 元内苹果，已是最低价"，并给跨品类替代（小番茄 8.80）——正确接住"再便宜"相对语境 |
+| 5 | 追问输入框两轮上限 | ✅ history≥4 隐藏（代码口径） |
+
+- 回归：`mvn test` **102 用例全绿**（+1 解析 +1 流式端点降级）；`npm run build` 通过

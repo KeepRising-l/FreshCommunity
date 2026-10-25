@@ -216,6 +216,12 @@ class SubscriptionApiTest extends ApiTestBase {
         assertThat(r.status()).isEqualTo(400);
         assertThat(r.msg()).contains("AI 服务暂时不可用");
 
+        // 流式端点在注册 emitter 前同样前置校验（统一 400 JSON，而非 SSE error 事件）
+        var rs = perform(post("/api/ai/recommend/stream"), login("user1", "123456"),
+                Map.of("text", "性价比高的苹果"));
+        assertThat(rs.status()).isEqualTo(400);
+        assertThat(rs.msg()).contains("AI 服务暂时不可用");
+
         var blank = perform(post("/api/ai/recommend"), login("user1", "123456"),
                 Map.of("text", "  "));
         assertThat(blank.status()).isEqualTo(400);

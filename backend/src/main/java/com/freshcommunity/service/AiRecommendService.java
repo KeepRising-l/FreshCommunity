@@ -51,10 +51,26 @@ public class AiRecommendService {
         this.userMapper = userMapper;
     }
 
-    public AiRecommendVO recommend(String text) {
+    /** 供流式端点在注册 emitter 前做前置校验（不可用走统一 400 而非 SSE error 事件）。 */
+    public void requireAvailable() {
         if (!aiClient.isAvailable()) {
             throw new IllegalArgumentException("AI 服务暂时不可用，请稍后重试");
         }
+    }
+
+    public AiRecommendVO recommend(String text) {
+        return recommend(text, null);
+    }
+
+    /**
+     * 即时推荐（可携带追问历史）。history 为已发生的问答对（user/assistant），
+     * 服务端裁剪到最近 4 条（约两轮问答），避免 prompt 无限增长。
+     */
+    public AiRecommendVO recommend(String text, List<Map<String, String>> history) {
+        if (!aiClient.isAvailable()) {
+            throw new IllegalArgumentException("AI 服务暂时不可用，请稍后重试");
+        }
+        List<Map<String, String>> bounded = boundHistory(history);
 
         List<Product> products = productMapper.selectList(new LambdaQueryWrapper<Product>()
                 .eq(Product::getStatus, 1)
@@ -69,7 +85,8 @@ public class AiRecommendService {
         Map<Long, com.freshcommunity.entity.User> leadersByGroupId = leadersOf(ongoing);
 
         String candidateText = buildCandidates(products, ongoingByProductId, tagsByProduct);
-        String reply = aiClient.chat(SYSTEM_PROMPT, "用户需求：" + text + "\n\n候选商品清单：\n" + candidateText, false);
+        String reply = aiClient.chat(SYSTEM_PROMPT, bounded,
+                "用户需求：" + text + "\n\n候选商品清单：\n" + candidateText, false);
         if (reply == null || reply.isBlank()) {
             log.warn("AI 推荐调用失败：LLM 返回空");
             throw new IllegalArgumentException("AI 服务暂时没有响应，请稍后重试");
@@ -79,6 +96,59 @@ public class AiRecommendService {
         vo.setReply(reply.trim());
         vo.setItems(pickMentionedItems(reply, products, ongoingByProductId, tagsByProduct, leadersByGroupId));
         return vo;
+    }
+
+    /**
+     * 流式版推荐：正文增量实时回调 onDelta（打字机），完成后组装与 {@link #recommend} 一致的结果。
+     * 回复为空时抛"暂时没有响应"，由调用方（流式端点）转错误事件。
+     */
+    public AiRecommendVO recommendStream(String text, List<Map<String, String>> history,
+                                         java.util.function.Consumer<String> onDelta) {
+        if (!aiClient.isAvailable()) {
+            throw new IllegalArgumentException("AI 服务暂时不可用，请稍后重试");
+        }
+        List<Map<String, String>> bounded = boundHistory(history);
+
+        List<Product> products = productMapper.selectList(new LambdaQueryWrapper<Product>()
+                .eq(Product::getStatus, 1)
+                .orderByAsc(Product::getId));
+        if (products.isEmpty()) {
+            throw new IllegalArgumentException("平台暂无在售商品，无法推荐");
+        }
+        List<GroupBuy> ongoing = groupBuyService.listOngoing();
+        Map<Long, GroupBuy> ongoingByProductId = ongoingByProductId(ongoing);
+        Map<Long, List<String>> tagsByProduct = reviewAnalysisService
+                .topTags(products.stream().map(Product::getId).toList(), 3);
+        Map<Long, com.freshcommunity.entity.User> leadersByGroupId = leadersOf(ongoing);
+
+        String candidateText = buildCandidates(products, ongoingByProductId, tagsByProduct);
+        String reply = aiClient.chatStream(SYSTEM_PROMPT, bounded,
+                "用户需求：" + text + "\n\n候选商品清单：\n" + candidateText, onDelta);
+        if (reply == null || reply.isBlank()) {
+            throw new IllegalArgumentException("AI 服务暂时没有响应，请稍后重试");
+        }
+
+        AiRecommendVO vo = new AiRecommendVO();
+        vo.setReply(reply.trim());
+        vo.setItems(pickMentionedItems(reply, products, ongoingByProductId, tagsByProduct, leadersByGroupId));
+        return vo;
+    }
+
+    /** 追问历史裁剪：只保留合法角色与最近 4 条（约两轮），防 prompt 膨胀与脏注入。 */
+    private List<Map<String, String>> boundHistory(List<Map<String, String>> history) {
+        if (history == null || history.isEmpty()) {
+            return List.of();
+        }
+        List<Map<String, String>> valid = new ArrayList<>();
+        for (Map<String, String> m : history) {
+            String role = m.get("role");
+            String content = m.get("content");
+            if (("user".equals(role) || "assistant".equals(role))
+                    && content != null && !content.isBlank() && content.length() <= 2000) {
+                valid.add(Map.of("role", role, "content", content.trim()));
+            }
+        }
+        return valid.size() <= 4 ? valid : valid.subList(valid.size() - 4, valid.size());
     }
 
     private static final String SYSTEM_PROMPT = """

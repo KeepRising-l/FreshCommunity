@@ -104,7 +104,7 @@ class AiRecommendServiceTest {
                 .hasMessageContaining("AI 服务暂时不可用");
 
         when(aiClient.isAvailable()).thenReturn(true);
-        when(aiClient.chat(any(), any(), eq(false))).thenReturn(null);
+        when(aiClient.chat(any(), any(), any(), eq(false))).thenReturn(null);
         when(productMapper.selectList(any())).thenReturn(List.of(fuji));
         assertThatThrownBy(() -> service.recommend("性价比高的苹果"))
                 .isInstanceOf(IllegalArgumentException.class)
@@ -116,7 +116,7 @@ class AiRecommendServiceTest {
     void picksMentionedItemsWithLongNameFirst() {
         stubCandidates();
         when(aiClient.isAvailable()).thenReturn(true);
-        when(aiClient.chat(any(), any(), eq(false))).thenReturn(
+        when(aiClient.chat(any(), any(), any(), eq(false))).thenReturn(
                 "推荐：红富士苹果，拼团价9.9元比零售12.9元划算，口碑说新鲜实惠。\n"
                         + "也可以看看：甘肃花牛苹果，更便宜适合做果泥。\n"
                         + "小贴士：成团还差1人，尽快下单。");
@@ -140,17 +140,29 @@ class AiRecommendServiceTest {
     void candidateLinesCarryRealData() {
         stubCandidates();
         when(aiClient.isAvailable()).thenReturn(true);
-        when(aiClient.chat(any(), any(), eq(false))).thenReturn("推荐：红富士苹果，理由。");
+        when(aiClient.chat(any(), any(), any(), eq(false))).thenReturn("推荐：红富士苹果，理由。");
 
         service.recommend("性价比高的苹果");
 
         org.mockito.ArgumentCaptor<String> captor = org.mockito.ArgumentCaptor.forClass(String.class);
-        org.mockito.Mockito.verify(aiClient).chat(any(), captor.capture(), eq(false));
+        org.mockito.Mockito.verify(aiClient).chat(any(), any(), captor.capture(), eq(false));
         String prompt = captor.getValue();
         assertThat(prompt).contains("用户需求：性价比高的苹果");
         assertThat(prompt).contains("#17 红富士苹果[水果] 零售12.90元 库存50");
         assertThat(prompt).contains("在团:「红富士苹果 · 产地直发」拼团价9.90元 已参团2/3人");
         assertThat(prompt).contains("口碑:新鲜,实惠");
         assertThat(prompt).contains("#19 甘肃花牛苹果[水果] 零售9.90元");
+    }
+
+    @Test
+    @DisplayName("SSE 行解析：仅取 delta.content，忽略思考内容与 [DONE]")
+    void parsesStreamDeltaCorrectly() {
+        assertThat(com.freshcommunity.service.AiClient.parseStreamDelta(
+                "data: {\"choices\":[{\"delta\":{\"reasoning_content\":\"思考\"}}]}")).isNull();
+        assertThat(com.freshcommunity.service.AiClient.parseStreamDelta("data: [DONE]")).isNull();
+        assertThat(com.freshcommunity.service.AiClient.parseStreamDelta(": keep-alive")).isNull();
+        assertThat(com.freshcommunity.service.AiClient.parseStreamDelta(
+                "data: {\"choices\":[{\"delta\":{\"content\":\"推荐\"}}]}")).isEqualTo("推荐");
+        assertThat(com.freshcommunity.service.AiClient.parseStreamDelta("data: not-json")).isNull();
     }
 }
