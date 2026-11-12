@@ -21,7 +21,11 @@ public interface OrderMapper extends BaseMapper<Order> {
     @Update("UPDATE `order` SET status = #{status} WHERE id = #{id} AND status = #{expectedStatus}")
     int updateStatus(@Param("id") Long id, @Param("status") String status, @Param("expectedStatus") String expectedStatus);
 
-    @Select("SELECT * FROM `order` WHERE group_buy_id = #{groupBuyId} AND status = #{status}")
+    @Update("UPDATE `order` SET status = 'SUCCESS', pickup_code = #{code} WHERE id = #{id} AND status = 'PENDING_GROUP'")
+    int assignPickupCode(@Param("id") Long id, @Param("code") String code);
+
+    // 当前读：并发支付在获取团购锁前可能已经建立旧快照，成团时必须看到其他已提交订单。
+    @Select("SELECT * FROM `order` WHERE group_buy_id = #{groupBuyId} AND status = #{status} FOR UPDATE")
     List<Order> findByGroupBuyAndStatus(@Param("groupBuyId") Long groupBuyId, @Param("status") String status);
 
     @Select("SELECT * FROM `order` WHERE status = 'PENDING_PAYMENT' AND created_at <= DATE_SUB(NOW(), INTERVAL 30 MINUTE)")
@@ -29,9 +33,6 @@ public interface OrderMapper extends BaseMapper<Order> {
 
     @Select("SELECT * FROM `order` WHERE pickup_code = #{code}")
     Order findByPickupCode(@Param("code") String code);
-
-    @Select("SELECT COUNT(*) FROM `order` WHERE pickup_code = #{code}")
-    long countByPickupCode(@Param("code") String code);
 
     @Select("SELECT COUNT(*) FROM `order` WHERE DATE(created_at) = CURDATE() AND deleted = 0")
     Long countTodayOrders();

@@ -122,7 +122,9 @@ mysql -uroot -p --default-character-set=utf8mb4 < db/seed.sql
 
 > Windows 下务必带 `--default-character-set=utf8mb4`，否则中文会因 GBK 解析而报 `ERROR 1366`。
 >
-> **已有旧库时必须重跑 `schema.sql`**：它是 `DROP TABLE` + `CREATE TABLE` 的完整重建脚本。只跑 `seed.sql` 不会补建新增的表（例如 AI 导购的 `review_analysis`），后端启动后商品详情会报 `Table doesn't exist`，定时任务也会每 60 秒刷一次同样的错误。
+> **已有数据的数据库不要直接重跑 `schema.sql` 或 `seed.sql`**：它们会重建表或清空业务数据。请先备份，并根据现有结构执行所需的 `db/migrate-*.sql` 增量脚本；旧库缺少的表也须先完成对应迁移。
+>
+> **取货码并发修复的旧库升级**：先按 [`db/migrate-2026-11-12-pickup-code.sql`](db/migrate-2026-11-12-pickup-code.sql) 中的查询检查并处理历史重复码，再对目标库执行该脚本，增加唯一索引。确认索引尚未存在后执行；新建库已包含此索引，无需重复迁移。未完成迁移前不能依靠新代码防止取货码并发重复。
 
 - **`schema.sql`**：建库、建 9 张表（含需求订阅 `user_subscription` 与评价洞察 `review_analysis`），写入三个基础账号和 3 个商品
 - **`seed.sql`**：**丰富的演示数据集**，可重复执行（每次清空业务表重建），时间全部是相对 `NOW()` 的，任何时候执行都能得到"看起来正在发生"的数据：

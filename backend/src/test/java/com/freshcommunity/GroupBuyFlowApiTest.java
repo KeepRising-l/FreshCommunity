@@ -6,8 +6,10 @@ import com.freshcommunity.support.ApiTestBase;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.dao.DuplicateKeyException;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 
@@ -16,6 +18,59 @@ class GroupBuyFlowApiTest extends ApiTestBase {
 
     @Autowired
     private ScheduledJobs scheduledJobs;
+
+    @Test
+    @DisplayName("团购成团后，其他待支付订单不能支付且仍可取消回补库存")
+    void pendingOrderCannotPayAfterGroupSucceeds() throws Exception {
+        String leader = login("leader1", "123456");
+        String buyer = login("user1", "123456");
+        long productId = firstProductId(buyer);
+        long groupId = createGroupBuy(leader, productId, 1);
+        long first = createOrder(buyer, groupId, 1);
+        long second = createOrder(buyer, groupId, 1);
+
+        assertThat(payOrder(buyer, first).ok()).isTrue();
+        assertThat(groupBuyDetail(buyer, groupId).path("status").asText()).isEqualTo("SUCCESS");
+        long stockBeforeCancel = productStock(buyer, productId);
+
+        assertThat(payOrder(buyer, second).status()).isEqualTo(400);
+        assertThat(jdbcTemplate.queryForObject("SELECT status FROM `order` WHERE id = ?", String.class, second))
+                .isEqualTo("PENDING_PAYMENT");
+        assertThat(perform(post("/api/orders/" + second + "/cancel"), buyer, null).ok()).isTrue();
+        assertThat(productStock(buyer, productId)).isEqualTo(stockBeforeCancel + 1);
+    }
+
+    @Test
+    @DisplayName("已截止或已解散团购的待支付订单不能支付")
+    void pendingOrderCannotPayAfterDeadlineOrFailure() throws Exception {
+        String leader = login("leader1", "123456");
+        String buyer = login("user1", "123456");
+        long groupId = createGroupBuy(leader, firstProductId(buyer), 2);
+        long orderId = createOrder(buyer, groupId, 1);
+        jdbcTemplate.update("UPDATE group_buy SET deadline = DATE_SUB(NOW(), INTERVAL 1 MINUTE) WHERE id = ?", groupId);
+
+        assertThat(payOrder(buyer, orderId).status()).isEqualTo(400);
+        scheduledJobs.processExpiredGroupBuys();
+        assertThat(groupBuyDetail(buyer, groupId).path("status").asText()).isEqualTo("FAIL");
+        assertThat(payOrder(buyer, orderId).status()).isEqualTo(400);
+        assertThat(jdbcTemplate.queryForObject("SELECT status FROM `order` WHERE id = ?", String.class, orderId))
+                .isEqualTo("PENDING_PAYMENT");
+    }
+
+    @Test
+    @DisplayName("数据库拒绝不同订单使用相同取货码")
+    void pickupCodeHasDatabaseUniquenessConstraint() throws Exception {
+        String leader = login("leader1", "123456");
+        String buyer = login("user1", "123456");
+        long groupId = createGroupBuy(leader, firstProductId(buyer), 3);
+        long first = createOrder(buyer, groupId, 1);
+        long second = createOrder(buyer, groupId, 1);
+        jdbcTemplate.update("UPDATE `order` SET pickup_code = '987654' WHERE id = ?", first);
+
+        assertThatThrownBy(() -> jdbcTemplate.update(
+                "UPDATE `order` SET pickup_code = '987654' WHERE id = ?", second))
+                .isInstanceOf(DuplicateKeyException.class);
+    }
 
     @Test
     @DisplayName("团购列表返回团长与提货点信息（回归：曾返回空）")

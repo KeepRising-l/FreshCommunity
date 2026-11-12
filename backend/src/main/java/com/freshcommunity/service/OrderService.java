@@ -17,6 +17,7 @@ import com.freshcommunity.mapper.OrderMapper;
 import com.freshcommunity.mapper.ProductMapper;
 import com.freshcommunity.mapper.UserMapper;
 import org.springframework.stereotype.Service;
+import org.springframework.dao.DuplicateKeyException;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
@@ -100,18 +101,26 @@ public class OrderService {
         if (!"PENDING_PAYMENT".equals(order.getStatus())) {
             throw new IllegalArgumentException("订单状态错误");
         }
-        if (!payService.pay(order)) {
-            throw new IllegalStateException("支付失败");
+        // 先锁住仍在进行且未截止的团购，和成团/解散判定串行化。
+        if (groupBuyMapper.lockOpenGroup(order.getGroupBuyId()) == null) {
+            throw new IllegalArgumentException("团购已结束或截止，请取消订单");
         }
         int updated = orderMapper.updateStatus(orderId, "PENDING_GROUP", "PENDING_PAYMENT");
         if (updated == 0) {
             throw new IllegalStateException("支付状态更新失败");
         }
+        // 行级条件更新同时检查团购状态和截止时间，避免其他订单成团/解散后继续支付。
+        // 失败时抛异常回滚订单状态，用户仍可取消订单回补库存。
+        if (groupBuyMapper.incrementMemberCount(order.getGroupBuyId()) == 0) {
+            throw new IllegalArgumentException("团购已结束或截止，请取消订单");
+        }
+        if (!payService.pay(order)) {
+            throw new IllegalStateException("支付失败");
+        }
         order.setStatus("PENDING_GROUP");
         order.setPayTime(LocalDateTime.now());
         orderMapper.updateById(order);
 
-        groupBuyMapper.incrementMemberCount(order.getGroupBuyId());
         tryGroupSuccess(order.getGroupBuyId());
     }
 
@@ -121,12 +130,13 @@ public class OrderService {
         if (success > 0) {
             List<Order> orders = orderMapper.findByGroupBuyAndStatus(groupBuyId, "PENDING_GROUP");
             for (Order o : orders) {
-                o.setStatus("SUCCESS");
-                o.setPickupCode(generatePickupCode());
-                orderMapper.updateById(o);
+                String code = assignUniquePickupCode(o.getId());
+                if (code == null) {
+                    continue;
+                }
                 notificationService.notify(o.getUserId(), NotificationService.TYPE_GROUP_SUCCESS,
                         "团购已成团",
-                        "你参与的团购已成团，请留意提货通知。取货码：" + o.getPickupCode(),
+                        "你参与的团购已成团，请留意提货通知。取货码：" + code,
                         o.getId());
             }
         }
@@ -166,7 +176,9 @@ public class OrderService {
         if (!"SUCCESS".equals(order.getStatus()) && !"PENDING_PICKUP".equals(order.getStatus())) {
             throw new IllegalArgumentException("订单状态不允许核销");
         }
-        orderMapper.updateStatus(order.getId(), "COMPLETED", order.getStatus());
+        if (orderMapper.updateStatus(order.getId(), "COMPLETED", order.getStatus()) == 0) {
+            throw new IllegalArgumentException("订单已核销或状态已变更");
+        }
         notificationService.notify(order.getUserId(), NotificationService.TYPE_PICKUP_DONE,
                 "提货完成", "你的订单已核销完成，感谢参与。", order.getId());
     }
@@ -302,12 +314,14 @@ public class OrderService {
         return "O" + System.currentTimeMillis() + String.format("%06d", new Random().nextInt(1_000_000));
     }
 
-    private String generatePickupCode() {
-        // 生成唯一的 6 位数字取货码，避免碰撞导致 findByPickupCode 抛 TooManyResultsException
+    private String assignUniquePickupCode(Long orderId) {
+        // 唯一索引负责并发去重；碰撞时重新生成，不能用先查询再写入保证唯一性。
         for (int attempt = 0; attempt < 20; attempt++) {
             String code = String.format("%06d", SECURE_RANDOM.nextInt(1_000_000));
-            if (orderMapper.countByPickupCode(code) == 0) {
-                return code;
+            try {
+                return orderMapper.assignPickupCode(orderId, code) == 1 ? code : null;
+            } catch (DuplicateKeyException collision) {
+                // 另一个订单已使用该码，重试。
             }
         }
         throw new IllegalStateException("取货码生成失败，请重试");

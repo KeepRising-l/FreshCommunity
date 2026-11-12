@@ -96,7 +96,7 @@ CREATE TABLE `order` (
     INDEX idx_order_no (order_no),
     INDEX idx_user_id (user_id),
     INDEX idx_group_buy_id (group_buy_id),
-    INDEX idx_pickup_code (pickup_code)
+    UNIQUE INDEX uk_order_pickup_code (pickup_code)
 );
 
 CREATE TABLE review (
