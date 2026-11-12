@@ -9,7 +9,10 @@
 
     <!-- 主体：商品 + 金额（点击进入订单详情） -->
     <div class="main clickable" title="查看订单详情" @click="$emit('open', order)">
-      <div class="thumb" :class="visual.gradient">{{ visual.emoji }}</div>
+      <div class="thumb" :class="order.productImage ? '' : visual.gradient">
+        <img v-if="order.productImage" :src="order.productImage" :alt="title" />
+        <span v-else>{{ visual.emoji }}</span>
+      </div>
       <div class="info">
         <h4>{{ title }}</h4>
         <div v-if="pickupText" class="from">
@@ -207,7 +210,10 @@ const hint = computed(() => {
   display: grid;
   place-items: center;
   font-size: 30px;
+  overflow: hidden;
 }
+
+.thumb img { width: 100%; height: 100%; object-fit: cover; display: block; }
 
 .info {
   flex: 1;

@@ -1,8 +1,16 @@
 <template>
   <div class="login-page">
+    <div class="auth-shell">
+      <aside class="auth-story" aria-label="社区生鲜团购">
+        <div class="story-copy">
+          <span>FRESH COMMUNITY</span>
+          <h1>一日三餐，<br />和邻居一起更有滋味。</h1>
+          <p>挑选新鲜好物，成团后到社区提货点自提。</p>
+        </div>
+      </aside>
     <div class="login-card">
       <div class="brand">
-        <div class="mark">🥬</div>
+        <div class="mark" aria-hidden="true">✳</div>
         <div>
           <b>FreshCommunity</b>
           <small>社区生鲜团购平台</small>
@@ -47,6 +55,7 @@
         <b>演示账号</b>（密码均为 <code>123456</code>）<br />
         用户 <code>user1</code> · 团长 <code>leader1</code> · 管理员 <code>admin</code>
       </div>
+    </div>
     </div>
   </div>
 </template>
@@ -211,5 +220,50 @@ h2 {
   font-weight: 600;
   color: var(--fc-ink-700);
   padding-bottom: 6px;
+}
+
+/* 邻里生活：用真实商品照片和温暖的纸色承载登录表单。 */
+.login-page {
+  height: auto;
+  min-height: 100vh;
+  overflow: visible;
+  padding: 32px;
+  background: #f3f0e7;
+}
+.login-page::before, .login-page::after { display: none; }
+.auth-shell {
+  width: min(1020px, 100%);
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(380px, 450px);
+  overflow: hidden;
+  border: 1px solid #e7e2d5;
+  border-radius: 18px;
+  background: #fffdf8;
+  box-shadow: 0 18px 48px rgba(45, 54, 38, .09);
+}
+.auth-story {
+  min-height: 620px;
+  display: flex;
+  align-items: flex-end;
+  padding: 42px;
+  color: #fff;
+  background: linear-gradient(180deg, rgba(20, 39, 27, .05) 20%, rgba(20, 39, 27, .78)), url('/images/products/p18.jpg') center / cover;
+}
+.story-copy { max-width: 420px; }
+.story-copy span { font-size: 12px; font-weight: 700; letter-spacing: .14em; color: #f3d8bb; }
+.story-copy h1 { margin: 14px 0 12px; font-size: clamp(26px, 3vw, 36px); line-height: 1.35; }
+.story-copy p { margin: 0; font-size: 14px; line-height: 1.7; color: #f4f2e9; }
+.login-card { max-width: none; padding: 46px 44px; border-radius: 0; background: #fffdf8; box-shadow: none; align-self: center; }
+.brand .mark { background: #285a40; box-shadow: none; color: #fff; }
+.sub, .foot { color: #657467; }
+.demo { background: #f6f3ea; border-color: #e7e1d5; font-size: 12px; }
+.demo code { background: #fffdf8; font-size: 12px; }
+@media (max-width: 760px) {
+  .login-page { padding: 18px; }
+  .auth-shell { display: block; max-width: 480px; }
+  .auth-story { min-height: 190px; padding: 24px; }
+  .story-copy h1 { margin: 8px 0; font-size: 24px; }
+  .story-copy p { font-size: 13px; }
+  .login-card { padding: 30px 24px; }
 }
 </style>

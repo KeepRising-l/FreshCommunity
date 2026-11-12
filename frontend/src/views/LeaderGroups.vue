@@ -72,7 +72,7 @@
       </el-table>
     </section>
 
-    <el-dialog v-model="dialogVisible" title="发起团购" width="440px">
+    <el-dialog v-model="dialogVisible" title="发起团购" width="min(440px, calc(100vw - 32px))">
       <el-form :model="form" label-width="80px">
         <el-form-item label="标题">
           <el-input v-model="form.title" />
@@ -102,7 +102,7 @@
       </template>
     </el-dialog>
 
-    <el-dialog v-model="orderDialogVisible" title="订单列表" width="620px">
+    <el-dialog v-model="orderDialogVisible" title="订单列表" width="min(620px, calc(100vw - 32px))">
       <el-table :data="orders" empty-text="该团暂无订单">
         <el-table-column prop="orderNo" label="订单号" min-width="170" show-overflow-tooltip />
         <el-table-column prop="quantity" label="数量" width="70" align="center" />
@@ -232,7 +232,9 @@ onMounted(() => {
 .leader-groups {
   display: flex;
   flex-direction: column;
-  gap: 18px;
+  gap: 24px;
+  max-width: 1440px;
+  margin: 0 auto;
 }
 
 .page-head {
@@ -245,7 +247,7 @@ onMounted(() => {
 
 .page-head h2 {
   margin: 0 0 6px;
-  font-size: 20px;
+  font-size: 26px;
   font-weight: 750;
   letter-spacing: -0.4px;
   color: var(--fc-ink-900);
@@ -253,8 +255,9 @@ onMounted(() => {
 
 .sub {
   margin: 0;
-  font-size: 12.5px;
-  color: var(--fc-ink-400);
+  font-size: 13px;
+  line-height: 1.6;
+  color: var(--fc-ink-500);
 }
 
 .kpis {
@@ -264,7 +267,19 @@ onMounted(() => {
 }
 
 .table-card {
-  padding: 18px 20px 8px;
+  padding: 22px 22px 12px;
+  box-shadow: none;
+  overflow: hidden;
+}
+
+.table-card :deep(.el-table) {
+  --el-table-header-bg-color: var(--fc-card-2);
+  --el-table-tr-bg-color: var(--fc-card);
+  --el-table-row-hover-bg-color: var(--fc-bg);
+  --el-table-border-color: var(--fc-line);
+  --el-table-text-color: var(--fc-ink-700);
+  --el-table-header-text-color: var(--fc-ink-500);
+  background: var(--fc-card);
 }
 
 .card-head {
@@ -277,7 +292,7 @@ onMounted(() => {
 
 .card-head h3 {
   margin: 0;
-  font-size: 14.5px;
+  font-size: 16px;
   font-weight: 700;
   color: var(--fc-ink-900);
 }
@@ -311,8 +326,8 @@ onMounted(() => {
 }
 
 .progress-meta small {
-  font-size: 10.5px;
-  color: var(--fc-ink-400);
+  font-size: 12px;
+  color: var(--fc-ink-500);
 }
 
 .progress-cell .fc-progress {
@@ -332,6 +347,7 @@ onMounted(() => {
 }
 
 @media (max-width: 720px) {
+  .page-head h2 { font-size: 23px; }
   .table-card {
     padding: 14px 12px 6px;
   }

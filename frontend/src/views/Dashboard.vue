@@ -3,7 +3,7 @@
     <!-- ============ 侧边导航 ============ -->
     <aside class="app-side">
       <div class="side-logo">
-        <div class="mark">🥬</div>
+        <div class="mark"><el-icon><Goods /></el-icon></div>
         <div class="brand-text">
           <b>FreshCommunity</b>
           <small>社区生鲜团购</small>
@@ -251,7 +251,7 @@ watch(() => route.path, () => unreadStore.refresh())
 .app-side {
   width: var(--fc-side-w);
   flex: none;
-  background: #fff;
+  background: #F9F7EF;
   border-right: 1px solid var(--fc-line);
   display: flex;
   flex-direction: column;
@@ -275,8 +275,8 @@ watch(() => route.path, () => unreadStore.refresh())
   display: grid;
   place-items: center;
   font-size: 17px;
-  background: linear-gradient(140deg, #2BB673, #12713F);
-  box-shadow: 0 3px 10px rgba(30, 158, 90, .3);
+  background: var(--fc-brand);
+  color: #fff;
 }
 
 .brand-text b {
@@ -290,7 +290,7 @@ watch(() => route.path, () => unreadStore.refresh())
 
 .brand-text small {
   display: block;
-  font-size: 10.5px;
+  font-size: 11px;
   color: var(--fc-ink-400);
   letter-spacing: .4px;
 }
@@ -307,10 +307,10 @@ watch(() => route.path, () => unreadStore.refresh())
 
 .nav-grp > label {
   display: block;
-  font-size: 10.5px;
+  font-size: 11px;
   font-weight: 700;
   letter-spacing: 1px;
-  color: var(--fc-ink-300);
+  color: var(--fc-ink-500);
   padding: 0 10px 7px;
 }
 
@@ -412,7 +412,7 @@ watch(() => route.path, () => unreadStore.refresh())
   flex: none;
   display: grid;
   place-items: center;
-  background: linear-gradient(140deg, #7ED0A4, #1E9E5A);
+  background: var(--fc-brand);
   color: #fff;
   font-size: 13px;
   font-weight: 600;
@@ -441,7 +441,7 @@ watch(() => route.path, () => unreadStore.refresh())
 }
 
 .user-text small {
-  font-size: 10.5px;
+  font-size: 11px;
   color: var(--fc-ink-400);
 }
 
@@ -475,7 +475,7 @@ watch(() => route.path, () => unreadStore.refresh())
 .app-top {
   height: var(--fc-top-h);
   flex: none;
-  background: #fff;
+  background: #FAF8F1;
   border-bottom: 1px solid var(--fc-line);
   display: flex;
   align-items: center;
@@ -545,7 +545,7 @@ watch(() => route.path, () => unreadStore.refresh())
 }
 
 .top-search input::placeholder {
-  color: var(--fc-ink-300);
+  color: var(--fc-ink-400);
 }
 
 .icon-btn {
@@ -635,7 +635,7 @@ watch(() => route.path, () => unreadStore.refresh())
     bottom: 0;
     z-index: 100;
     display: flex;
-    background: #fff;
+    background: #FAF8F1;
     border-top: 1px solid var(--fc-line);
     padding: 4px 4px env(safe-area-inset-bottom, 0px);
     box-shadow: 0 -4px 16px rgba(15, 26, 20, .06);
@@ -652,7 +652,7 @@ watch(() => route.path, () => unreadStore.refresh())
     gap: 2px;
     text-decoration: none;
     color: var(--fc-ink-400);
-    font-size: 10.5px;
+    font-size: 11px;
     font-weight: 600;
     border-radius: var(--fc-r-sm);
     transition: color .15s ease;
@@ -737,5 +737,8 @@ watch(() => route.path, () => unreadStore.refresh())
   .app-body {
     padding: 16px 14px 32px;
   }
+}
+@media (max-width: 768px) {
+  .app-body { padding-bottom: calc(76px + env(safe-area-inset-bottom, 0px)); }
 }
 </style>

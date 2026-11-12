@@ -588,4 +588,32 @@ function goProduct(id) {
     gap: 4px;
   }
 }
+
+/* 商品详情以真实图片为主角，保留完整价格、库存和评价信息。 */
+.pdetail { max-width: 1100px; }
+.crumbs { margin-bottom: 20px; color: var(--fc-ink-500); }
+.hero { gap: 34px; padding: 28px; background: #fffdf8; border-color: #e9e4d9; box-shadow: none; }
+.gallery { width: min(42%, 390px); }
+.visual { width: 100%; height: auto; aspect-ratio: 1 / 1; background-color: #f0ede3; }
+.info { padding: 6px 0; }
+.info h2 { font-size: 27px; line-height: 1.3; overflow-wrap: anywhere; }
+.price-row { padding: 16px 18px; background: #f8f1e8; border-radius: 10px; flex-wrap: wrap; }
+.price { color: #b7593c; }
+.price-tip, .rating-text, .insights-label { color: var(--fc-ink-500); }
+.desc, .reviews, .similar { background: #fffdf8; border-color: #e9e4d9; box-shadow: none; }
+.leader-reply { background: #f1f2e9; border-left-color: #729479; }
+.avatar { background: #527c5d; }
+.similar-card:hover { border-color: #afc3ae; }
+@media (max-width: 760px) {
+  .hero { padding: 16px; gap: 19px; }
+  .gallery { width: 100%; }
+  .visual { width: 100%; height: auto; aspect-ratio: 4 / 3; }
+  .info h2 { font-size: 23px; }
+  .price-row { gap: 8px; }
+  .actions { flex-wrap: wrap; }
+  .actions :deep(.el-button) { margin: 0; }
+  .review-head { flex-wrap: wrap; }
+  .scores { width: 100%; margin-left: 45px; }
+  .desc, .reviews, .similar { padding: 18px; }
+}
 </style>

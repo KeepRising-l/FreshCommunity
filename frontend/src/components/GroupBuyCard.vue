@@ -150,20 +150,21 @@ defineExpose({ left })
   background: var(--fc-card);
   border: 1px solid var(--fc-line);
   border-radius: var(--fc-r-lg);
-  box-shadow: var(--fc-sh-1);
+  box-shadow: none;
   overflow: hidden;
   transition: transform .2s ease, box-shadow .2s ease, border-color .2s ease;
   cursor: pointer;
 }
 
 .gb-card:hover {
-  transform: translateY(-3px);
-  box-shadow: var(--fc-sh-2);
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(66, 65, 48, .08);
   border-color: var(--fc-brand-100);
 }
 
-/* ---- 纵向卡片 ---- */
-.v-card .media {
+/* ---- 纵向卡片与首页主推 ---- */
+.v-card .media,
+.v-feature .media {
   height: 132px;
   position: relative;
   display: grid;
@@ -171,7 +172,12 @@ defineExpose({ left })
   overflow: hidden;
 }
 
-.v-card .emoji {
+.v-feature .media { height: clamp(210px, 19vw, 270px); }
+.v-feature .body { padding: 20px 22px; }
+.v-feature .title { font-size: 19px; }
+.v-feature .price { font-size: 25px; }
+.v-card .emoji,
+.v-feature .emoji {
   font-size: 52px;
 }
 
@@ -193,7 +199,7 @@ defineExpose({ left })
 }
 
 .v-row .media {
-  width: 108px;
+  width: clamp(110px, 11vw, 150px);
   flex: none;
   display: grid;
   place-items: center;
@@ -208,7 +214,14 @@ defineExpose({ left })
 .v-row .body {
   flex: 1;
   min-width: 0;
+  padding: 10px 14px;
 }
+
+.v-row .title { margin-bottom: 3px; }
+.v-row .from { margin-bottom: 5px; }
+.v-row .price-line { margin-bottom: 5px; }
+.v-row .meta { margin: 5px 0 7px; }
+.v-row .action { align-self: flex-end; width: auto; min-width: 112px; }
 
 .flag {
   position: absolute;
@@ -223,12 +236,11 @@ defineExpose({ left })
 }
 
 .flag-hot {
-  background: linear-gradient(90deg, #FF8A3D, #FF5E1A);
-  box-shadow: 0 3px 10px rgba(255, 94, 26, .34);
+  background: var(--fc-accent-600);
 }
 
 .flag-new {
-  background: linear-gradient(90deg, #38BDF8, #0EA5E9);
+  background: var(--fc-brand-700);
 }
 
 .flag-done {
@@ -283,7 +295,7 @@ defineExpose({ left })
 }
 
 .price-line s {
-  color: var(--fc-ink-300);
+  color: var(--fc-ink-400);
   font-size: 12.5px;
 }
 
@@ -328,5 +340,19 @@ defineExpose({ left })
 .action {
   margin-top: auto;
   width: 100%;
+}
+
+@media (max-width: 700px) {
+  .v-feature { flex-direction: row; }
+  .v-feature .media { width: 110px; height: auto; flex: none; }
+  .v-feature .body { padding: 12px; }
+  .v-feature .title { font-size: 15px; }
+  .v-feature .price { font-size: 20px; }
+  .v-feature .from { margin-bottom: 6px; }
+  .v-feature .price-line { margin-bottom: 7px; }
+  .v-feature .meta { margin: 6px 0 8px; }
+  .v-feature .action { width: 100%; }
+  .v-row .media { width: 105px; }
+  .v-row .body { padding: 12px; }
 }
 </style>

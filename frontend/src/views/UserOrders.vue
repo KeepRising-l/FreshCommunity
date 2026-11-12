@@ -1,5 +1,12 @@
 <template>
   <div class="orders">
+    <header class="page-head">
+      <div>
+        <h2>我的订单</h2>
+        <p>从参团到提货，随时查看订单进度。</p>
+      </div>
+      <span v-if="!loading && orders.length" class="order-count">{{ orders.length }} 笔订单</span>
+    </header>
     <!-- 状态筛选 -->
     <div class="tabs">
       <button
@@ -43,7 +50,7 @@
     <ReviewDialog v-model:visible="reviewVisible" :order="reviewTarget" @submitted="load" />
 
     <!-- 取货码弹窗 -->
-    <el-dialog v-model="codeVisible" title="取货凭证" width="400px">
+    <el-dialog v-model="codeVisible" title="取货凭证" width="min(400px, calc(100vw - 32px))">
       <div v-if="codeOrder" class="ticket">
         <div class="ticket-head">
           <div class="ticket-ok">
@@ -302,5 +309,24 @@ onMounted(load)
   color: var(--fc-ink-800);
   font-weight: 600;
   flex: 1;
+}
+
+.orders { max-width: 980px; gap: 20px; }
+.page-head { display: flex; align-items: end; justify-content: space-between; gap: 16px; }
+.page-head h2 { margin: 0; color: var(--fc-ink-900); font-size: 27px; letter-spacing: .03em; }
+.page-head p { margin: 8px 0 0; color: var(--fc-ink-500); font-size: 14px; }
+.order-count { color: var(--fc-ink-500); font-size: 13px; white-space: nowrap; }
+.tabs { gap: 4px; border-color: #e5e1d5; }
+.tabs button { color: var(--fc-ink-500); }
+.tabs .n { background: #f0ede4; color: var(--fc-ink-500); }
+.ticket-code i { background: #f7f5ec; border-color: #d8e4d5; border-radius: 9px; }
+.ticket-kv .v { min-width: 0; overflow-wrap: anywhere; }
+@media (max-width: 600px) {
+  .page-head { align-items: start; }
+  .page-head h2 { font-size: 23px; }
+  .tabs { flex-wrap: nowrap; overflow-x: auto; }
+  .tabs button { flex: none; margin-right: 16px; white-space: nowrap; }
+  .ticket-code { gap: 5px; }
+  .ticket-code i { width: min(40px, 12vw); height: 50px; }
 }
 </style>

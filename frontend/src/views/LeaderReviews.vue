@@ -120,17 +120,17 @@ onMounted(load)
 
 <style scoped>
 .leader-reviews {
-  max-width: 860px;
+  max-width: 960px;
   margin: 0 auto;
 }
 
 .page-head {
-  margin-bottom: 16px;
+  margin-bottom: 24px;
 }
 
 .page-head h2 {
   margin: 0 0 4px;
-  font-size: 21px;
+  font-size: 26px;
   font-weight: 700;
   color: var(--fc-ink-900);
 }
@@ -138,17 +138,19 @@ onMounted(load)
 .page-head p {
   margin: 0;
   font-size: 13px;
-  color: var(--fc-ink-400);
+  color: var(--fc-ink-500);
+  line-height: 1.6;
 }
 
 .list {
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 16px;
 }
 
 .review-card {
-  padding: 16px 20px;
+  padding: 20px 22px;
+  box-shadow: none;
 }
 
 .rv-head {
@@ -164,8 +166,8 @@ onMounted(load)
   flex: none;
   display: grid;
   place-items: center;
-  background: linear-gradient(140deg, #7ED0A4, #1E9E5A);
-  color: #fff;
+  background: var(--fc-brand-50);
+  color: var(--fc-brand-700);
   font-size: 13px;
   font-weight: 600;
 }
@@ -214,9 +216,9 @@ onMounted(load)
 .rv-reply.shown {
   margin-left: 45px;
   padding: 9px 13px;
-  background: var(--fc-brand-50);
-  border-left: 3px solid var(--fc-brand);
-  border-radius: 0 var(--fc-r-sm) var(--fc-r-sm) 0;
+  background: var(--fc-card-2);
+  border: 1px solid var(--fc-line);
+  border-radius: var(--fc-r-sm);
   font-size: 12.5px;
   line-height: 1.7;
   display: flex;
@@ -261,5 +263,15 @@ onMounted(load)
   justify-content: flex-end;
   gap: 8px;
   margin-top: 8px;
+}
+
+@media (max-width: 600px) {
+  .page-head h2 { font-size: 23px; }
+  .review-card { padding: 16px; }
+  .rv-head { flex-wrap: wrap; }
+  .scores { margin-left: 45px; width: 100%; flex-direction: row; flex-wrap: wrap; gap: 12px; }
+  .rv-content, .rv-reply.shown, .rv-editor { margin-left: 0; }
+  .review-card > .el-button { margin-left: 0; }
+  .rv-reply.shown { flex-wrap: wrap; }
 }
 </style>

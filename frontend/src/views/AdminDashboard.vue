@@ -28,11 +28,13 @@
         <div class="card-head">
           <h3>近 7 日趋势</h3>
           <div class="legend">
-            <span><i class="swatch swatch-gmv" />成交额</span>
-            <span><i class="swatch swatch-orders" />订单数</span>
+            <span><i class="swatch swatch-gmv" />成交额（元）</span>
+            <span><i class="swatch swatch-orders" />订单数（单）</span>
           </div>
         </div>
 
+        <p class="chart-note">两条线分别按各自最大值缩放，订单数线显示在下半区；每日具体数值见下方。</p>
+        <div class="chart-scroll">
         <svg
           class="chart"
           :viewBox="`0 0 ${CHART_W} ${CHART_H}`"
@@ -41,8 +43,8 @@
         >
           <defs>
             <linearGradient id="gmvFill" x1="0" y1="0" x2="0" y2="1">
-              <stop offset="0%" stop-color="#1E9E5A" stop-opacity=".22" />
-              <stop offset="100%" stop-color="#1E9E5A" stop-opacity="0" />
+              <stop offset="0%" stop-color="#547d61" stop-opacity=".20" />
+              <stop offset="100%" stop-color="#547d61" stop-opacity="0" />
             </linearGradient>
           </defs>
 
@@ -72,6 +74,7 @@
             <b class="axis-gmv fc-num">¥{{ money(p.gmv) }}</b>
             <small>{{ p.orders }} 单</small>
           </div>
+        </div>
         </div>
       </article>
 
@@ -234,7 +237,9 @@ onMounted(load)
 .dash {
   display: flex;
   flex-direction: column;
-  gap: 18px;
+  gap: 24px;
+  max-width: 1440px;
+  margin: 0 auto;
 }
 
 .page-head {
@@ -247,7 +252,7 @@ onMounted(load)
 
 .page-head h2 {
   margin: 0 0 6px;
-  font-size: 20px;
+  font-size: 26px;
   font-weight: 750;
   letter-spacing: -0.4px;
   color: var(--fc-ink-900);
@@ -255,8 +260,9 @@ onMounted(load)
 
 .sub {
   margin: 0;
-  font-size: 12.5px;
-  color: var(--fc-ink-400);
+  font-size: 13px;
+  line-height: 1.65;
+  color: var(--fc-ink-500);
 }
 
 .stamp {
@@ -285,8 +291,8 @@ onMounted(load)
   background: var(--fc-card);
   border: 1px solid var(--fc-line);
   border-radius: var(--fc-r-lg);
-  box-shadow: var(--fc-sh-1);
-  padding: 18px 20px 20px;
+  box-shadow: none;
+  padding: 24px;
 }
 
 .card-head {
@@ -299,7 +305,7 @@ onMounted(load)
 
 .card-head h3 {
   margin: 0;
-  font-size: 14.5px;
+  font-size: 16px;
   font-weight: 700;
   color: var(--fc-ink-900);
 }
@@ -329,6 +335,18 @@ onMounted(load)
 
 .swatch-orders {
   background: var(--fc-accent);
+}
+
+.chart-scroll {
+  min-width: 0;
+  overflow-x: auto;
+}
+
+.chart-note {
+  margin: -4px 0 14px;
+  color: var(--fc-ink-500);
+  font-size: 12px;
+  line-height: 1.5;
 }
 
 .chart {
@@ -404,7 +422,7 @@ onMounted(load)
 
 .axis-item small {
   display: block;
-  font-size: 10.5px;
+  font-size: 11px;
   color: var(--fc-ink-400);
   white-space: nowrap;
 }
@@ -448,13 +466,13 @@ onMounted(load)
   transition: width 0.4s ease;
 }
 
-.tone-green { background: var(--fc-brand); }
-.tone-orange { background: var(--fc-accent); }
-.tone-blue { background: var(--fc-info); }
-.tone-yellow { background: var(--fc-warning); }
-.tone-red { background: var(--fc-danger); }
-.tone-purple { background: var(--fc-purple); }
-.tone-gray { background: var(--fc-ink-300); }
+.bar-fill.tone-green { background: var(--fc-brand); }
+.bar-fill.tone-orange { background: var(--fc-accent); }
+.bar-fill.tone-blue { background: var(--fc-info); }
+.bar-fill.tone-yellow { background: var(--fc-warning); }
+.bar-fill.tone-red { background: var(--fc-danger); }
+.bar-fill.tone-purple { background: var(--fc-purple); }
+.bar-fill.tone-gray { background: var(--fc-ink-300); }
 
 @media (max-width: 1080px) {
   .panels {
@@ -463,9 +481,11 @@ onMounted(load)
 }
 
 @media (max-width: 560px) {
-  .axis-item small,
-  .axis-gmv {
-    font-size: 10px;
+  .card { padding: 18px 16px; }
+  .page-head h2 { font-size: 23px; }
+  .trend .chart,
+  .trend .axis {
+    min-width: 520px;
   }
 }
 </style>

@@ -1,5 +1,9 @@
 <template>
   <div class="profile">
+    <header class="page-heading">
+      <h1>个人中心</h1>
+      <p>管理账号资料与安全设置</p>
+    </header>
     <!-- 账号信息 -->
     <section class="fc-card account">
       <div class="avatar-wrap">
@@ -355,5 +359,21 @@ onMounted(loadMe)
   .cols {
     grid-template-columns: 1fr;
   }
+}
+
+.page-heading { margin-bottom: 22px; }
+.page-heading h1 { margin: 0 0 6px; font-size: 25px; color: var(--fc-ink-900); }
+.page-heading p { margin: 0; color: #657467; font-size: 14px; }
+.account, .block { background: #fffdf8; box-shadow: none; }
+.account { padding: 24px 26px; }
+.avatar { background: #315e43; box-shadow: none; }
+.role-tag.admin { color: #5a5d76; background: #f0eff1; }
+.block { padding: 24px; }
+.block-desc { line-height: 1.6; }
+@media (max-width: 760px) {
+  .page-heading { margin-bottom: 16px; }
+  .account { padding: 18px; }
+  .block { padding: 20px 16px; }
+  .account-info h2 { flex-wrap: wrap; }
 }
 </style>

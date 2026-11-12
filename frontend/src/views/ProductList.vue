@@ -4,8 +4,9 @@
     <header class="page-head">
       <div>
         <h2>商品浏览</h2>
-        <p>基地直采的生鲜商品，参团享受拼团价</p>
+        <p>挑选喜欢的食材，看看邻居们正在拼什么。</p>
       </div>
+      <span v-if="!loading && total" class="catalog-count">{{ total }} 件商品</span>
     </header>
 
     <!-- 工具栏：搜索 + 排序 -->
@@ -69,14 +70,16 @@
     />
 
     <div v-else class="grid">
-      <article v-for="p in products" :key="p.id" class="pcard fc-card" @click="goDetail(p.id)">
+      <article v-for="p in products" :key="p.id" class="pcard fc-card" role="link" tabindex="0"
+        :aria-label="`查看${p.name}详情`" @click="goDetail(p.id)" @keydown.enter="goDetail(p.id)"
+        @keydown.space.prevent="goDetail(p.id)">
         <div class="thumb" :class="visualOf(p).gradient">
           <img v-if="p.imageUrl" :src="p.imageUrl" :alt="p.name" loading="lazy" />
           <span v-else class="emoji">{{ visualOf(p).emoji }}</span>
           <span class="cat-tag">{{ p.category || '其他' }}</span>
         </div>
         <div class="body">
-          <h4>{{ p.name }}</h4>
+          <h4 :title="p.name">{{ p.name }}</h4>
           <div class="meta">
             <b class="price fc-price"><i>¥</i>{{ formatMoney(p.price) }}</b>
             <span class="stock" :class="{ low: p.stock <= 10 }">
@@ -308,7 +311,7 @@ onMounted(async () => {
 }
 
 .search input::placeholder {
-  color: var(--fc-ink-300);
+  color: var(--fc-ink-400);
 }
 
 .search .clear {
@@ -491,5 +494,41 @@ onMounted(async () => {
   display: flex;
   justify-content: center;
   margin-top: 26px;
+}
+
+/* 邻里生活：将商品作为页面主体，工具栏保持轻量。 */
+.plist { max-width: 1200px; }
+.page-head { display: flex; align-items: end; justify-content: space-between; gap: 16px; margin-bottom: 26px; }
+.page-head h2 { font-size: 27px; letter-spacing: .03em; }
+.page-head p { margin-top: 8px; font-size: 14px; color: var(--fc-ink-500); }
+.catalog-count { color: var(--fc-ink-500); font-size: 13px; white-space: nowrap; }
+.toolbar { padding: 14px 16px; background: #fffdf8; border-color: #e9e3d7; box-shadow: none; }
+.search { border-radius: 9px; background: #f6f3eb; }
+.cats { gap: 9px; margin: 19px 0 22px; }
+.cat { border-color: #e5e2d7; background: #fffdf8; }
+.cat.on { background: #285a40; border-color: #285a40; }
+.grid { grid-template-columns: repeat(auto-fill, minmax(225px, 1fr)); gap: 18px; }
+.pcard { background: #fffdf8; border-color: #e9e4d9; box-shadow: none; }
+.pcard:hover, .pcard:focus-visible { outline: none; border-color: #9bb39f; box-shadow: 0 9px 25px rgba(52, 69, 52, .09); }
+.thumb { height: 205px; }
+.cat-tag { color: #315f46; background: rgba(255, 253, 248, .94); }
+.body { padding: 17px 18px 19px; }
+.body h4 { font-size: 16px; margin-bottom: 13px; }
+.price { color: #b7593c; font-size: 19px; }
+.stock { color: var(--fc-ink-500); }
+.pager :deep(.el-pagination) { justify-content: center; flex-wrap: wrap; row-gap: 10px; }
+@media (max-width: 600px) {
+  .page-head { align-items: start; margin-bottom: 20px; }
+  .page-head h2 { font-size: 23px; }
+  .toolbar { gap: 10px; }
+  .search { min-width: 0; width: 100%; max-width: none; flex-basis: 100%; }
+  .sort { margin-left: 0; flex-wrap: wrap; }
+  .sort-item { padding: 7px 9px; }
+  .grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+  .thumb { height: auto; aspect-ratio: 1 / 1; }
+  .body { padding: 12px; }
+  .body h4 { font-size: 14px; }
+  .meta { flex-wrap: wrap; gap: 4px 8px; }
+  .price { font-size: 17px; }
 }
 </style>

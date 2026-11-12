@@ -71,6 +71,7 @@ public class GroupBuyController {
             vo.setProductName(product.getName());
             vo.setImageUrl(product.getImageUrl());
             vo.setOriginalPrice(product.getPrice());
+            vo.setCategory(product.getCategory());
         }
     }
 

@@ -6,7 +6,7 @@
         <h1>想要什么<em>问一句</em>，AI 帮你挑好</h1>
         <p>描述你的需求，AI 会对比所有在售商品和正在进行的团购，直接推荐最合适的，并说明理由。</p>
       </div>
-      <div class="hero-mark" aria-hidden="true">🤖</div>
+      <div class="hero-mark" aria-hidden="true">AI</div>
     </section>
 
     <!-- 01 即时推荐 -->
@@ -658,5 +658,32 @@ onMounted(loadSubscriptions)
   .subscription { align-items: flex-start; padding: 14px; }
   .subscription-icon { width: 36px; height: 36px; }
   .subscription :deep(.el-button) { padding-inline: 5px; }
+}
+
+/* 与邻里生活主题统一，保留输入、流式回答和订阅的原有交互。 */
+.hero {
+  min-height: 160px;
+  border-color: #e5dfd2;
+  background: #efede2;
+}
+.hero h1 em { color: #a75038; }
+.hero-mark {
+  width: 84px;
+  height: 84px;
+  border-radius: 50%;
+  background: #dfe8db;
+  box-shadow: none;
+  color: #285a40;
+  font-family: Georgia, serif;
+  font-size: 28px;
+  font-weight: 700;
+}
+.card, .rec-card, .examples button { background: #fffdf8; box-shadow: none; }
+.answer, .result { border-color: #dce8d9; background: #f5f8f0; }
+.subscription-icon { background: #e8eee1; }
+.answer-text { font-size: 14px !important; line-height: 1.8 !important; }
+.hint, .examples, .rec-group, .subscription-copy small { color: #647467; }
+@media (max-width: 680px) {
+  .hero-mark { width: 58px; height: 58px; font-size: 21px; }
 }
 </style>

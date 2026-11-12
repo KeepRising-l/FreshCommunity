@@ -848,4 +848,36 @@ watch(() => route.params.id, load)
     font-size: 15px;
   }
 }
+
+/* 邻里生活：商品图与参团信息并列，提货信息清晰可辨。 */
+.gbd { max-width: 1200px; margin: 0 auto; gap: 22px; }
+.crumb { font-size: 13px; color: var(--fc-ink-500); flex-wrap: wrap; }
+.crumb b { overflow-wrap: anywhere; }
+.pd { grid-template-columns: minmax(290px, .9fr) minmax(0, 1.1fr); gap: 34px; padding: 26px; background: #fffdf8; border: 1px solid #e9e4d9; border-radius: 14px; }
+.gallery { height: auto; aspect-ratio: 1 / 1; background-color: #f0ede3; }
+.pd-info h2 { font-size: 27px; line-height: 1.3; overflow-wrap: anywhere; }
+.price-bar { background: #f8f1e8; border-color: #f0e4d8; flex-wrap: wrap; }
+.price-bar .big { color: #b7593c; }
+.save { border-color: #eacdbd; background: #fffaf5; }
+.prog-card { background: #f7f7f0; box-shadow: none; border-color: #e8ebdf; }
+.leader-card { background: #f8f7f0; box-shadow: none; border-color: #ebe9de; }
+.leader-info span { flex-wrap: wrap; overflow-wrap: anywhere; }
+.avatar { background: #527c5d; }
+.panel { background: #fffdf8; border-color: #e9e4d9; box-shadow: none; padding: 23px; }
+.leader-reply { background: #f1f2e9; border-left-color: #729479; }
+@media (max-width: 1000px) {
+  .pd { grid-template-columns: 1fr; }
+  .gallery { height: auto; aspect-ratio: 16 / 9; }
+}
+@media (max-width: 768px) {
+  .pd { padding: 16px; gap: 20px; }
+  .pd-info h2 { font-size: 23px; }
+  .price-bar { padding: 14px; gap: 8px; }
+  .leader-card { padding: 12px; flex-wrap: wrap; }
+  .pickup-photo { width: 68px; height: 52px; }
+  .buy-row { flex-wrap: wrap; }
+  .buy-btn { min-width: 0; }
+  .panel { padding: 18px; }
+  .mobile-cta { background: #fffdf8; }
+}
 </style>

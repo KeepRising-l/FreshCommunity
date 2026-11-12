@@ -7,7 +7,9 @@
         <h2>{{ heroTitle }}</h2>
         <p>{{ heroDesc }}</p>
       </div>
-      <div class="hero-emoji">🥬</div>
+      <div class="hero-photo" aria-hidden="true">
+        <img src="/images/products/p02.jpg" alt="" />
+      </div>
     </section>
 
     <!-- 数据概览 -->
@@ -71,7 +73,7 @@ const greeting = computed(() => {
 const HERO = {
   USER: { title: '今天想拼点什么？', desc: '看看楼下正在进行中的团购，和邻居一起拼更划算。' },
   LEADER: { title: '你的团今天进展如何？', desc: '关注还差几人的团，及时催一催；备好货记得提醒邻居来取。' },
-  ADMIN: { title: '平台今天运行正常', desc: '掌握订单与成团情况，留意库存偏低的商品。' }
+  ADMIN: { title: '平台经营概览', desc: '查看订单与成团情况，留意库存偏低的商品。' }
 }
 
 const heroTitle = computed(() => (HERO[store.role] || HERO.USER).title)
@@ -315,4 +317,42 @@ onMounted(() => {
     display: none;
   }
 }
+
+.hero {
+  min-height: 190px;
+  padding: 30px 34px;
+  color: var(--fc-ink-900);
+  background: #ebe9dc;
+  border: 1px solid #e3e0d3;
+}
+.hero::before { display: none; }
+.hero-text { flex: 1; }
+.hero-tag {
+  background: transparent;
+  border: 0;
+  padding: 0;
+  margin-bottom: 10px;
+  color: #8f523c;
+  font-size: 13px;
+}
+.hero h2 { font-size: clamp(22px, 2.5vw, 30px); }
+.hero p { color: #5e6f61; font-size: 14px; opacity: 1; }
+.hero-photo {
+  width: 210px;
+  height: 132px;
+  flex: none;
+  border-radius: 12px;
+  overflow: hidden;
+  margin-left: auto;
+}
+.hero-photo img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.quick-item { box-shadow: none; background: #fffdf8; }
+.quick-item:hover { box-shadow: 0 8px 22px rgba(43, 65, 48, .07); }
+.qi-text small { color: #657467; font-size: 13px; }
+@media (max-width: 700px) {
+  .hero { min-height: 0; padding: 22px 20px; }
+  .hero-photo { width: 90px; height: 90px; }
+  .hero h2 { font-size: 22px; }
+}
+@media (max-width: 390px) { .hero-photo { display: none; } }
 </style>

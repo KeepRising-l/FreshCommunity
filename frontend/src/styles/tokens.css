@@ -10,23 +10,23 @@
 
 /* ---------- 1. 品牌 token ---------- */
 :root {
-  /* 品牌主色 · 新叶绿 */
-  --fc-brand: #1E9E5A;
-  --fc-brand-600: #178A4E;
-  --fc-brand-700: #12713F;
-  --fc-brand-800: #0C5530;
-  --fc-brand-100: #D6F0E1;
-  --fc-brand-50: #EAF7F0;
+  /* 品牌主色 · 邻里深绿 */
+  --fc-brand: #315E43;
+  --fc-brand-600: #28543B;
+  --fc-brand-700: #224A34;
+  --fc-brand-800: #1B3929;
+  --fc-brand-100: #DDE8D9;
+  --fc-brand-50: #EDF2E8;
 
-  /* 强调色 · 暖橙（价格 / 倒计时 / 优惠） */
-  --fc-accent: #FF7A1A;
-  --fc-accent-600: #EE6A08;
-  --fc-accent-50: #FFF3E8;
+  /* 强调色 · 陶土橙（价格 / 倒计时 / 优惠） */
+  --fc-accent: #BC5E3E;
+  --fc-accent-600: #A94F33;
+  --fc-accent-50: #F8EAE1;
 
   /* 语义色 */
-  --fc-success: #1E9E5A;
-  --fc-warning: #F5A524;
-  --fc-warning-50: #FEF6E7;
+  --fc-success: #315E43;
+  --fc-warning: #A76527;
+  --fc-warning-50: #F8EEDC;
   --fc-danger: #E5484D;
   --fc-danger-50: #FDECEC;
   --fc-info: #3B82F6;
@@ -34,18 +34,18 @@
   --fc-purple: #7C5CFA;
   --fc-purple-50: #EDE9FD;
 
-  /* 中性色（带极轻微绿调，营造生鲜感） */
-  --fc-ink-900: #0F1A14;
-  --fc-ink-800: #1B2A22;
-  --fc-ink-700: #33443B;
-  --fc-ink-500: #5B6B62;
-  --fc-ink-400: #8A9A91;
-  --fc-ink-300: #B7C2BB;
-  --fc-line: #E4EAE6;
-  --fc-line-soft: #EFF3F0;
-  --fc-bg: #F3F7F4;
-  --fc-card: #FFFFFF;
-  --fc-card-2: #FAFCFA;
+  /* 中性色（暖米白与柔和绿灰） */
+  --fc-ink-900: #24382D;
+  --fc-ink-800: #304337;
+  --fc-ink-700: #45584A;
+  --fc-ink-500: #667568;
+  --fc-ink-400: #78877A;
+  --fc-ink-300: #A9B2A5;
+  --fc-line: #E5E1D5;
+  --fc-line-soft: #F0EDE3;
+  --fc-bg: #F3F0E7;
+  --fc-card: #FFFDF8;
+  --fc-card-2: #FAF8F1;
 
   /* 圆角 */
   --fc-r-xl: 20px;
@@ -70,45 +70,45 @@
 /* ---------- 2. Element Plus 变量覆盖 ---------- */
 :root {
   /* 主色及其派生梯度（Element Plus 用 light-3/5/7/8/9 与 dark-2 生成 hover/disabled/边框等） */
-  --el-color-primary: #1E9E5A;
-  --el-color-primary-light-3: #5FBE8B;
-  --el-color-primary-light-5: #8FD2AC;
-  --el-color-primary-light-7: #BFE5CE;
-  --el-color-primary-light-8: #D6F0E1;
-  --el-color-primary-light-9: #EAF7F0;
-  --el-color-primary-dark-2: #178A4E;
+  --el-color-primary: #315E43;
+  --el-color-primary-light-3: #6A9B79;
+  --el-color-primary-light-5: #93B79B;
+  --el-color-primary-light-7: #C2D8C3;
+  --el-color-primary-light-8: #DDE8D9;
+  --el-color-primary-light-9: #EDF2E8;
+  --el-color-primary-dark-2: #28543B;
 
-  --el-color-success: #1E9E5A;
-  --el-color-success-light-9: #EAF7F0;
-  --el-color-warning: #F5A524;
-  --el-color-warning-light-9: #FEF6E7;
+  --el-color-success: #315E43;
+  --el-color-success-light-9: #EDF2E8;
+  --el-color-warning: #A76527;
+  --el-color-warning-light-9: #F8EEDC;
   --el-color-danger: #E5484D;
   --el-color-danger-light-9: #FDECEC;
   --el-color-error: #E5484D;
   --el-color-error-light-9: #FDECEC;
-  --el-color-info: #8A9A91;
-  --el-color-info-light-9: #F3F7F4;
+  --el-color-info: #78877A;
+  --el-color-info-light-9: #F3F0E7;
 
   /* 文本与边框 */
-  --el-text-color-primary: #0F1A14;
-  --el-text-color-regular: #33443B;
-  --el-text-color-secondary: #5B6B62;
-  --el-text-color-placeholder: #B7C2BB;
-  --el-text-color-disabled: #B7C2BB;
+  --el-text-color-primary: #24382D;
+  --el-text-color-regular: #45584A;
+  --el-text-color-secondary: #667568;
+  --el-text-color-placeholder: #78877A;
+  --el-text-color-disabled: #A9B2A5;
 
-  --el-border-color: #E4EAE6;
-  --el-border-color-light: #EFF3F0;
-  --el-border-color-lighter: #EFF3F0;
-  --el-border-color-extra-light: #F3F7F4;
-  --el-border-color-hover: #B7C2BB;
+  --el-border-color: #E5E1D5;
+  --el-border-color-light: #F0EDE3;
+  --el-border-color-lighter: #F0EDE3;
+  --el-border-color-extra-light: #F3F0E7;
+  --el-border-color-hover: #A9B2A5;
 
-  --el-fill-color: #F3F7F4;
-  --el-fill-color-light: #F7FAF8;
-  --el-fill-color-lighter: #FAFCFA;
-  --el-fill-color-blank: #FFFFFF;
-  --el-bg-color: #FFFFFF;
-  --el-bg-color-page: #F3F7F4;
-  --el-bg-color-overlay: #FFFFFF;
+  --el-fill-color: #F3F0E7;
+  --el-fill-color-light: #F8F6EE;
+  --el-fill-color-lighter: #FAF8F1;
+  --el-fill-color-blank: #FFFDF8;
+  --el-bg-color: #FFFDF8;
+  --el-bg-color-page: #F3F0E7;
+  --el-bg-color-overlay: #FFFDF8;
 
   /* 圆角与字体 */
   --el-border-radius-base: 9px;
@@ -156,12 +156,12 @@ body {
 }
 
 ::-webkit-scrollbar-thumb {
-  background: #D8E2DA;
+  background: #DBD9CE;
   border-radius: 4px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: #C2CFC7;
+  background: #C6CABE;
 }
 
 ::-webkit-scrollbar-track {
@@ -214,7 +214,7 @@ body {
 .fc-progress {
   height: 7px;
   border-radius: var(--fc-r-pill);
-  background: #EDF1EE;
+  background: #EAECE3;
   overflow: hidden;
 }
 
@@ -222,12 +222,12 @@ body {
   display: block;
   height: 100%;
   border-radius: var(--fc-r-pill);
-  background: linear-gradient(90deg, #4CC98A, #1E9E5A);
+  background: linear-gradient(90deg, #8AAA87, #527C5D);
   transition: width .4s ease;
 }
 
 .fc-progress > i.is-hot {
-  background: linear-gradient(90deg, #FFA45C, #FF7A1A);
+  background: linear-gradient(90deg, #DAA17E, #BC5E3E);
 }
 
 /* ---------- Element Plus 细节打磨 ---------- */

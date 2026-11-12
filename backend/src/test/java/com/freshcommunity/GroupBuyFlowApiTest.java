@@ -105,6 +105,7 @@ class GroupBuyFlowApiTest extends ApiTestBase {
         JsonNode listItem = perform(get("/api/group-buys"), token, null).data().get(0);
         assertThat(listItem.path("productId").asLong()).isEqualTo(productId);
         assertThat(listItem.path("productName").asText()).isEqualTo(productName);
+        assertThat(listItem.path("category").asText()).isEqualTo(product.path("category").asText());
         assertThat(listItem.path("originalPrice").asDouble()).isEqualTo(originalPrice);
         // 拼团价必须存在且不高于原价
         assertThat(listItem.path("price").isNumber()).isTrue();
@@ -113,6 +114,7 @@ class GroupBuyFlowApiTest extends ApiTestBase {
         JsonNode detail = groupBuyDetail(token, gid);
         assertThat(detail.path("productId").asLong()).isEqualTo(productId);
         assertThat(detail.path("productName").asText()).isEqualTo(productName);
+        assertThat(detail.path("category").asText()).isEqualTo(product.path("category").asText());
         assertThat(detail.path("price").asDouble()).isEqualTo(listItem.path("price").asDouble());
         assertThat(detail.path("originalPrice").asDouble()).isEqualTo(originalPrice);
     }

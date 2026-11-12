@@ -2,7 +2,7 @@
   <div class="not-found">
     <div class="code">
       <span>4</span>
-      <span class="leaf">🥬</span>
+      <span class="leaf">0</span>
       <span>4</span>
     </div>
     <h2>这片菜地还没开垦</h2>
@@ -63,4 +63,7 @@ p {
   display: flex;
   gap: 10px;
 }
+.code { gap: 2px; color: #c3d0bd; font-family: Georgia, serif; }
+.code .leaf { font-size: inherit; color: #b36b4d; filter: none; }
+p { color: #657467; }
 </style>

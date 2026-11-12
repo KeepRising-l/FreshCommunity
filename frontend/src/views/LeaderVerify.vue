@@ -147,21 +147,21 @@ onMounted(() => {
 <style scoped>
 .console {
   width: 100%;
-  max-width: 560px;
+  max-width: 600px;
   margin: 0 auto;
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: 20px;
 }
 
 .head {
   text-align: center;
-  padding: 4px 0 2px;
+  padding: 10px 0 4px;
 }
 
 .head h2 {
   margin: 0 0 6px;
-  font-size: 20px;
+  font-size: 26px;
   font-weight: 750;
   letter-spacing: -0.4px;
   color: var(--fc-ink-900);
@@ -169,24 +169,25 @@ onMounted(() => {
 
 .sub {
   margin: 0;
-  font-size: 12.5px;
-  color: var(--fc-ink-400);
+  font-size: 13px;
+  line-height: 1.6;
+  color: var(--fc-ink-500);
 }
 
 .card {
   background: var(--fc-card);
   border: 1px solid var(--fc-line);
   border-radius: var(--fc-r-lg);
-  box-shadow: var(--fc-sh-1);
+  box-shadow: none;
 }
 
 .panel {
-  padding: 20px;
+  padding: 28px;
 }
 
 .field-label {
   display: block;
-  font-size: 12.5px;
+  font-size: 14px;
   font-weight: 650;
   color: var(--fc-ink-700);
   margin-bottom: 8px;
@@ -213,18 +214,18 @@ onMounted(() => {
 .code-input:focus {
   border-color: var(--fc-brand);
   background: #fff;
-  box-shadow: 0 0 0 4px rgba(30, 158, 90, 0.12);
+  box-shadow: 0 0 0 4px rgba(40, 90, 64, 0.12);
 }
 
 .code-input::placeholder {
-  color: var(--fc-ink-300);
+  color: var(--fc-ink-400);
   font-weight: 500;
 }
 
 .input-hint {
   margin: 7px 0 14px;
-  font-size: 11.5px;
-  color: var(--fc-ink-400);
+  font-size: 13px;
+  color: var(--fc-ink-500);
 }
 
 .verify-btn {
@@ -287,9 +288,9 @@ onMounted(() => {
 .safety li {
   position: relative;
   padding-left: 16px;
-  font-size: 11.5px;
+  font-size: 12.5px;
   line-height: 1.6;
-  color: var(--fc-ink-400);
+  color: var(--fc-ink-500);
 }
 
 .safety li::before {
@@ -302,7 +303,7 @@ onMounted(() => {
 }
 
 .records {
-  padding: 18px 20px 8px;
+  padding: 22px 24px 10px;
 }
 
 .records-head {
@@ -315,7 +316,7 @@ onMounted(() => {
 
 .records-head h3 {
   margin: 0;
-  font-size: 14.5px;
+  font-size: 16px;
   font-weight: 700;
   color: var(--fc-ink-900);
 }
@@ -356,8 +357,8 @@ onMounted(() => {
 }
 
 .r-main span {
-  font-size: 11px;
-  color: var(--fc-ink-400);
+  font-size: 12px;
+  color: var(--fc-ink-500);
 }
 
 .r-meta {
@@ -371,6 +372,10 @@ onMounted(() => {
 }
 
 @media (max-width: 560px) {
+  .head h2 { font-size: 23px; }
+  .panel { padding: 20px 16px; }
+  .records { padding: 18px 16px 8px; }
+  .record-list li { flex-wrap: wrap; }
   .code-input {
     height: 60px;
     font-size: 26px;

@@ -1,8 +1,16 @@
 <template>
   <div class="register-page">
+    <div class="auth-shell">
+      <aside class="auth-story" aria-label="社区生鲜团购">
+        <div class="story-copy">
+          <span>FRESH COMMUNITY</span>
+          <h1>好食材，<br />就在家门口。</h1>
+          <p>加入社区，和邻居一起发现新鲜好物。</p>
+        </div>
+      </aside>
     <div class="register-card">
       <div class="brand">
-        <div class="mark">🥬</div>
+        <div class="mark" aria-hidden="true">✳</div>
         <div>
           <b>FreshCommunity</b>
           <small>社区生鲜团购平台</small>
@@ -74,6 +82,7 @@
       <div class="foot">
         已有账号？<el-link type="primary" :underline="false" @click="router.push('/login')">去登录</el-link>
       </div>
+    </div>
     </div>
   </div>
 </template>
@@ -305,5 +314,46 @@ h2 {
   font-weight: 600;
   color: var(--fc-ink-700);
   padding-bottom: 6px;
+}
+
+.register-page {
+  overflow: visible;
+  padding: 32px;
+  background: #f3f0e7;
+}
+.register-page::before, .register-page::after { display: none; }
+.auth-shell {
+  width: min(1020px, 100%);
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(400px, 460px);
+  overflow: hidden;
+  border: 1px solid #e7e2d5;
+  border-radius: 18px;
+  background: #fffdf8;
+  box-shadow: 0 18px 48px rgba(45, 54, 38, .09);
+}
+.auth-story {
+  min-height: 690px;
+  display: flex;
+  align-items: flex-end;
+  padding: 42px;
+  color: #fff;
+  background: linear-gradient(180deg, rgba(20, 39, 27, .05) 20%, rgba(20, 39, 27, .78)), url('/images/products/p18.jpg') center / cover;
+}
+.story-copy { max-width: 420px; }
+.story-copy span { font-size: 12px; font-weight: 700; letter-spacing: .14em; color: #f3d8bb; }
+.story-copy h1 { margin: 14px 0 12px; font-size: clamp(26px, 3vw, 36px); line-height: 1.35; }
+.story-copy p { margin: 0; font-size: 14px; line-height: 1.7; color: #f4f2e9; }
+.register-card { max-width: none; max-height: none; padding: 40px 42px; overflow: visible; border-radius: 0; background: #fffdf8; box-shadow: none; align-self: center; }
+.brand .mark { background: #285a40; box-shadow: none; color: #fff; }
+.sub, .foot, .role-card small { color: #657467; }
+.role-card.on { box-shadow: 0 0 0 3px rgba(40, 90, 64, .08); }
+@media (max-width: 760px) {
+  .register-page { padding: 18px; }
+  .auth-shell { display: block; max-width: 480px; }
+  .auth-story { min-height: 175px; padding: 24px; }
+  .story-copy h1 { margin: 8px 0; font-size: 24px; }
+  .story-copy p { font-size: 13px; }
+  .register-card { padding: 30px 24px; }
 }
 </style>

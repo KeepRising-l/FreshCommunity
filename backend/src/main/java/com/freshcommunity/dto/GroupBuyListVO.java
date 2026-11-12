@@ -31,6 +31,7 @@ public class GroupBuyListVO {
     /** 所挂商品 */
     private Long productId;
     private String productName;
+    private String category;
     private String imageUrl;
     /** 拼团价（group_buy_item.price_snapshot） */
     private BigDecimal price;

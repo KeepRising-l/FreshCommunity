@@ -35,7 +35,10 @@
         <section class="fc-card section">
           <h3 class="fc-section-title">商品信息</h3>
           <div class="product-row">
-            <div class="thumb" :class="visual.gradient">{{ visual.emoji }}</div>
+            <div class="thumb" :class="order.productImage ? '' : visual.gradient">
+              <img v-if="order.productImage" :src="order.productImage" :alt="order.productName || '商品图片'" />
+              <span v-else>{{ visual.emoji }}</span>
+            </div>
             <div class="product-info">
               <b>{{ order.productName || '商品已删除' }}</b>
               <span class="fc-muted">数量 × {{ order.quantity }}　单价 {{ formatPrice(unitPrice) }}</span>
@@ -92,7 +95,7 @@
       <!-- 评价弹窗 / 取货码弹窗 -->
       <ReviewDialog v-model:visible="reviewVisible" :order="order" @submitted="load" />
 
-      <el-dialog v-model="codeVisible" title="取货凭证" width="400px">
+      <el-dialog v-model="codeVisible" title="取货凭证" width="min(400px, calc(100vw - 32px))">
         <div class="ticket">
           <div class="ticket-head">
             <div class="ticket-ok">
@@ -387,5 +390,25 @@ onMounted(load)
   color: var(--fc-ink-800);
   font-weight: 600;
   flex: 1;
+}
+
+.odetail { max-width: 980px; }
+.crumbs { margin-bottom: 20px; }
+.section { padding: 22px 24px; background: #fffdf8; border-color: #e9e4d9; box-shadow: none; }
+.section .fc-section-title { font-size: 16px; }
+.thumb { width: 72px; height: 72px; border-radius: 10px; overflow: hidden; }
+.thumb img { width: 100%; height: 100%; display: block; object-fit: cover; }
+.amount { color: #b7593c; font-size: 19px; }
+.kv { padding: 12px 0; border-bottom-style: solid; }
+.kv .v { min-width: 0; overflow-wrap: anywhere; }
+.ticket-code i { background: #f7f5ec; border-color: #d8e4d5; border-radius: 9px; }
+.ticket-kv .v { min-width: 0; overflow-wrap: anywhere; }
+@media (max-width: 600px) {
+  .section { padding: 18px; }
+  .product-row { gap: 10px; flex-wrap: wrap; }
+  .thumb { width: 58px; height: 58px; }
+  .amount { margin-left: auto; }
+  .ticket-code { gap: 5px; }
+  .ticket-code i { width: min(40px, 12vw); height: 50px; }
 }
 </style>

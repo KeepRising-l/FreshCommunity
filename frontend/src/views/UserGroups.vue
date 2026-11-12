@@ -1,44 +1,54 @@
 <template>
   <div class="plaza">
-    <!-- 引导区 -->
-    <section class="hero">
-      <div class="hero-text">
-        <span class="hero-tag">🎉 今日新鲜直达 · 满员即享拼团价</span>
-        <h2>和邻居一起拼，<em>省下的都是新鲜的</em></h2>
-        <p>楼下提货点自提免运费，未成团自动全额退款</p>
-        <div class="hero-btns">
-          <el-button type="primary" size="large" @click="filter = 'urgent'">看看即将截止的团</el-button>
-          <el-button size="large" @click="goOrders">我的订单</el-button>
-        </div>
+    <section class="plaza-intro">
+      <div>
+        <span class="intro-label">邻里好物 · 社区自提</span>
+        <h2>和邻居一起，团点新鲜</h2>
+        <p>挑选喜欢的食材，成团后到社区提货点自提。</p>
       </div>
-      <div class="hero-stats">
-        <div class="hs">
-          <b>{{ all.length }}</b>
-          <span>进行中</span>
-        </div>
-        <div class="hs">
-          <b>{{ urgentCount }}</b>
-          <span>即将截止</span>
-        </div>
-        <div class="hs">
-          <b>{{ almostCount }}</b>
-          <span>马上成团</span>
-        </div>
-      </div>
+      <button type="button" class="order-link" @click="goOrders">查看我的订单 <span aria-hidden="true">→</span></button>
     </section>
+
+    <!-- 搜索与分类控制栏 -->
+    <div class="plaza-controls">
+      <div class="search-box">
+        <el-input
+          v-model="searchKeyword"
+          placeholder="搜索团购商品或标题…"
+          clearable
+          :prefix-icon="Search"
+          style="width: 260px"
+        />
+      </div>
+      <div v-if="categories.length > 1" class="cat-tabs">
+        <button
+          v-for="cat in categories"
+          :key="cat"
+          type="button"
+          class="cat-chip"
+          :class="{ on: selectedCategory === cat }"
+          :aria-pressed="selectedCategory === cat"
+          @click="selectedCategory = cat"
+        >
+          {{ cat }}
+        </button>
+      </div>
+    </div>
 
     <!-- 筛选 -->
     <div class="filters">
-      <span
+      <button
         v-for="f in FILTERS"
         :key="f.value"
+        type="button"
         class="chip"
         :class="{ on: filter === f.value }"
+        :aria-pressed="filter === f.value"
         @click="filter = f.value"
       >
         {{ f.label }}
         <b v-if="f.count">{{ f.count }}</b>
-      </span>
+      </button>
       <span class="spacer" />
       <span class="sort-group">
         <button
@@ -59,22 +69,43 @@
     <EmptyState
       v-else-if="visible.length === 0"
       icon="🧺"
-      :title="all.length === 0 ? '暂时没有进行中的团购' : '这个筛选下没有团购'"
-      :description="all.length === 0 ? '团长开团后会出现在这里，稍后再来看看。' : '换个筛选条件试试。'"
-      :action-text="all.length === 0 ? '' : '查看全部'"
-      @action="filter = 'all'"
+      :title="all.length === 0 ? '暂时没有进行中的团购' : '未找到匹配的团购'"
+      :description="all.length === 0 ? '团长开团后会出现在这里，稍后再来看看。' : '换个关键词或分类条件试试。'"
+      :action-text="all.length === 0 ? '' : '重置筛选'"
+      @action="resetFilters"
     />
 
-    <div v-else class="grid">
-      <GroupBuyCard
-        v-for="g in visible"
-        :key="g.id"
-        :group="g"
-        :action-text="'立即参团' + (remainingMembers(g.memberCount, g.targetCount) > 0 ? ' · 还差 ' + remainingMembers(g.memberCount, g.targetCount) + ' 人' : '')"
-        @action="openJoin(g)"
-        @click="goDetail(g)"
-      />
-    </div>
+    <template v-else>
+      <div class="featured-groups">
+        <GroupBuyCard
+          :group="visible[0]"
+          layout="feature"
+          :action-text="'立即参团' + (remainingMembers(visible[0].memberCount, visible[0].targetCount) > 0 ? ' · 还差 ' + remainingMembers(visible[0].memberCount, visible[0].targetCount) + ' 人' : '')"
+          @action="openJoin(visible[0])"
+          @click="goDetail(visible[0])"
+        />
+        <div v-if="visible.length > 1" class="featured-list">
+          <GroupBuyCard
+            v-for="g in visible.slice(1, 4)"
+            :key="g.id"
+            :group="g"
+            layout="row"
+            :action-text="'立即参团'"
+            @action="openJoin(g)"
+            @click="goDetail(g)"
+          />
+        </div>
+      </div>
+      <div v-if="visible.length > 4" class="grid">
+        <GroupBuyCard
+          v-for="g in visible.slice(4)"
+          :key="g.id"
+          :group="g"
+          @action="openJoin(g)"
+          @click="goDetail(g)"
+        />
+      </div>
+    </template>
 
     <!-- 参团下单 -->
     <el-dialog v-model="dialogVisible" title="参加团购" width="420px">
@@ -86,8 +117,8 @@
           </div>
           <div class="join-info">
             <h4>{{ current.title || current.productName }}</h4>
-            <div class="fc-price" style="font-size: 19px">
-              <i>¥</i>{{ formatMoney(current.price) }}
+            <div class="join-unit-price">
+              拼团单价 <span class="fc-price"><i>¥</i>{{ formatMoney(current.price) }}</span>
             </div>
           </div>
         </div>
@@ -99,7 +130,15 @@
 
         <div class="join-row">
           <span class="join-label">提货点</span>
-          <span class="join-value">{{ current.pickupPointName || '—' }}</span>
+          <span class="join-value">
+            {{ current.pickupPointName || '—' }}
+            <small v-if="current.pickupPointAddress">{{ current.pickupPointAddress }}</small>
+          </span>
+        </div>
+
+        <div class="join-row join-total">
+          <span class="join-label">应付合计</span>
+          <strong class="join-value fc-price"><i>¥</i>{{ formatMoney(orderTotal) }}</strong>
         </div>
 
         <div class="join-note">
@@ -119,6 +158,7 @@
 import { computed, onMounted, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
+import { Search } from '@element-plus/icons-vue'
 import GroupBuyCard from '../components/GroupBuyCard.vue'
 import SkeletonList from '../components/SkeletonList.vue'
 import EmptyState from '../components/EmptyState.vue'
@@ -134,6 +174,17 @@ const now = useNow()
 const all = ref([])
 const loading = ref(true)
 const filter = ref('all')
+const searchKeyword = ref('')
+const selectedCategory = ref('全部')
+
+/** 动态提取在团商品的所有分类 */
+const categories = computed(() => {
+  const set = new Set()
+  all.value.forEach(g => {
+    if (g.category) set.add(g.category)
+  })
+  return ['全部', ...Array.from(set)]
+})
 
 /** 列表排序：综合为接口默认顺序（新开团优先），截止时间按 deadline 升序（客户端排即可，数据集为进行中团） */
 const SORTS = [
@@ -146,6 +197,7 @@ const dialogVisible = ref(false)
 const submitting = ref(false)
 const quantity = ref(1)
 const current = ref(null)
+const orderTotal = computed(() => Math.round(Number(current.value?.price || 0) * 100) * quantity.value / 100)
 
 /** 即将截止：2 小时内到期 */
 function isUrgent(g) {
@@ -171,11 +223,27 @@ const visible = computed(() => {
   let list = all.value
   if (filter.value === 'urgent') list = list.filter(isUrgent)
   if (filter.value === 'almost') list = list.filter(isAlmost)
+  if (selectedCategory.value !== '全部') {
+    list = list.filter(g => g.category === selectedCategory.value)
+  }
+  if (searchKeyword.value.trim()) {
+    const kw = searchKeyword.value.trim().toLowerCase()
+    list = list.filter(g =>
+      (g.title && g.title.toLowerCase().includes(kw)) ||
+      (g.productName && g.productName.toLowerCase().includes(kw))
+    )
+  }
   if (sort.value === 'deadline') {
     list = [...list].sort((a, b) => new Date(a.deadline) - new Date(b.deadline))
   }
   return list
 })
+
+function resetFilters() {
+  filter.value = 'all'
+  selectedCategory.value = '全部'
+  searchKeyword.value = ''
+}
 
 const joinVisual = computed(() => productVisual(current.value?.productName || current.value?.title || ''))
 
@@ -230,126 +298,83 @@ onMounted(load)
   gap: 20px;
 }
 
-/* ---------- 引导区 ---------- */
-.hero {
-  position: relative;
-  overflow: hidden;
-  border-radius: var(--fc-r-xl);
-  padding: 30px 34px;
-  color: #fff;
-  background: linear-gradient(120deg, #1E9E5A 0%, #178A4E 55%, #0F6B3C 100%);
+/* 首页标题保留足够的空间，让商品与团购状态成为主角。 */
+.plaza-intro {
   display: flex;
-  align-items: center;
-  gap: 28px;
+  align-items: end;
+  justify-content: space-between;
+  gap: 24px;
+  padding: 8px 0 6px;
 }
-
-.hero::before {
-  content: "";
-  position: absolute;
-  width: 440px;
-  height: 440px;
-  border-radius: 50%;
-  right: -120px;
-  top: -180px;
-  background: radial-gradient(circle, rgba(255, 255, 255, .14), transparent 68%);
-}
-
-.hero::after {
-  content: "";
-  position: absolute;
-  width: 260px;
-  height: 260px;
-  border-radius: 50%;
-  right: 150px;
-  bottom: -170px;
-  background: radial-gradient(circle, rgba(255, 122, 26, .34), transparent 66%);
-}
-
-.hero-text {
-  position: relative;
-  z-index: 2;
-  flex: 1;
-  min-width: 0;
-}
-
-.hero-tag {
-  display: inline-flex;
-  align-items: center;
+.intro-label {
+  color: var(--fc-accent-600);
   font-size: 12px;
-  font-weight: 600;
-  background: rgba(255, 255, 255, .17);
-  border: 1px solid rgba(255, 255, 255, .26);
-  padding: 5px 13px;
-  border-radius: var(--fc-r-pill);
-  margin-bottom: 15px;
+  font-weight: 700;
+  letter-spacing: .14em;
 }
-
-.hero h2 {
-  margin: 0 0 9px;
-  font-size: 27px;
-  font-weight: 750;
-  letter-spacing: -.5px;
+.plaza-intro h2 {
+  margin: 8px 0 6px;
+  color: var(--fc-ink-900);
+  font-family: "Songti SC", "Microsoft YaHei", serif;
+  font-size: clamp(23px, 2.4vw, 31px);
   line-height: 1.3;
 }
-
-.hero h2 em {
-  font-style: normal;
-  color: #FFC48A;
-}
-
-.hero p {
-  margin: 0 0 20px;
-  font-size: 13.5px;
-  opacity: .84;
-}
-
-.hero-btns {
-  display: flex;
-  gap: 10px;
-}
-
-.hero-btns :deep(.el-button) {
-  border: none;
-}
-
-.hero-btns :deep(.el-button:not(.el-button--primary)) {
-  background: rgba(255, 255, 255, .14);
-  color: #fff;
-  border: 1px solid rgba(255, 255, 255, .34);
-}
-
-.hero-btns :deep(.el-button:not(.el-button--primary):hover) {
-  background: rgba(255, 255, 255, .24);
-}
-
-.hero-stats {
-  position: relative;
-  z-index: 2;
-  display: flex;
-  gap: 10px;
+.plaza-intro p { margin: 0; color: var(--fc-ink-500); font-size: 14px; }
+.order-link {
   flex: none;
+  border: 1px solid var(--fc-line);
+  border-radius: var(--fc-r-sm);
+  background: var(--fc-card);
+  color: var(--fc-brand-700);
+  padding: 10px 15px;
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+}
+.order-link:hover { background: var(--fc-brand-50); }
+.order-link span { margin-left: 8px; }
+
+/* ---------- 搜索与分类控制栏 ---------- */
+.plaza-controls {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
 }
 
-.hs {
-  background: rgba(255, 255, 255, .13);
-  border: 1px solid rgba(255, 255, 255, .22);
-  border-radius: var(--fc-r);
-  padding: 14px 18px;
-  text-align: center;
-  min-width: 92px;
+.cat-tabs {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
 }
 
-.hs b {
-  display: block;
-  font-size: 23px;
-  font-weight: 750;
-  letter-spacing: -.5px;
-  font-variant-numeric: tabular-nums;
+.cat-chip {
+  display: inline-flex;
+  align-items: center;
+  padding: 5px 14px;
+  border-radius: var(--fc-r-pill);
+  font-size: 13px;
+  color: var(--fc-ink-500);
+  background: #fff;
+  border: 1px solid var(--fc-line);
+  cursor: pointer;
+  transition: all .15s ease;
+  user-select: none;
 }
 
-.hs span {
-  font-size: 11.5px;
-  opacity: .8;
+.cat-chip:hover {
+  color: var(--fc-brand);
+  border-color: var(--fc-brand);
+}
+
+.cat-chip.on {
+  color: #fff;
+  background: var(--fc-brand);
+  border-color: var(--fc-brand);
+  font-weight: 600;
+  box-shadow: 0 2px 6px rgba(30, 158, 90, .25);
 }
 
 /* ---------- 筛选 ---------- */
@@ -431,7 +456,15 @@ onMounted(load)
   background: var(--fc-brand-50);
 }
 
-/* ---------- 网格 ---------- */
+/* 一张主图与旁侧团购列表呼应社区生活的方向。 */
+.featured-groups {
+  display: grid;
+  grid-template-columns: minmax(0, .95fr) minmax(0, 1.05fr);
+  gap: 16px;
+  align-items: stretch;
+}
+.featured-list { display: grid; gap: 12px; }
+.featured-groups:has(> :only-child) { grid-template-columns: minmax(0, 620px); }
 .grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
@@ -478,6 +511,9 @@ onMounted(load)
   color: var(--fc-ink-900);
 }
 
+.join-unit-price { color: var(--fc-ink-500); font-size: 13px; }
+.join-unit-price .fc-price { margin-left: 5px; font-size: 18px; }
+
 .join-row {
   display: flex;
   align-items: center;
@@ -494,7 +530,12 @@ onMounted(load)
   font-size: 13.5px;
   color: var(--fc-ink-800);
   font-weight: 600;
+  text-align: right;
 }
+
+.join-value small { display: block; color: var(--fc-ink-500); font-size: 12px; font-weight: 400; }
+.join-total { padding-top: 14px; border-top: 1px solid var(--fc-line); }
+.join-total .join-value { font-size: 21px; }
 
 .join-note {
   padding: 11px 13px;
@@ -506,19 +547,17 @@ onMounted(load)
   line-height: 1.7;
 }
 
-@media (max-width: 1100px) {
-  .hero-stats {
-    display: none;
-  }
+@media (max-width: 1000px) {
+  .featured-groups { grid-template-columns: 1fr; }
+  .featured-list { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }
-
 @media (max-width: 700px) {
-  .hero {
-    padding: 22px 20px;
-  }
-
-  .hero h2 {
-    font-size: 21px;
-  }
+  .plaza { gap: 15px; }
+  .plaza-intro { align-items: flex-start; }
+  .plaza-intro h2 { font-size: 23px; }
+  /* 手机底部导航已有订单入口，避免标题被挤成单字换行。 */
+  .order-link { display: none; }
+  .featured-list { grid-template-columns: 1fr; }
+  .grid { grid-template-columns: 1fr; }
 }
 </style>

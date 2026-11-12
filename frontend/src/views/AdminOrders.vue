@@ -20,7 +20,7 @@
       >
         <template #prefix><el-icon><Search /></el-icon></template>
       </el-input>
-      <el-select v-model="status" class="st" @change="search">
+      <el-select v-model="status" class="st" placeholder="全部状态" @change="search">
         <el-option v-for="t in ORDER_STATUS_TABS" :key="t.value" :label="t.label || '全部状态'" :value="t.value" />
       </el-select>
       <el-button @click="search">查询</el-button>
@@ -193,17 +193,17 @@ onMounted(load)
 
 <style scoped>
 .admin-orders {
-  max-width: 1120px;
+  max-width: 1440px;
   margin: 0 auto;
 }
 
 .page-head {
-  margin-bottom: 16px;
+  margin-bottom: 24px;
 }
 
 .page-head h2 {
   margin: 0 0 4px;
-  font-size: 21px;
+  font-size: 26px;
   font-weight: 700;
   color: var(--fc-ink-900);
 }
@@ -211,14 +211,18 @@ onMounted(load)
 .page-head p {
   margin: 0;
   font-size: 13px;
-  color: var(--fc-ink-400);
+  color: var(--fc-ink-500);
+  line-height: 1.6;
 }
 
 .toolbar {
   display: flex;
+  align-items: center;
+  flex-wrap: wrap;
   gap: 10px;
-  padding: 13px 16px;
-  margin-bottom: 14px;
+  padding: 16px 18px;
+  margin-bottom: 18px;
+  box-shadow: none;
 }
 
 .toolbar .kw {
@@ -230,9 +234,23 @@ onMounted(load)
 }
 
 .table-wrap {
-  padding: 6px 10px 10px;
+  padding: 12px 16px 16px;
   min-height: 200px;
+  box-shadow: none;
+  overflow: hidden;
 }
+
+.table-wrap :deep(.el-table) {
+  --el-table-header-bg-color: var(--fc-card-2);
+  --el-table-tr-bg-color: var(--fc-card);
+  --el-table-row-hover-bg-color: var(--fc-bg);
+  --el-table-border-color: var(--fc-line);
+  --el-table-text-color: var(--fc-ink-700);
+  --el-table-header-text-color: var(--fc-ink-500);
+  background: var(--fc-card);
+}
+
+.table-wrap :deep(.el-table th.el-table__cell) { font-weight: 650; }
 
 .mono {
   font-family: ui-monospace, Menlo, Consolas, monospace;
@@ -253,5 +271,14 @@ onMounted(load)
   display: flex;
   justify-content: center;
   margin-top: 18px;
+}
+
+@media (max-width: 600px) {
+  .page-head h2 { font-size: 23px; }
+  .toolbar { padding: 14px; }
+  .toolbar .kw { width: 100%; }
+  .toolbar .st { flex: 1; min-width: 120px; }
+  .table-wrap { padding: 8px; }
+  .pager { overflow-x: auto; justify-content: flex-start; }
 }
 </style>

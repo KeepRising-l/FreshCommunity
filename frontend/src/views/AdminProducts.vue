@@ -21,7 +21,7 @@
       >
         <template #prefix><el-icon><Search /></el-icon></template>
       </el-input>
-      <el-select v-model="statusFilter" class="st" @change="search">
+      <el-select v-model="statusFilter" class="st" placeholder="全部状态" @change="search">
         <el-option label="全部状态" :value="undefined" />
         <el-option label="上架中" :value="1" />
         <el-option label="已下架" :value="0" />
@@ -95,7 +95,7 @@
     </div>
 
     <!-- 新增 / 编辑弹窗 -->
-    <el-dialog v-model="dialogVisible" :title="form.id ? '编辑商品' : '新增商品'" width="520px">
+    <el-dialog v-model="dialogVisible" :title="form.id ? '编辑商品' : '新增商品'" width="min(520px, calc(100vw - 32px))">
       <el-form ref="formRef" :model="form" :rules="rules" label-width="88px">
         <el-form-item label="商品名称" prop="name">
           <el-input v-model="form.name" maxlength="128" show-word-limit placeholder="如：红颜草莓" />
@@ -380,7 +380,7 @@ onMounted(load)
 
 <style scoped>
 .admin-products {
-  max-width: 1080px;
+  max-width: 1440px;
   margin: 0 auto;
 }
 
@@ -388,12 +388,14 @@ onMounted(load)
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-bottom: 16px;
+  gap: 16px;
+  flex-wrap: wrap;
+  margin-bottom: 24px;
 }
 
 .page-head h2 {
   margin: 0 0 4px;
-  font-size: 21px;
+  font-size: 26px;
   font-weight: 700;
   color: var(--fc-ink-900);
 }
@@ -401,14 +403,18 @@ onMounted(load)
 .page-head p {
   margin: 0;
   font-size: 13px;
-  color: var(--fc-ink-400);
+  color: var(--fc-ink-500);
+  line-height: 1.6;
 }
 
 .toolbar {
   display: flex;
+  align-items: center;
+  flex-wrap: wrap;
   gap: 10px;
-  padding: 13px 16px;
-  margin-bottom: 14px;
+  padding: 16px 18px;
+  margin-bottom: 18px;
+  box-shadow: none;
 }
 
 .toolbar .kw {
@@ -420,9 +426,23 @@ onMounted(load)
 }
 
 .table-wrap {
-  padding: 6px 10px 10px;
+  padding: 12px 16px 16px;
   min-height: 200px;
+  box-shadow: none;
+  overflow: hidden;
 }
+
+.table-wrap :deep(.el-table) {
+  --el-table-header-bg-color: var(--fc-card-2);
+  --el-table-tr-bg-color: var(--fc-card);
+  --el-table-row-hover-bg-color: var(--fc-bg);
+  --el-table-border-color: var(--fc-line);
+  --el-table-text-color: var(--fc-ink-700);
+  --el-table-header-text-color: var(--fc-ink-500);
+  background: var(--fc-card);
+}
+
+.table-wrap :deep(.el-table th.el-table__cell) { font-weight: 650; }
 
 .product-cell {
   display: flex;
@@ -582,5 +602,15 @@ onMounted(load)
 
 .tip {
   margin-left: 10px;
+}
+
+@media (max-width: 600px) {
+  .page-head h2 { font-size: 23px; }
+  .toolbar { padding: 14px; }
+  .toolbar .kw { width: 100%; }
+  .toolbar .st { flex: 1; min-width: 120px; }
+  .table-wrap { padding: 8px; }
+  .pager { overflow-x: auto; justify-content: flex-start; }
+  .tip { margin-left: 0; }
 }
 </style>

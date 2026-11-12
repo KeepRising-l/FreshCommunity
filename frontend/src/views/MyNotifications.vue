@@ -1,17 +1,24 @@
 <template>
   <div class="noti">
+    <header class="page-heading">
+      <div>
+        <h1>消息中心</h1>
+        <p>查看团购、订单和取货提醒</p>
+      </div>
+    </header>
     <!-- 筛选 -->
     <div class="filters">
-      <span
+      <button
         v-for="f in filters"
         :key="f.value"
+        type="button"
         class="chip"
         :class="{ on: filter === f.value }"
         @click="filter = f.value"
       >
         {{ f.label }}
         <b v-if="f.count">{{ f.count }}</b>
-      </span>
+      </button>
       <span class="spacer" />
       <el-button
         size="small"
@@ -316,5 +323,19 @@ onUnmounted(() => offEvent && offEvent())
   background: var(--fc-accent);
   flex: none;
   margin-top: 6px;
+}
+.page-heading h1 { margin: 0 0 6px; font-size: 25px; color: var(--fc-ink-900); }
+.page-heading p { margin: 0; color: #657467; font-size: 14px; }
+.chip { background: #fffdf8; font-family: inherit; }
+.chip.on { box-shadow: none; }
+.list { background: #fffdf8; box-shadow: none; padding: 8px; }
+.msg { padding: 18px; }
+.msg.unread { background: #f2f6ed; border-color: #dfe9db; }
+.r1 h4 { font-size: 14px; }
+.r1 .time { color: #6e7c70; font-size: 12px; }
+.msg p { font-size: 14px; overflow-wrap: anywhere; }
+@media (max-width: 600px) {
+  .msg { gap: 10px; padding: 14px 10px; }
+  .r1 { flex-wrap: wrap; }
 }
 </style>
