@@ -38,6 +38,10 @@
               <img :src="img" :alt="`${product.name} ${i + 1}`" loading="lazy" />
             </button>
           </div>
+          <p v-if="seedImageAttribution(gallery[activeImage])" class="image-credit">
+            同类商品演示图，非实物 ·
+            <a :href="seedImageAttribution(gallery[activeImage])" target="_blank" rel="noopener noreferrer">图片来源</a>
+          </p>
         </div>
 
         <div class="info">
@@ -147,6 +151,7 @@ import { getProductReviews } from '../api/review'
 import EmptyState from '../components/EmptyState.vue'
 import SkeletonList from '../components/SkeletonList.vue'
 import { productVisual } from '../utils/visual'
+import { seedImageAttribution } from '../utils/imageAttribution'
 import { formatMoney, fromNow } from '../utils/format'
 
 const route = useRoute()
@@ -196,6 +201,8 @@ function goProduct(id) {
 </script>
 
 <style scoped>
+.image-credit { margin: 8px 0 0; color: #718174; font-size: 12px; line-height: 1.5; }
+.image-credit a { color: #467854; }
 .pdetail {
   max-width: 980px;
   margin: 0 auto;

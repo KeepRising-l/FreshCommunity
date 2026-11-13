@@ -26,6 +26,10 @@
             <img v-if="detail.imageUrl" :src="detail.imageUrl" :alt="detail.title" />
             <span v-else class="gallery-emoji">{{ visual.emoji }}</span>
           </div>
+          <p v-if="seedImageAttribution(detail.imageUrl)" class="image-credit">
+            同类商品演示图，非实物 ·
+            <a :href="seedImageAttribution(detail.imageUrl)" target="_blank" rel="noopener noreferrer">图片来源</a>
+          </p>
         </div>
 
         <!-- 右：信息 -->
@@ -247,6 +251,7 @@ import { getProductReviews } from '../api/review'
 import { createOrder } from '../api/order'
 import { useNow } from '../composables/useNow'
 import { productVisual } from '../utils/visual'
+import { seedImageAttribution } from '../utils/imageAttribution'
 import { formatMoney, formatPrice, remaining, progressPercent, remainingMembers, fromNow } from '../utils/format'
 
 const route = useRoute()
@@ -333,6 +338,8 @@ watch(() => route.params.id, load)
 </script>
 
 <style scoped>
+.image-credit { margin: 8px 0 0; color: #718174; font-size: 12px; line-height: 1.5; }
+.image-credit a { color: #467854; }
 .gbd {
   display: flex;
   flex-direction: column;

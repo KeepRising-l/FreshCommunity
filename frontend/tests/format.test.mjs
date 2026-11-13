@@ -2,6 +2,7 @@
 // 覆盖展示层格式化工具的关键口径（金额两位小数、倒计时紧迫态、进度上限等）。
 import test from 'node:test'
 import assert from 'node:assert/strict'
+import { seedImageAttribution } from '../src/utils/imageAttribution.js'
 import {
   formatMoney,
   formatPrice,
@@ -12,6 +13,15 @@ import {
   remainingMembers,
   splitCode
 } from '../src/utils/format.js'
+
+test('演示图片署名只匹配已核对的内置图片', () => {
+  assert.equal(seedImageAttribution('/images/products/p14.jpg'), '/images/attribution.html#p14')
+  assert.equal(seedImageAttribution('/images/products/p28.jpg?v=2'), '/images/attribution.html#p28')
+  assert.equal(seedImageAttribution('/images/products/p42.jpg'), '/images/attribution.html#p42')
+  assert.equal(seedImageAttribution('/images/products/p01.jpg'), null)
+  assert.equal(seedImageAttribution('/uploads/p14.jpg'), null)
+  assert.equal(seedImageAttribution(null), null)
+})
 
 test('formatMoney 固定两位小数', () => {
   assert.equal(formatMoney(12.9), '12.90')

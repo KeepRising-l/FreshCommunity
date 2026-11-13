@@ -107,7 +107,7 @@ INSERT INTO product (id, name, category, price, stock, image_url, description, s
 -- 明星商品补第二张图（图库演示）：草莓/红富士/花牛 各两张，第二张复用近邻素材
 INSERT INTO product_image (product_id, image_url, sort) VALUES
 (1,  '/images/products/p01.jpg', 0),
-(1,  '/images/products/p18.jpg', 1),
+(1,  '/images/products/p42.jpg', 1),
 (2,  '/images/products/p02.jpg', 0),
 (2,  '/images/products/p17.jpg', 1),
 (19, '/images/products/p19.jpg', 0),

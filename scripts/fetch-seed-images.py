@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-"""演示素材下载：按关键词从 Wikimedia Commons 检索真实照片（免费授权）。
+"""演示素材下载：按关键词从 Wikimedia Commons 检索照片候选。
 
 用法（在仓库根目录执行）：
     python scripts/fetch-seed-images.py
@@ -8,6 +8,7 @@
   - 下载结果提交入仓（frontend/public/images/），本脚本仅在素材缺失或需要换图时运行
   - Commons 要求规范的 User-Agent 与请求间隔；脚本带 2.5s 间隔与 429 退避
   - 校验：JPEG/PNG 魔数 + 体积 >= 10KB；失败项在结尾列出
+  - 自动搜索不保证图片与商品一致，也不核对许可；使用前须逐张检查并记录来源和授权
   - 对某张图不满意时：改 ITEMS 里对应关键词后删除该文件重跑，
     或直接在管理端商品管理上传替换（线上能力，不依赖本脚本）
 """
