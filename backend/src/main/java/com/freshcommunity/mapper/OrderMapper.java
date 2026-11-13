@@ -28,6 +28,11 @@ public interface OrderMapper extends BaseMapper<Order> {
     @Select("SELECT * FROM `order` WHERE group_buy_id = #{groupBuyId} AND status = #{status} FOR UPDATE")
     List<Order> findByGroupBuyAndStatus(@Param("groupBuyId") Long groupBuyId, @Param("status") String status);
 
+    // 锁定读避免事务在获取团购锁前建立的旧快照漏掉同一用户已支付的订单。
+    @Select("SELECT id FROM `order` WHERE group_buy_id = #{groupBuyId} AND user_id = #{userId} " +
+            "AND status = 'PENDING_GROUP' AND deleted = 0 LIMIT 1 FOR UPDATE")
+    Long findPendingGroupOrderForUser(@Param("groupBuyId") Long groupBuyId, @Param("userId") Long userId);
+
     @Select("SELECT * FROM `order` WHERE status = 'PENDING_PAYMENT' AND created_at <= DATE_SUB(NOW(), INTERVAL 30 MINUTE)")
     List<Order> findPendingPaymentExpired();
 

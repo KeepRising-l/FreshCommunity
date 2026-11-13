@@ -16,8 +16,11 @@ import java.util.concurrent.Callable;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
+import javax.sql.DataSource;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 
 // 并发请求需要独立事务，测试数据由 ApiTestBase 在专用测试库中初始化。
@@ -27,6 +30,50 @@ class OrderConcurrencyApiTest extends ApiTestBase {
     private OrderMapper orders;
     @Autowired
     private PlatformTransactionManager transactionManager;
+    @Autowired
+    private DataSource dataSource;
+
+    @Test
+    void creationWaitsForGroupResultAndRejectsAfterSuccess() throws Exception {
+        String leader = login("leader1", "123456");
+        String buyer = login("user1", "123456");
+        long productId = firstProductId(buyer);
+        long groupId = createGroupBuy(leader, productId, 1);
+        long initialStock = productStock(buyer, productId);
+        var executor = Executors.newSingleThreadExecutor();
+        try (var connection = dataSource.getConnection()) {
+            connection.setAutoCommit(false);
+            try (var update = connection.prepareStatement("UPDATE group_buy SET status = 'SUCCESS' WHERE id = ?")) {
+                update.setLong(1, groupId);
+                update.executeUpdate();
+            }
+            var result = executor.submit(() -> perform(post("/api/orders")
+                    .param("groupBuyId", String.valueOf(groupId)).param("quantity", "1"), buyer, null));
+            assertThatThrownBy(() -> result.get(1, TimeUnit.SECONDS)).isInstanceOf(TimeoutException.class);
+            connection.commit();
+            assertThat(result.get(10, TimeUnit.SECONDS).status()).isEqualTo(400);
+            assertThat(productStock(buyer, productId)).isEqualTo(initialStock);
+            assertThat(jdbcTemplate.queryForObject("SELECT COUNT(*) FROM `order` WHERE group_buy_id = ?",
+                    Integer.class, groupId)).isZero();
+        } finally {
+            executor.shutdownNow();
+        }
+    }
+
+    @Test
+    void simultaneousPaymentsFromSameUserCountOnce() throws Exception {
+        String leader = login("leader1", "123456");
+        String buyer = login("user1", "123456");
+        long groupId = createGroupBuy(leader, firstProductId(buyer), 2);
+        long first = createOrder(buyer, groupId, 1);
+        long second = createOrder(buyer, groupId, 1);
+        assertThat(concurrently(() -> payOrder(buyer, first).status(), () -> payOrder(buyer, second).status()))
+                .containsExactlyInAnyOrder(200, 200);
+        assertThat(jdbcTemplate.queryForObject("SELECT member_count FROM group_buy WHERE id = ?", Integer.class, groupId))
+                .isEqualTo(1);
+        assertThat(jdbcTemplate.queryForObject("SELECT status FROM group_buy WHERE id = ?", String.class, groupId))
+                .isEqualTo("ONGOING");
+    }
 
     @Test
     void simultaneousSamePickupCodeOnlyOneDatabaseWriteSucceeds() throws Exception {
@@ -92,9 +139,9 @@ class OrderConcurrencyApiTest extends ApiTestBase {
         String buyer = login("user1", "123456");
         long groupId = createGroupBuy(leader, firstProductId(buyer), 2);
         long first = createOrder(buyer, groupId, 1);
-        long second = createOrder(buyer, groupId, 1);
+        long second = createOrder(leader, groupId, 1);
 
-        assertThat(concurrently(() -> payOrder(buyer, first).status(), () -> payOrder(buyer, second).status()))
+        assertThat(concurrently(() -> payOrder(buyer, first).status(), () -> payOrder(leader, second).status()))
                 .containsExactlyInAnyOrder(200, 200);
         assertThat(jdbcTemplate.queryForObject(
                 "SELECT COUNT(*) FROM `order` WHERE group_buy_id = ? AND status = 'SUCCESS' AND pickup_code IS NOT NULL",

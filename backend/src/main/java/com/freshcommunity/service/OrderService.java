@@ -61,12 +61,9 @@ public class OrderService {
         if (quantity == null || quantity <= 0) {
             throw new IllegalArgumentException("购买数量必须大于0");
         }
-        GroupBuy groupBuy = groupBuyMapper.selectById(groupBuyId);
-        if (groupBuy == null || !"ONGOING".equals(groupBuy.getStatus())) {
-            throw new IllegalArgumentException("团购不在进行中");
-        }
-        if (groupBuy.getDeadline().isBefore(LocalDateTime.now())) {
-            throw new IllegalArgumentException("团购已截止");
+        // 与支付成团、到期解散共用团购行锁，避免检查后团购结束仍创建订单。
+        if (groupBuyMapper.lockOpenGroup(groupBuyId) == null) {
+            throw new IllegalArgumentException("团购已结束或截止");
         }
         List<GroupBuyItem> items = groupBuyItemMapper.selectList(
                 new LambdaQueryWrapper<GroupBuyItem>().eq(GroupBuyItem::getGroupBuyId, groupBuyId));
@@ -105,13 +102,14 @@ public class OrderService {
         if (groupBuyMapper.lockOpenGroup(order.getGroupBuyId()) == null) {
             throw new IllegalArgumentException("团购已结束或截止，请取消订单");
         }
+        boolean alreadyJoined = orderMapper.findPendingGroupOrderForUser(order.getGroupBuyId(), userId) != null;
         int updated = orderMapper.updateStatus(orderId, "PENDING_GROUP", "PENDING_PAYMENT");
         if (updated == 0) {
             throw new IllegalStateException("支付状态更新失败");
         }
         // 行级条件更新同时检查团购状态和截止时间，避免其他订单成团/解散后继续支付。
         // 失败时抛异常回滚订单状态，用户仍可取消订单回补库存。
-        if (groupBuyMapper.incrementMemberCount(order.getGroupBuyId()) == 0) {
+        if (!alreadyJoined && groupBuyMapper.incrementMemberCount(order.getGroupBuyId()) == 0) {
             throw new IllegalArgumentException("团购已结束或截止，请取消订单");
         }
         if (!payService.pay(order)) {
@@ -152,15 +150,16 @@ public class OrderService {
         if (!"PENDING_PAYMENT".equals(originStatus) && !"PENDING_GROUP".equals(originStatus)) {
             throw new IllegalArgumentException("当前订单不可取消");
         }
+        lockOrderGroup(order);
         int updated = orderMapper.updateStatus(orderId, "CANCELLED", originStatus);
         if (updated == 0) {
             throw new IllegalStateException("取消失败");
         }
-        productMapper.restoreStock(order.getProductId(), order.getQuantity());
-        // 待成团订单已计入人数，取消后必须回退，否则会造成"虚假成团"
         if ("PENDING_GROUP".equals(originStatus)) {
-            groupBuyMapper.decrementMemberCount(order.getGroupBuyId());
+            refundPaidOrder(order);
+            decrementMemberIfLastPendingOrder(order);
         }
+        productMapper.restoreStock(order.getProductId(), order.getQuantity());
     }
 
     @Transactional
@@ -195,21 +194,43 @@ public class OrderService {
                 || "COMPLETED".equals(currentStatus)) {
             throw new IllegalArgumentException("当前订单状态不可退款");
         }
+        lockOrderGroup(order);
         int updated = orderMapper.updateStatus(orderId, "REFUNDED", currentStatus);
         if (updated == 0) {
             throw new IllegalStateException("退款状态更新失败");
         }
-        productMapper.restoreStock(order.getProductId(), order.getQuantity());
-        // 待成团订单已计入人数，退款后同步回退
-        if ("PENDING_GROUP".equals(currentStatus)) {
-            groupBuyMapper.decrementMemberCount(order.getGroupBuyId());
+        if (!"PENDING_PAYMENT".equals(currentStatus)) {
+            refundPaidOrder(order);
         }
+        if ("PENDING_GROUP".equals(currentStatus)) {
+            decrementMemberIfLastPendingOrder(order);
+        }
+        productMapper.restoreStock(order.getProductId(), order.getQuantity());
         notificationService.notify(order.getUserId(), NotificationService.TYPE_REFUNDED,
                 "订单已退款", "你的订单已被退款，款项将按原路退回。", order.getId());
     }
 
     public List<Order> getPendingGroupOrders(Long groupBuyId) {
         return orderMapper.findByGroupBuyAndStatus(groupBuyId, "PENDING_GROUP");
+    }
+
+    private void lockOrderGroup(Order order) {
+        if (groupBuyMapper.lockGroup(order.getGroupBuyId()) == null) {
+            throw new IllegalArgumentException("团购不存在");
+        }
+    }
+
+    private void decrementMemberIfLastPendingOrder(Order order) {
+        if (orderMapper.findPendingGroupOrderForUser(order.getGroupBuyId(), order.getUserId()) == null) {
+            groupBuyMapper.decrementMemberCount(order.getGroupBuyId());
+        }
+    }
+
+    /** 当前支付服务为模拟实现；未来接入真实支付需要独立处理退款幂等与异步结果。 */
+    void refundPaidOrder(Order order) {
+        if (!payService.refund(order)) {
+            throw new IllegalStateException("模拟退款失败");
+        }
     }
 
     public void updateOrderStatus(Order order) {

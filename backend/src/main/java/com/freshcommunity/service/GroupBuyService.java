@@ -132,6 +132,7 @@ public class GroupBuyService {
             if (fail > 0) {
                 List<com.freshcommunity.entity.Order> orders = orderService.getPendingGroupOrders(gb.getId());
                 for (com.freshcommunity.entity.Order o : orders) {
+                    orderService.refundPaidOrder(o);
                     o.setStatus("REFUNDED");
                     orderService.updateOrderStatus(o);
                     productMapper.restoreStock(o.getProductId(), o.getQuantity());

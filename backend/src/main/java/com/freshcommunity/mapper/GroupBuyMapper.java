@@ -13,6 +13,9 @@ public interface GroupBuyMapper extends BaseMapper<GroupBuy> {
     @Select("SELECT id FROM group_buy WHERE id = #{id} AND status = 'ONGOING' AND deadline > NOW() FOR UPDATE")
     Long lockOpenGroup(@Param("id") Long id);
 
+    @Select("SELECT id FROM group_buy WHERE id = #{id} FOR UPDATE")
+    Long lockGroup(@Param("id") Long id);
+
     @Update("UPDATE group_buy SET member_count = member_count + 1 WHERE id = #{id} AND status = 'ONGOING' AND deadline > NOW()")
     int incrementMemberCount(@Param("id") Long id);
 

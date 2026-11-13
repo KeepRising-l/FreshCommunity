@@ -106,12 +106,14 @@ class NotificationApiTest extends ApiTestBase {
         String u1 = login("user1", "123456");
         long productId = firstProductId(u1);
 
-        // target=2：两笔支付后达标成团，两笔订单各产生一条成团通知
+        // 同一用户两笔订单只算一人；团长作为第二位用户参团，两笔订单各产生一条通知
         long gid = createGroupBuy(leader, productId, 2);
         long order1 = createOrder(u1, gid, 1);
         payOrder(u1, order1);
         long order2 = createOrder(u1, gid, 1);
         payOrder(u1, order2);
+        long order3 = createOrder(leader, gid, 1);
+        payOrder(leader, order3);
 
         long before = unread(u1);
         assertThat(before).isEqualTo(2);

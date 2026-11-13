@@ -20,6 +20,46 @@ class GroupBuyFlowApiTest extends ApiTestBase {
     private ScheduledJobs scheduledJobs;
 
     @Test
+    @DisplayName("同一用户多笔已付订单只算一人，另一用户支付后成团并为每笔订单发码")
+    void multipleOrdersFromOneUserCountOnce() throws Exception {
+        String leader = login("leader1", "123456");
+        String buyer = login("user1", "123456");
+        long groupId = createGroupBuy(leader, firstProductId(buyer), 2);
+        long first = createOrder(buyer, groupId, 1);
+        long second = createOrder(buyer, groupId, 2);
+        assertThat(payOrder(buyer, first).ok()).isTrue();
+        assertThat(payOrder(buyer, second).ok()).isTrue();
+        assertThat(groupBuyDetail(buyer, groupId).path("memberCount").asInt()).isEqualTo(1);
+        assertThat(groupBuyDetail(buyer, groupId).path("status").asText()).isEqualTo("ONGOING");
+
+        long third = createOrder(leader, groupId, 1);
+        assertThat(payOrder(leader, third).ok()).isTrue();
+        assertThat(groupBuyDetail(buyer, groupId).path("memberCount").asInt()).isEqualTo(2);
+        assertThat(groupBuyDetail(buyer, groupId).path("status").asText()).isEqualTo("SUCCESS");
+        assertThat(jdbcTemplate.queryForObject("SELECT COUNT(*) FROM `order` WHERE group_buy_id = ? " +
+                "AND status = 'SUCCESS' AND pickup_code IS NOT NULL", Integer.class, groupId)).isEqualTo(3);
+    }
+
+    @Test
+    @DisplayName("用户仍有其他待成团订单时，取消或退款不会重复减少人数")
+    void cancellationAndRefundRemoveOnlyLastPaidOrderFromCount() throws Exception {
+        String leader = login("leader1", "123456");
+        String buyer = login("user1", "123456");
+        String admin = login("admin", "123456");
+        long groupId = createGroupBuy(leader, firstProductId(buyer), 3);
+        long first = createOrder(buyer, groupId, 1);
+        long second = createOrder(buyer, groupId, 1);
+        assertThat(payOrder(buyer, first).ok()).isTrue();
+        assertThat(payOrder(buyer, second).ok()).isTrue();
+        assertThat(groupBuyDetail(buyer, groupId).path("memberCount").asInt()).isEqualTo(1);
+
+        assertThat(perform(post("/api/orders/" + first + "/cancel"), buyer, null).ok()).isTrue();
+        assertThat(groupBuyDetail(buyer, groupId).path("memberCount").asInt()).isEqualTo(1);
+        assertThat(perform(post("/api/orders/" + second + "/refund"), admin, null).ok()).isTrue();
+        assertThat(groupBuyDetail(buyer, groupId).path("memberCount").asInt()).isZero();
+    }
+
+    @Test
     @DisplayName("团购成团后，其他待支付订单不能支付且仍可取消回补库存")
     void pendingOrderCannotPayAfterGroupSucceeds() throws Exception {
         String leader = login("leader1", "123456");

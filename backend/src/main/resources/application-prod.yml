@@ -12,3 +12,7 @@ spring:
 mybatis-plus:
   configuration:
     log-impl: org.apache.ibatis.logging.nologging.NoLoggingImpl
+
+# 生产环境显式配置签名密钥，避免多实例不一致或使用公开默认值。
+jwt:
+  secret: ${JWT_SECRET}
