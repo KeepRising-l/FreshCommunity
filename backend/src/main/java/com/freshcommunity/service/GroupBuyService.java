@@ -56,6 +56,9 @@ public class GroupBuyService {
         if (product == null) {
             throw new IllegalArgumentException("商品不存在");
         }
+        if (product.getStatus() == null || product.getStatus() != 1) {
+            throw new IllegalArgumentException("商品已下架，无法发起团购");
+        }
         BigDecimal price = resolvePrice(req.getPrice(), product);
 
         GroupBuy groupBuy = new GroupBuy();

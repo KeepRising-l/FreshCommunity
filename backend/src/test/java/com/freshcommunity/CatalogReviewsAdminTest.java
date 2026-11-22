@@ -150,6 +150,44 @@ class CatalogReviewsAdminTest extends ApiTestBase {
                 .isEqualTo(403);
     }
 
+    @Test
+    @DisplayName("CSV 导出：突破分页列表 50 条上限，超过 50 笔订单可全量导出")
+    void csvExportExceedsPageLimitOfFifty() throws Exception {
+        String admin = login("admin", "123456");
+        long buyer = jdbcTemplate.queryForObject(
+                "SELECT id FROM user WHERE username = 'user1'", Long.class);
+        long leader = jdbcTemplate.queryForObject(
+                "SELECT id FROM user WHERE username = 'leader1'", Long.class);
+        long pid = jdbcTemplate.queryForObject(
+                "SELECT id FROM product ORDER BY id LIMIT 1", Long.class);
+        jdbcTemplate.update(
+                "INSERT INTO group_buy (leader_id, title, target_count, deadline, status, member_count) " +
+                        "VALUES (?, '批量导出测试团', 5, DATE_ADD(NOW(), INTERVAL 2 HOUR), 'ONGOING', 0)", leader);
+        long gid = jdbcTemplate.queryForObject("SELECT LAST_INSERT_ID()", Long.class);
+
+        for (int i = 1; i <= 55; i++) {
+            String orderNo = String.format("BULK_EXP_%03d", i);
+            jdbcTemplate.update(
+                    "INSERT INTO `order` (order_no, user_id, group_buy_id, product_id, quantity, amount, status) " +
+                            "VALUES (?, ?, ?, ?, 1, 10.00, 'PENDING_GROUP')", orderNo, buyer, gid, pid);
+        }
+
+        // 分页列表接口受 MAX_SIZE=50 限制
+        var paged = perform(get("/api/admin/orders")
+                .param("keyword", "BULK_EXP_")
+                .param("size", "100"), admin, null).data();
+        assertThat(paged.path("total").asLong()).isEqualTo(55);
+        assertThat(paged.path("records").size()).isEqualTo(50);
+
+        // CSV 导出不受 50 条限制，可全量导出 55 笔
+        String body = mockMvc.perform(get("/api/admin/orders/export")
+                        .param("keyword", "BULK_EXP_")
+                        .header("Authorization", "Bearer " + admin))
+                .andReturn().getResponse().getContentAsString(java.nio.charset.StandardCharsets.UTF_8);
+        long matchedCount = body.lines().filter(line -> line.startsWith("BULK_EXP_")).count();
+        assertThat(matchedCount).isEqualTo(55);
+    }
+
     private Long reviewIdOf(long orderId) {
         return jdbcTemplate.queryForObject(
                 "SELECT id FROM review WHERE order_id = ?", Long.class, orderId);

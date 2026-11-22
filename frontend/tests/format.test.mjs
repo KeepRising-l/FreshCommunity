@@ -3,6 +3,7 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
 import { seedImageAttribution } from '../src/utils/imageAttribution.js'
+import { isPendingPickupStatus, matchesOrderStatusTab } from '../src/constants/status.js'
 import {
   formatMoney,
   formatPrice,
@@ -75,4 +76,14 @@ test('remainingMembers 差额不为负', () => {
 test('splitCode 拆字符（取货码逐位展示）', () => {
   assert.deepEqual(splitCode('368772'), ['3', '6', '8', '7', '7', '2'])
   assert.deepEqual(splitCode(null), [])
+})
+
+test('待取货状态匹配：SUCCESS（成团发码）与 PENDING_PICKUP 均归入待取货', () => {
+  assert.equal(isPendingPickupStatus('SUCCESS'), true)
+  assert.equal(isPendingPickupStatus('PENDING_PICKUP'), true)
+  assert.equal(isPendingPickupStatus('PENDING_GROUP'), false)
+  assert.equal(matchesOrderStatusTab('SUCCESS', 'PENDING_PICKUP'), true)
+  assert.equal(matchesOrderStatusTab('PENDING_PICKUP', 'PENDING_PICKUP'), true)
+  assert.equal(matchesOrderStatusTab('PENDING_GROUP', 'PENDING_PICKUP'), false)
+  assert.equal(matchesOrderStatusTab('SUCCESS', ''), true)
 })

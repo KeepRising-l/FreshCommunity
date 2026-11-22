@@ -1,9 +1,11 @@
 package com.freshcommunity;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import com.freshcommunity.service.OrderService;
 import com.freshcommunity.support.ApiTestBase;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -15,6 +17,9 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 
 @DisplayName("团长端控制台：经营概览与最近核销记录")
 class LeaderConsoleApiTest extends ApiTestBase {
+
+    @Autowired
+    private OrderService orderService;
 
     /** schema.sql 里三个基础账号的 BCrypt 哈希，密码均为 123456 */
     private static final String PASSWORD_HASH = "$2a$10$eYBgVzfZ/6nfpPiMGwzpq.LgZo3t3VMFs/5aJGVfJ718FKYswWaDi";
@@ -198,5 +203,39 @@ class LeaderConsoleApiTest extends ApiTestBase {
     void verifyHistoryRequiresLeader() throws Exception {
         ApiResult r = perform(get("/api/orders/verify-history"), login("user1", "123456"), null);
         assertThat(r.status()).isEqualTo(403);
+    }
+
+    @Test
+    @DisplayName("取货码防暴力枚举：连续 5 次核销失败后触发临时锁定，重置后恢复正常")
+    void verifyPickupCodeRateLimitsBruteForceAttempts() throws Exception {
+        String leader = login("leader1", "123456");
+        String buyer = login("user1", "123456");
+        long leaderId = userId("leader1");
+        orderService.clearVerifyRateLimit(leaderId);
+
+        long gid = createGroupBuy(leader, firstProductId(buyer), 1);
+        long orderId = createOrder(buyer, gid, 1);
+        assertThat(payOrder(buyer, orderId).ok()).isTrue();
+        String validCode = jdbcTemplate.queryForObject(
+                "SELECT pickup_code FROM `order` WHERE id = ?", String.class, orderId);
+
+        try {
+            for (int i = 0; i < 5; i++) {
+                ApiResult fail = perform(post("/api/orders/verify").param("pickupCode", "000000"), leader, null);
+                assertThat(fail.status()).isEqualTo(400);
+                assertThat(fail.msg()).contains("取货码无效");
+            }
+            // 第 6 次即使传入真实有效取货码，也会被防暴力枚举限流拦截
+            ApiResult locked = perform(post("/api/orders/verify").param("pickupCode", validCode), leader, null);
+            assertThat(locked.status()).isEqualTo(400);
+            assertThat(locked.msg()).contains("核销失败次数过多");
+
+            // 解除锁定后，真实取货码可正常完成核销
+            orderService.clearVerifyRateLimit(leaderId);
+            ApiResult ok = perform(post("/api/orders/verify").param("pickupCode", validCode), leader, null);
+            assertThat(ok.ok()).isTrue();
+        } finally {
+            orderService.clearVerifyRateLimit(leaderId);
+        }
     }
 }

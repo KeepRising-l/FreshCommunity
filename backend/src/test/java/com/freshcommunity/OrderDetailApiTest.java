@@ -122,4 +122,27 @@ class OrderDetailApiTest extends ApiTestBase {
         assertThat(perform(get("/api/admin/orders"), login("user1", "123456"), null).status()).isEqualTo(403);
         assertThat(perform(get("/api/admin/orders"), login("leader1", "123456"), null).status()).isEqualTo(403);
     }
+
+    @Test
+    @DisplayName("管理端订单列表按待取货（PENDING_PICKUP）筛选包含成团发码（SUCCESS）订单")
+    void adminOrdersPendingPickupFilterIncludesSuccessOrders() throws Exception {
+        String leader = login("leader1", "123456");
+        String user = login("user1", "123456");
+        String admin = login("admin", "123456");
+        long gid = createGroupBuy(leader, firstProductId(user), 1);
+        long orderId = createOrder(user, gid, 1);
+        assertThat(payOrder(user, orderId).ok()).isTrue();
+
+        var byPendingPickup = perform(get("/api/admin/orders").param("status", "PENDING_PICKUP"), admin, null).data();
+        assertThat(byPendingPickup.path("total").asLong()).isGreaterThanOrEqualTo(1);
+        boolean found = false;
+        for (var rec : byPendingPickup.path("records")) {
+            if (rec.path("id").asLong() == orderId) {
+                found = true;
+                assertThat(rec.path("status").asText()).isEqualTo("SUCCESS");
+                assertThat(rec.path("pickupCode").asText()).isNotBlank();
+            }
+        }
+        assertThat(found).isTrue();
+    }
 }

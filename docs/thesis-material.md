@@ -2,7 +2,7 @@
 
 > **用途**：把本项目已有的产出，整理成写**开题报告 / 任务书 / 论文**时可直接引用的素材地图。
 > **边界**：本文件不替代论文本身，只做「素材定位 + 关键数据 + 图表清单 + 风险提示」。
-> **生成时间**：2026-10-11（首版）；**数据刷新**：2026-11-13（测试结果已更新；其他历史统计需重新核对）
+> **生成时间**：2026-10-11（首版）；**数据刷新**：2026-11-22（测试结果与闭环修复已同步更新）
 
 ---
 
@@ -22,11 +22,11 @@
 | --- | --- |
 | 后端 Java 文件 | **84** 个 / 约 **4843** 行（`backend/src/main/java`） |
 | 前端源码 | **49** 个文件 / 约 **10543** 行（20 个页面视图 + 8 个公共组件 + api/stores/utils） |
-| 前端单测 | **11** 个用例（Node 原生 test runner，零依赖，`npm test`） |
+| 前端单测 | **13** 个用例（Node 原生 test runner，零依赖，`npm test`） |
 | 数据库表 | **11** 张已建（含 `user_subscription`、`review_analysis`、`subscription_match`、`product_image`） |
 | 后端接口 | **48** 个 |
 | 功能能力（capability） | **12** 个基线能力（含 responsive-ui），68 条需求、159 个场景 |
-| 自动化测试 | 后端 **125** 个自动化测试（19 个测试类）+ 前端 11 个，2026-11-13 本地运行通过 |
+| 自动化测试 | 后端 **132** 个自动化测试（19 个测试类）+ 前端 **13** 个，2026-11-22 本地运行通过 |
 | 规格实测 | 累计 **16 轮实测报告**（`docs/verification-report.md` §一～§十七），含真实 LLM、SSE、并发补偿等端到端断言 |
 | 规格变更 | **13** 个已归档（最新 `2026-10-26-catalog-reviews-admin`） |
 | 工程化 | 提供 Docker Compose、GitHub Actions 和 prod 配置；目标环境仍需部署复验 |
@@ -42,11 +42,11 @@
 | **需求分析** | 11 个 capability 的完整需求与验收场景（含 WHEN/THEN） | `openspec/specs/*/spec.md` |
 | **需求优先级与范围** | 明确「做什么 / 不做什么」的边界声明 | `openspec/changes/archive/2026-10-11-mvp-group-buying/proposal.md` |
 | **系统总体设计** | 分层架构、模块划分、技术选型理由 | `openspec/changes/archive/.../design.md` |
-| **数据库设计** | 9 张已建表的 DDL、索引设计 | `db/schema.sql`、`docs/design-document.md` |
+| **数据库设计** | 11 张已建表的 DDL、索引设计 | `db/schema.sql`、`docs/design-document.md` |
 | **关键机制设计** | 库存防超卖（原子扣减）、状态机、定时任务、并发成团判定 | 同上 `design.md` + `openspec/specs/inventory/spec.md`、`order-lifecycle/spec.md` |
 | **界面设计** | 设计原则、信息架构、视觉语言、双端原型 | `docs/ui-design/design-spec.md`、`prototype.html`、`prototype-mobile.html` |
 | **系统实现** | 各模块接口清单与权限 | `README.md` 接口一览 |
-| **系统测试** | 实测验证方法与结论、52 个测试源码方法 | `docs/verification-report.md`、`backend/src/test/` |
+| **系统测试** | 实测验证方法与结论、19 个测试类 / 132 个测试源码方法 | `docs/verification-report.md`、`backend/src/test/` |
 | **过程管理** | 需求→实现→归档的可追溯轨迹，含当前活动变更 | `openspec/changes/`（proposal / design / tasks / specs） |
 | **开发规范与工具** | 规格驱动开发方法论 | `docs/openspec-guide.md` |
 
@@ -60,13 +60,13 @@
 | --- | --- | --- |
 | 系统架构图 | 前端 / 后端 / 数据库三层 + 定时任务 | `design.md`、项目结构 |
 | 用例图 | 三角色的功能边界 | `openspec/specs/user-roles/spec.md` |
-| ER 图 | 9 张已建表 | `db/schema.sql`、`docs/design-document.md` |
+| ER 图 | 11 张已建表 | `db/schema.sql`、`docs/design-document.md` |
 | **团购状态机图** | 进行中 → 已成团 / 已解散 | `openspec/specs/group-buying/spec.md` |
 | **订单状态机图** | 待支付 → 待成团 → 已成团 → 已完成，及终态 | `openspec/specs/order-lifecycle/spec.md` |
 | 时序图 | 下单→支付→达标成团的并发判定 | `design.md` 决策 4 |
 | 时序图 | 到点未成团→自动解散→退款 | `specs/group-buying/spec.md` |
 | 界面原型图 | 三角色关键页面 | `docs/ui-design/preview/*.png` |
-| 测试用例分布图 | 7 个测试类 / 52 个方法 | `backend/src/test/` |
+| 测试用例分布图 | 19 个测试类 / 132 个方法 | `backend/src/test/` |
 
 ---
 

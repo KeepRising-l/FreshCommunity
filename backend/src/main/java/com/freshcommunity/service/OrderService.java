@@ -34,6 +34,16 @@ import java.util.stream.Collectors;
 public class OrderService {
 
     private static final SecureRandom SECURE_RANDOM = new SecureRandom();
+    private static final int MAX_VERIFY_FAILURES = 5;
+    private static final long VERIFY_LOCK_WINDOW_MS = 5 * 60 * 1000L;
+
+    private static class VerifyAttempt {
+        int failures;
+        long firstFailureAtMs;
+        long lockedUntilMs;
+    }
+
+    private final Map<Long, VerifyAttempt> verifyAttemptsByLeader = new java.util.concurrent.ConcurrentHashMap<>();
 
     private final OrderMapper orderMapper;
     private final GroupBuyMapper groupBuyMapper;
@@ -164,22 +174,74 @@ public class OrderService {
 
     @Transactional
     public void verifyPickupCode(Long leaderId, String code) {
+        checkVerifyRateLimit(leaderId);
         Order order = orderMapper.findByPickupCode(code);
         if (order == null) {
+            recordVerifyFailure(leaderId);
             throw new IllegalArgumentException("取货码无效");
         }
         GroupBuy groupBuy = groupBuyMapper.selectById(order.getGroupBuyId());
         if (groupBuy == null || !groupBuy.getLeaderId().equals(leaderId)) {
+            recordVerifyFailure(leaderId);
             throw new IllegalArgumentException("无权核销该订单");
         }
         if (!"SUCCESS".equals(order.getStatus()) && !"PENDING_PICKUP".equals(order.getStatus())) {
+            recordVerifyFailure(leaderId);
             throw new IllegalArgumentException("订单状态不允许核销");
         }
         if (orderMapper.updateStatus(order.getId(), "COMPLETED", order.getStatus()) == 0) {
+            recordVerifyFailure(leaderId);
             throw new IllegalArgumentException("订单已核销或状态已变更");
         }
+        clearVerifyRateLimit(leaderId);
         notificationService.notify(order.getUserId(), NotificationService.TYPE_PICKUP_DONE,
                 "提货完成", "你的订单已核销完成，感谢参与。", order.getId());
+    }
+
+    private void checkVerifyRateLimit(Long leaderId) {
+        if (leaderId == null) {
+            return;
+        }
+        VerifyAttempt attempt = verifyAttemptsByLeader.get(leaderId);
+        if (attempt == null) {
+            return;
+        }
+        long now = System.currentTimeMillis();
+        synchronized (attempt) {
+            if (attempt.lockedUntilMs > now) {
+                throw new IllegalArgumentException("核销失败次数过多，请稍后再试");
+            }
+            if (attempt.lockedUntilMs > 0 || now - attempt.firstFailureAtMs > VERIFY_LOCK_WINDOW_MS) {
+                attempt.failures = 0;
+                attempt.firstFailureAtMs = 0;
+                attempt.lockedUntilMs = 0;
+            }
+        }
+    }
+
+    private void recordVerifyFailure(Long leaderId) {
+        if (leaderId == null) {
+            return;
+        }
+        long now = System.currentTimeMillis();
+        VerifyAttempt attempt = verifyAttemptsByLeader.computeIfAbsent(leaderId, k -> new VerifyAttempt());
+        synchronized (attempt) {
+            if (attempt.firstFailureAtMs == 0 || now - attempt.firstFailureAtMs > VERIFY_LOCK_WINDOW_MS) {
+                attempt.firstFailureAtMs = now;
+                attempt.failures = 1;
+            } else {
+                attempt.failures++;
+            }
+            if (attempt.failures >= MAX_VERIFY_FAILURES) {
+                attempt.lockedUntilMs = now + VERIFY_LOCK_WINDOW_MS;
+            }
+        }
+    }
+
+    public void clearVerifyRateLimit(Long leaderId) {
+        if (leaderId != null) {
+            verifyAttemptsByLeader.remove(leaderId);
+        }
     }
 
     @Transactional
@@ -270,6 +332,14 @@ public class OrderService {
                 new Page<>(Math.max(page, 1), Math.min(Math.max(size, 1), 50)),
                 blankToNull(status), blankToNull(keyword));
         return PageResult.from(result);
+    }
+
+    /** 管理端订单 CSV 导出列表：与订单管理页同筛选口径，上限 5000 行（不受分页接口 50 条限制）。 */
+    public List<OrderVO> listForAdminExport(String status, String keyword) {
+        IPage<OrderVO> result = orderMapper.pageForAdmin(
+                new Page<>(1, 5000),
+                blankToNull(status), blankToNull(keyword));
+        return result.getRecords();
     }
 
     /**

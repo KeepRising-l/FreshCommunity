@@ -50,11 +50,11 @@ public class AdminController {
     public org.springframework.http.ResponseEntity<String> exportOrders(
             @RequestParam(required = false) String status,
             @RequestParam(required = false) String keyword) {
-        PageResult<OrderVO> page = orderService.pageForAdmin(status, keyword, 1, 5000);
+        java.util.List<OrderVO> records = orderService.listForAdminExport(status, keyword);
         StringBuilder sb = new StringBuilder();
         sb.append('\uFEFF'); // UTF-8 BOM
         sb.append("订单号,买家,商品,团购,数量,金额,状态,下单时间,支付时间,取货码\n");
-        for (OrderVO o : page.getRecords()) {
+        for (OrderVO o : records) {
             sb.append(csv(o.getOrderNo())).append(',')
               .append(csv(o.getBuyerName())).append(',')
               .append(csv(o.getProductName())).append(',')

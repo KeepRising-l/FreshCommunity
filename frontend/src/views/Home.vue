@@ -54,6 +54,7 @@ import { useNotificationStore } from '../stores/notification'
 import { listMyOrders } from '../api/order'
 import { listMyGroupBuys } from '../api/groupBuy'
 import { getDashboard } from '../api/admin'
+import { isPendingPickupStatus } from '../constants/status'
 
 const store = useUserStore()
 const unreadStore = useNotificationStore()
@@ -106,7 +107,7 @@ const stats = computed(() => {
   return [
     { label: '我的订单', value: orders.length, icon: '📋', tone: 'green' },
     { label: '待支付', value: orders.filter((o) => o.status === 'PENDING_PAYMENT').length, icon: '⏰', tone: 'orange' },
-    { label: '待取货', value: orders.filter((o) => o.status === 'PENDING_PICKUP').length, icon: '🎫', tone: 'blue' },
+    { label: '待取货', value: orders.filter((o) => isPendingPickupStatus(o.status)).length, icon: '🎫', tone: 'blue' },
     { label: '未读消息', value: unread, icon: '🔔', tone: 'purple' }
   ]
 })

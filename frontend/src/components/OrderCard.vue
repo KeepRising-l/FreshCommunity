@@ -35,7 +35,7 @@
         </div>
       </div>
       <div class="pickup-text">
-        <b>{{ order.status === 'PENDING_PICKUP' ? '凭码到店自提' : '成团后凭码自提' }}</b>
+        <b>凭码到店自提</b>
         <span>{{ pickupText || '请向团长出示取货码核销' }}</span>
       </div>
     </div>
@@ -125,7 +125,9 @@ const canPay = computed(() => props.order.status === 'PENDING_PAYMENT')
 const canCancel = computed(() => ['PENDING_PAYMENT', 'PENDING_GROUP'].includes(props.order.status))
 const canReview = computed(() => props.order.status === 'COMPLETED' && !props.order.reviewed)
 const isReviewed = computed(() => props.order.status === 'COMPLETED' && !!props.order.reviewed)
-const canViewCode = computed(() => props.order.status === 'PENDING_PICKUP' && !!props.order.pickupCode)
+const canViewCode = computed(
+  () => ['SUCCESS', 'PENDING_PICKUP'].includes(props.order.status) && !!props.order.pickupCode
+)
 
 /** 待支付：剩余支付时间；其余状态给出状态说明 */
 const hint = computed(() => {
@@ -146,7 +148,7 @@ const hint = computed(() => {
   }
 
   if (s === 'PENDING_GROUP') return '⏳ 等待其他邻居参团，达标后自动成团'
-  if (s === 'SUCCESS') return '🎉 已成团，团长正在备货，请留意取货通知'
+  if (s === 'SUCCESS') return '🎉 已成团，请凭取货码到提货点自提'
   if (s === 'PENDING_PICKUP') return '✅ 已备货，请凭取货码到提货点自提'
   if (s === 'COMPLETED') return props.order.reviewed ? '✅ 交易完成，感谢你的评价' : '✅ 交易完成，欢迎评价本次体验'
   if (s === 'CANCELLED') return '💬 订单已取消'

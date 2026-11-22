@@ -191,6 +191,46 @@ class OrderConcurrencyApiTest extends ApiTestBase {
                 Integer.class, orderId)).isEqualTo(1);
     }
 
+    @Test
+    void eightThreadsCompeteForLastSingleStockOnlyOneSucceeds() throws Exception {
+        String leader = login("leader1", "123456");
+        String buyer = login("user1", "123456");
+        jdbcTemplate.update(
+                "INSERT INTO product (name, category, price, stock, image_url, description, status) " +
+                        "VALUES ('单库存并发抢购商品', '水果', 9.90, 1, '', '并发防超卖测试', 1)");
+        long productId = jdbcTemplate.queryForObject(
+                "SELECT id FROM product WHERE name = '单库存并发抢购商品' ORDER BY id DESC LIMIT 1", Long.class);
+        long groupId = createGroupBuy(leader, productId, 5);
+
+        int threads = 8;
+        var executor = Executors.newFixedThreadPool(threads);
+        var start = new CountDownLatch(1);
+        try {
+            var futures = new java.util.ArrayList<java.util.concurrent.Future<Integer>>();
+            for (int i = 0; i < threads; i++) {
+                futures.add(executor.submit(() -> {
+                    start.await();
+                    return perform(post("/api/orders")
+                            .param("groupBuyId", String.valueOf(groupId))
+                            .param("quantity", "1"), buyer, null).status();
+                }));
+            }
+            start.countDown();
+            var statuses = new java.util.ArrayList<Integer>();
+            for (var f : futures) {
+                statuses.add(f.get(20, TimeUnit.SECONDS));
+            }
+            assertThat(statuses.stream().filter(s -> s == 200).count()).isEqualTo(1);
+            assertThat(statuses.stream().filter(s -> s == 400).count()).isEqualTo(threads - 1);
+            assertThat(productStock(buyer, productId)).isZero();
+            assertThat(jdbcTemplate.queryForObject(
+                    "SELECT COUNT(*) FROM `order` WHERE group_buy_id = ?", Integer.class, groupId))
+                    .isEqualTo(1);
+        } finally {
+            executor.shutdownNow();
+        }
+    }
+
     private List<Integer> concurrently(Callable<Integer> first, Callable<Integer> second) throws Exception {
         var executor = Executors.newFixedThreadPool(2);
         var start = new CountDownLatch(1);

@@ -39,4 +39,9 @@ public interface GroupBuyMapper extends BaseMapper<GroupBuy> {
 
     @Select("SELECT COUNT(*) FROM group_buy WHERE leader_id = #{leaderId} AND status = 'ONGOING' AND deleted = 0")
     Long countOngoingByLeader(@Param("leaderId") Long leaderId);
+
+    @Select("SELECT COUNT(*) FROM group_buy gb JOIN group_buy_item gbi ON gb.id = gbi.group_buy_id " +
+            "WHERE gbi.product_id = #{productId} AND gb.status = 'ONGOING' AND gb.deadline > NOW() " +
+            "AND gb.deleted = 0 AND gbi.deleted = 0")
+    Long countOngoingByProduct(@Param("productId") Long productId);
 }

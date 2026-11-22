@@ -93,7 +93,12 @@
           <el-input-number v-model="form.targetCount" :min="1" />
         </el-form-item>
         <el-form-item label="截止时间">
-          <el-date-picker v-model="form.deadline" type="datetime" placeholder="选择截止时间" />
+          <el-date-picker
+            v-model="form.deadline"
+            type="datetime"
+            value-format="YYYY-MM-DDTHH:mm:ss"
+            placeholder="选择截止时间"
+          />
         </el-form-item>
       </el-form>
       <template #footer>
@@ -120,6 +125,7 @@
 
 <script setup>
 import { ref, onMounted, reactive, computed } from 'vue'
+import { ElMessage } from 'element-plus'
 import {
   listMyGroupBuys,
   createGroupBuy,
@@ -198,8 +204,8 @@ async function loadProgress() {
 }
 
 async function loadProducts() {
-  const res = await listProducts()
-  products.value = res.data
+  const res = await listProducts({ size: 50 })
+  products.value = Array.isArray(res.data) ? res.data : (res.data?.records || [])
 }
 
 function openDialog() {
@@ -208,10 +214,23 @@ function openDialog() {
 }
 
 async function submit() {
+  if (!form.title || !form.title.trim()) {
+    ElMessage.warning('请输入团购标题')
+    return
+  }
+  if (!form.productId) {
+    ElMessage.warning('请选择商品')
+    return
+  }
+  if (!form.deadline) {
+    ElMessage.warning('请选择截止时间')
+    return
+  }
   // price 留空表示按零售价开团，不发送该字段，避免后端收到 null 之外的空值
-  const payload = { ...form }
+  const payload = { ...form, title: form.title.trim() }
   if (payload.price == null) delete payload.price
   await createGroupBuy(payload)
+  ElMessage.success('团购已发起')
   dialogVisible.value = false
   load()
 }

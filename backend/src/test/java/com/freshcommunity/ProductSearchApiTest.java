@@ -7,8 +7,10 @@ import org.junit.jupiter.api.Test;
 import java.math.BigDecimal;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 
 /**
  * 商品检索（product-catalog spec：关键词 / 分类 / 排序 / 分页 / 管理端全量列表）。
@@ -128,5 +130,31 @@ class ProductSearchApiTest extends ApiTestBase {
         String category = jdbcTemplate.queryForObject(
                 "SELECT category FROM product WHERE name = '无分类土豆'", String.class);
         assertThat(category).isEqualTo("其他");
+    }
+
+    @Test
+    @DisplayName("正在开团的商品禁止下架或删除（400）；无进行中团购的商品可正常下架与删除")
+    void cannotOffShelfOrDeleteProductWithOngoingGroupBuy() throws Exception {
+        String admin = login("admin", "123456");
+        String leader = login("leader1", "123456");
+        long activePid = insertProduct("在团测试橙", "水果", "12.00", 30, 1, 0);
+        createGroupBuy(leader, activePid, 3);
+
+        var offActive = perform(put("/api/products/" + activePid), admin, java.util.Map.of(
+                "name", "在团测试橙", "category", "水果", "price", 12.00, "stock", 30, "status", 0));
+        assertThat(offActive.status()).isEqualTo(400);
+        assertThat(offActive.msg()).contains("正在进行的团购");
+
+        var delActive = perform(delete("/api/products/" + activePid), admin, null);
+        assertThat(delActive.status()).isEqualTo(400);
+        assertThat(delActive.msg()).contains("正在进行的团购");
+
+        long idlePid = insertProduct("闲置测试梨", "水果", "8.00", 20, 1, 0);
+        var offIdle = perform(put("/api/products/" + idlePid), admin, java.util.Map.of(
+                "name", "闲置测试梨", "category", "水果", "price", 8.00, "stock", 20, "status", 0));
+        assertThat(offIdle.ok()).isTrue();
+
+        var delIdle = perform(delete("/api/products/" + idlePid), admin, null);
+        assertThat(delIdle.ok()).isTrue();
     }
 }

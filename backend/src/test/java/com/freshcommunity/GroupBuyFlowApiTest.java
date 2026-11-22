@@ -368,4 +368,22 @@ class GroupBuyFlowApiTest extends ApiTestBase {
 
         assertThat(r.status()).isEqualTo(403);
     }
+
+    @Test
+    @DisplayName("已下架商品不能发起团购（400）")
+    void cannotCreateGroupBuyForOffShelfProduct() throws Exception {
+        String leader = login("leader1", "123456");
+        String u1 = login("user1", "123456");
+        long productId = firstProductId(u1);
+        jdbcTemplate.update("UPDATE product SET status = 0 WHERE id = ?", productId);
+
+        ApiResult r = perform(post("/api/group-buys"), leader, java.util.Map.of(
+                "title", "下架商品开团",
+                "productId", productId,
+                "targetCount", 2,
+                "deadline", java.time.LocalDateTime.now().plusHours(2).toString()));
+
+        assertThat(r.status()).isEqualTo(400);
+        assertThat(r.msg()).contains("下架");
+    }
 }

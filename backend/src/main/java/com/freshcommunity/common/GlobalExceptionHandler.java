@@ -32,6 +32,16 @@ public class GlobalExceptionHandler {
         return Result.error(400, msg);
     }
 
+    @ExceptionHandler({
+        org.springframework.http.converter.HttpMessageNotReadableException.class,
+        org.springframework.web.bind.MissingServletRequestParameterException.class,
+        org.springframework.web.method.annotation.MethodArgumentTypeMismatchException.class
+    })
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    public Result<?> handleBadRequestInput(Exception e) {
+        return Result.error(400, "请求参数格式错误或缺少必要参数");
+    }
+
     @ExceptionHandler({DuplicateKeyException.class, DataIntegrityViolationException.class})
     @ResponseStatus(HttpStatus.BAD_REQUEST)
     public Result<?> handleDuplicateKey(Exception e) {

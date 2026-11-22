@@ -29,15 +29,18 @@ public class ProductController {
 
     private final ProductMapper productMapper;
     private final com.freshcommunity.mapper.ProductImageMapper productImageMapper;
+    private final com.freshcommunity.mapper.GroupBuyMapper groupBuyMapper;
     private final ReviewService reviewService;
     private final ReviewAnalysisService reviewAnalysisService;
 
     public ProductController(ProductMapper productMapper,
                              com.freshcommunity.mapper.ProductImageMapper productImageMapper,
+                             com.freshcommunity.mapper.GroupBuyMapper groupBuyMapper,
                              ReviewService reviewService,
                              ReviewAnalysisService reviewAnalysisService) {
         this.productMapper = productMapper;
         this.productImageMapper = productImageMapper;
+        this.groupBuyMapper = groupBuyMapper;
         this.reviewService = reviewService;
         this.reviewAnalysisService = reviewAnalysisService;
     }
@@ -137,6 +140,9 @@ public class ProductController {
     @PutMapping("/{id}")
     @PreAuthorize("hasRole('ADMIN')")
     public Result<Void> update(@PathVariable Long id, @Valid @RequestBody Product product) {
+        if (product.getStatus() != null && product.getStatus() == 0) {
+            requireNoOngoingGroupBuy(id, "下架");
+        }
         normalizeCategory(product);
         product.setId(id);
         syncFirstImage(product);
@@ -148,8 +154,16 @@ public class ProductController {
     @DeleteMapping("/{id}")
     @PreAuthorize("hasRole('ADMIN')")
     public Result<Void> delete(@PathVariable Long id) {
+        requireNoOngoingGroupBuy(id, "删除");
         productMapper.deleteById(id);
         return Result.success();
+    }
+
+    private void requireNoOngoingGroupBuy(Long productId, String action) {
+        Long count = groupBuyMapper.countOngoingByProduct(productId);
+        if (count != null && count > 0) {
+            throw new IllegalArgumentException("该商品有正在进行的团购，无法" + action);
+        }
     }
 
     // ---------- 私有辅助 ----------

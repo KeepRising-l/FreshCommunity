@@ -94,4 +94,17 @@ class AuthApiTest extends ApiTestBase {
 
         assertThat(r.status()).isEqualTo(405);
     }
+
+    @Test
+    @DisplayName("缺少必填参数或参数类型不匹配返回 400（不落入 500）")
+    void missingOrMismatchParamReturns400() throws Exception {
+        String user = login("user1", "123456");
+        ApiResult missingParam = perform(post("/api/orders"), user, null);
+        assertThat(missingParam.status()).isEqualTo(400);
+        assertThat(missingParam.code()).isEqualTo(400);
+
+        ApiResult typeMismatch = perform(get("/api/products/not-a-number"), user, null);
+        assertThat(typeMismatch.status()).isEqualTo(400);
+        assertThat(typeMismatch.code()).isEqualTo(400);
+    }
 }

@@ -95,7 +95,7 @@ import ReviewDialog from '../components/ReviewDialog.vue'
 import SkeletonList from '../components/SkeletonList.vue'
 import EmptyState from '../components/EmptyState.vue'
 import { listMyOrders, payOrder, cancelOrder } from '../api/order'
-import { ORDER_STATUS_TABS } from '../constants/status'
+import { ORDER_STATUS_TABS, matchesOrderStatusTab } from '../constants/status'
 import { formatPrice, formatDateTime, splitCode } from '../utils/format'
 
 const router = useRouter()
@@ -113,12 +113,12 @@ const codeOrder = ref(null)
 const tabs = computed(() =>
   ORDER_STATUS_TABS.map((t) => ({
     ...t,
-    count: t.value ? orders.value.filter((o) => o.status === t.value).length : orders.value.length
+    count: orders.value.filter((o) => matchesOrderStatusTab(o.status, t.value)).length
   }))
 )
 
 const visible = computed(() =>
-  status.value ? orders.value.filter((o) => o.status === status.value) : orders.value
+  orders.value.filter((o) => matchesOrderStatusTab(o.status, status.value))
 )
 
 /** 订单 VO 已自带商品/提货点字段，不再拉全量商品做映射 */

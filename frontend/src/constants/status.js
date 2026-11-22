@@ -71,3 +71,14 @@ function pick(map, key) {
 export const groupBuyStatus = (key) => pick(GROUP_BUY_STATUS, key)
 export const orderStatus = (key) => pick(ORDER_STATUS, key)
 export const notificationType = (key) => pick(NOTIFICATION_TYPE, key)
+
+/** 成团后订单落 SUCCESS（已发取货码、待上门）；PENDING_PICKUP 为历史状态，一并归入待取货 */
+export const isPendingPickupStatus = (status) =>
+  status === 'SUCCESS' || status === 'PENDING_PICKUP'
+
+/** 订单状态筛选标签匹配：待取货（PENDING_PICKUP）同时匹配 SUCCESS 与 PENDING_PICKUP */
+export const matchesOrderStatusTab = (status, tabValue) => {
+  if (!tabValue) return true
+  if (tabValue === 'PENDING_PICKUP') return isPendingPickupStatus(status)
+  return status === tabValue
+}

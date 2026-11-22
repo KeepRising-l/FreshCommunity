@@ -135,6 +135,7 @@ class ReviewInsightsTest extends ApiTestBase {
         // 无评价商品：insightTags 空
         long otherProduct = otherProductId(u1, productId);
         ApiResult r2 = perform(get("/api/products/" + otherProduct), u1, null);
+        assertThat(r2.ok()).isTrue();
         assertThat(r2.data().path("insightTags").isEmpty()).isTrue();
         assertThat(leader).isNotNull();
     }
@@ -187,7 +188,7 @@ class ReviewInsightsTest extends ApiTestBase {
     }
 
     private long otherProductId(String token, long exclude) throws Exception {
-        for (var p : perform(get("/api/products"), token, null).data()) {
+        for (var p : perform(get("/api/products"), token, null).data().path("records")) {
             if (p.path("id").asLong() != exclude) {
                 return p.path("id").asLong();
             }

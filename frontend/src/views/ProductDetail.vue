@@ -143,7 +143,7 @@
 </template>
 
 <script setup>
-import { computed, onMounted, ref } from 'vue'
+import { computed, onMounted, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { ArrowRight } from '@element-plus/icons-vue'
 import { getProduct, getSimilarProducts } from '../api/product'
@@ -178,14 +178,17 @@ const ratingText = computed(() => {
   return `${product.value.avgScore} 分 · ${count} 条评价`
 })
 
-onMounted(async () => {
-  const id = route.params.id
+async function load(id) {
+  if (!id) return
+  loading.value = true
+  activeImage.value = 0
   try {
     const [p, r] = await Promise.all([getProduct(id), getProductReviews(id)])
     product.value = p.data || {}
     reviews.value = r.data?.reviews || []
   } catch (e) {
     product.value = {}
+    reviews.value = []
   } finally {
     loading.value = false
   }
@@ -193,7 +196,15 @@ onMounted(async () => {
   getSimilarProducts(id, 4)
     .then((res) => (similar.value = res.data || []))
     .catch(() => (similar.value = []))
-})
+}
+
+onMounted(() => load(route.params.id))
+watch(
+  () => route.params.id,
+  (id) => {
+    if (id) load(id)
+  }
+)
 
 function goProduct(id) {
   router.push('/user/products/' + id)

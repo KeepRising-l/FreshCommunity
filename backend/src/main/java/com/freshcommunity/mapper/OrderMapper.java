@@ -104,7 +104,8 @@ public interface OrderMapper extends BaseMapper<Order> {
             "LEFT JOIN `user` u2 ON gb.leader_id = u2.id AND u2.deleted = 0 " +
             "LEFT JOIN `user` u ON o.user_id = u.id AND u.deleted = 0 " +
             "WHERE o.deleted = 0 " +
-            "AND (#{status} IS NULL OR o.status = #{status}) " +
+            "AND (#{status} IS NULL OR o.status = #{status} " +
+            "     OR (#{status} = 'PENDING_PICKUP' AND o.status = 'SUCCESS')) " +
             "AND (#{keyword} IS NULL OR o.order_no LIKE CONCAT('%', #{keyword}, '%') " +
             "     OR u.username LIKE CONCAT('%', #{keyword}, '%')) " +
             "ORDER BY o.created_at DESC")

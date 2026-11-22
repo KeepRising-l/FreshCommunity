@@ -193,7 +193,7 @@ erDiagram
 
 ### 3.3 表结构详表
 
-> 共 9 张表，全部已建成（`db/schema.sql`），含 AI 导购的 `user_subscription` 与 `review_analysis`。
+> 共 11 张表，全部已建成（`db/schema.sql`），含商品图集 `product_image` 及 AI 导购的 `user_subscription`、`subscription_match` 与 `review_analysis`。
 
 **（1）user —— 用户表**
 
@@ -220,7 +220,7 @@ erDiagram
 | target_count | INT | 成团人数 |
 | deadline | DATETIME | 截止时间 |
 | status | VARCHAR(20) | ONGOING / SUCCESS / FAIL |
-| member_count | INT | 已支付人数（成团判定依据） |
+| member_count | INT | 已支付的不同用户数（成团判定依据，同用户多单计 1 人） |
 | 索引 | | `idx_status_deadline(status, deadline)`（扫描优化） |
 
 **（4）group_buy_item —— 团购商品关联表**：id、group_buy_id、product_id、price_snapshot(DECIMAL 10,2，团长开团时指定的拼团价；未指定时取商品零售价快照，须 ≤ 零售价)、created_at、deleted。
@@ -245,13 +245,17 @@ erDiagram
 
 **（9）review_analysis —— 评价洞察表（AI 导购）**：id、review_id(BIGINT UNIQUE，1:1 关联评价)、product_id(BIGINT，冗余供按商品聚合)、sentiment(VARCHAR 16：POSITIVE/NEGATIVE/NEUTRAL)、tags(VARCHAR 255，逗号分隔)、analyzed_at、deleted、`uk_review_id(review_id)`、`idx_product_id(product_id)`。
 
+**（10）product_image —— 商品图集表**：id、product_id(BIGINT，关联商品)、image_url(VARCHAR 255)、sort(INT，排序序号)、created_at、deleted、`idx_product(product_id)`。
+
+**（11）subscription_match —— 订阅匹配幂等记录表（AI 导购）**：id、subscription_id(BIGINT)、group_buy_id(BIGINT)、created_at、deleted、`uk_sub_group(subscription_id, group_buy_id)`（数据库级唯一键防重闸门）、`idx_group(group_buy_id)`。
+
 ### 3.4 关键约束与索引设计说明
 
 | 设计点 | 目的 |
 | --- | --- |
 | `uk_order_id`（review） | 并发重复评价由数据库唯一索引兜底，应用层异常转 400 |
 | `idx_status_deadline`（group_buy） | 定时任务按「状态 + 截止时间」扫描，走索引 |
-| `idx_pickup_code`（order） | 核销按码查询走索引；码生成时查重保证唯一 |
+| `uk_order_pickup_code`（order） | 数据库唯一索引保证取货码全局不重复，碰撞时捕获异常重试 |
 | 逻辑删除统一约定 | 所有业务查询自动过滤，删除可追溯、可回滚 |
 
 ---

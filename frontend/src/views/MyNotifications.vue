@@ -89,11 +89,12 @@ const filter = ref('all')
 
 const typeOf = (n) => notificationType(n.type)
 
-/** 分类定义：把 5 类事件按用户关心的问题归成 3 组 */
+/** 分类定义：把 6 类事件按用户关心的问题归成 4 组 */
 const GROUP_MAP = {
   success: ['GROUP_SUCCESS'],
   failed: ['GROUP_FAILED', 'ORDER_TIMEOUT', 'REFUNDED'],
-  pickup: ['PICKUP_DONE']
+  pickup: ['PICKUP_DONE'],
+  ai: ['SUBSCRIPTION_MATCH']
 }
 
 const filters = computed(() => {
@@ -108,7 +109,8 @@ const filters = computed(() => {
     { value: 'unread', label: '未读', count: count('unread') },
     { value: 'success', label: '成团通知', count: count('success') },
     { value: 'failed', label: '退款 / 关单', count: count('failed') },
-    { value: 'pickup', label: '核销通知', count: count('pickup') }
+    { value: 'pickup', label: '核销通知', count: count('pickup') },
+    { value: 'ai', label: 'AI 导购提醒', count: count('ai') }
   ]
 })
 
