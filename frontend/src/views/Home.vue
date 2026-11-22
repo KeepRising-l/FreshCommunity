@@ -33,7 +33,9 @@
       <h3 class="fc-section-title">快捷入口</h3>
       <div class="quick-grid">
         <router-link v-for="q in quickLinks" :key="q.path" :to="q.path" class="quick-item">
-          <span class="qi-icon" :class="'tone-' + q.tone">{{ q.icon }}</span>
+          <span class="qi-icon" :class="'tone-' + q.tone" aria-hidden="true">
+            <el-icon><component :is="q.icon" /></el-icon>
+          </span>
           <span class="qi-text">
             <b>{{ q.label }}</b>
             <small>{{ q.desc }}</small>
@@ -88,50 +90,50 @@ const stats = computed(() => {
   if (store.role === 'ADMIN') {
     const d = remote.value.dashboard || {}
     return [
-      { label: '今日订单数', value: d.todayOrders ?? '—', icon: '📋', tone: 'green' },
-      { label: '今日成团数', value: d.todaySuccessGroups ?? '—', icon: '📦', tone: 'orange' },
-      { label: '未读消息', value: unread, icon: '🔔', tone: 'blue' }
+      { label: '今日订单数', value: d.todayOrders ?? '—', icon: 'Document', tone: 'green' },
+      { label: '今日成团数', value: d.todaySuccessGroups ?? '—', icon: 'Box', tone: 'orange' },
+      { label: '未读消息', value: unread, icon: 'Bell', tone: 'blue' }
     ]
   }
 
   if (store.role === 'LEADER') {
     const gs = remote.value.myGroups || []
     return [
-      { label: '我发起的团购', value: gs.length, icon: '🧺', tone: 'green' },
-      { label: '进行中', value: gs.filter((g) => g.status === 'ONGOING').length, icon: '⏳', tone: 'orange' },
-      { label: '已成团', value: gs.filter((g) => g.status === 'SUCCESS').length, icon: '✅', tone: 'blue' },
-      { label: '未读消息', value: unread, icon: '🔔', tone: 'purple' }
+      { label: '我发起的团购', value: gs.length, icon: 'ShoppingBag', tone: 'green' },
+      { label: '进行中', value: gs.filter((g) => g.status === 'ONGOING').length, icon: 'Timer', tone: 'orange' },
+      { label: '已成团', value: gs.filter((g) => g.status === 'SUCCESS').length, icon: 'CircleCheck', tone: 'blue' },
+      { label: '未读消息', value: unread, icon: 'Bell', tone: 'purple' }
     ]
   }
 
   const orders = remote.value.myOrders || []
   return [
-    { label: '我的订单', value: orders.length, icon: '📋', tone: 'green' },
-    { label: '待支付', value: orders.filter((o) => o.status === 'PENDING_PAYMENT').length, icon: '⏰', tone: 'orange' },
-    { label: '待取货', value: orders.filter((o) => isPendingPickupStatus(o.status)).length, icon: '🎫', tone: 'blue' },
-    { label: '未读消息', value: unread, icon: '🔔', tone: 'purple' }
+    { label: '我的订单', value: orders.length, icon: 'Document', tone: 'green' },
+    { label: '待支付', value: orders.filter((o) => o.status === 'PENDING_PAYMENT').length, icon: 'Clock', tone: 'orange' },
+    { label: '待取货', value: orders.filter((o) => isPendingPickupStatus(o.status)).length, icon: 'Ticket', tone: 'blue' },
+    { label: '未读消息', value: unread, icon: 'Bell', tone: 'purple' }
   ]
 })
 
 /* ---------------- 快捷入口 ---------------- */
 const QUICK = {
   USER: [
-    { label: '团购广场', desc: '看正在进行中的团', path: '/user/groups', icon: '🧺', tone: 'green' },
-    { label: '商品浏览', desc: '按分类挑选生鲜', path: '/user/products', icon: '🥬', tone: 'blue' },
-    { label: 'AI 导购', desc: '问好价与到货订阅提醒', path: '/user/ai', icon: '🤖', tone: 'orange' },
-    { label: '我的订单', desc: '取货码与订单状态', path: '/user/orders', icon: '🎫', tone: 'orange' },
-    { label: '消息中心', desc: '成团与核销通知', path: '/notifications', icon: '🔔', tone: 'purple' }
+    { label: '团购广场', desc: '看正在进行中的团', path: '/user/groups', icon: 'ShoppingBag', tone: 'green' },
+    { label: '商品浏览', desc: '按分类挑选生鲜', path: '/user/products', icon: 'Goods', tone: 'blue' },
+    { label: 'AI 导购', desc: '问好价与到货订阅提醒', path: '/user/ai', icon: 'MagicStick', tone: 'orange' },
+    { label: '我的订单', desc: '取货码与订单状态', path: '/user/orders', icon: 'Ticket', tone: 'orange' },
+    { label: '消息中心', desc: '成团与核销通知', path: '/notifications', icon: 'Bell', tone: 'purple' }
   ],
   LEADER: [
-    { label: '我的团购', desc: '进度与订单明细', path: '/leader/groups', icon: '🧺', tone: 'green' },
-    { label: '核销台', desc: '输入取货码核销', path: '/leader/verify', icon: '✅', tone: 'orange' },
-    { label: '团购广场', desc: '看看邻居在拼什么', path: '/user/groups', icon: '🥬', tone: 'blue' },
-    { label: '消息中心', desc: '核销与成团通知', path: '/notifications', icon: '🔔', tone: 'purple' }
+    { label: '我的团购', desc: '进度与订单明细', path: '/leader/groups', icon: 'ShoppingBag', tone: 'green' },
+    { label: '核销台', desc: '输入取货码核销', path: '/leader/verify', icon: 'CircleCheck', tone: 'orange' },
+    { label: '团购广场', desc: '看看邻居在拼什么', path: '/user/groups', icon: 'Goods', tone: 'blue' },
+    { label: '消息中心', desc: '核销与成团通知', path: '/notifications', icon: 'Bell', tone: 'purple' }
   ],
   ADMIN: [
-    { label: '数据看板', desc: '订单与成团概况', path: '/admin/dashboard', icon: '📊', tone: 'green' },
-    { label: '商品管理', desc: '增删改查与库存', path: '/admin/products', icon: '📦', tone: 'orange' },
-    { label: '消息中心', desc: '系统与退款通知', path: '/notifications', icon: '🔔', tone: 'blue' }
+    { label: '数据看板', desc: '订单与成团概况', path: '/admin/dashboard', icon: 'DataAnalysis', tone: 'green' },
+    { label: '商品管理', desc: '增删改查与库存', path: '/admin/products', icon: 'Box', tone: 'orange' },
+    { label: '消息中心', desc: '系统与退款通知', path: '/notifications', icon: 'Bell', tone: 'blue' }
   ]
 }
 
@@ -274,17 +276,17 @@ onMounted(() => {
 .qi-icon {
   width: 40px;
   height: 40px;
-  border-radius: 12px;
+  border-radius: 11px;
   flex: none;
   display: grid;
   place-items: center;
-  font-size: 19px;
+  font-size: 18px;
 }
 
-.tone-green { background: var(--fc-brand-50); }
-.tone-orange { background: var(--fc-accent-50); }
-.tone-blue { background: var(--fc-info-50); }
-.tone-purple { background: var(--fc-purple-50); }
+.tone-green { background: #EBF3EE; color: #285A40; border: 1px solid #D3E4DA; }
+.tone-orange { background: #F9EFEA; color: #BA593B; border: 1px solid #EED8CE; }
+.tone-blue { background: #EDF2F0; color: #2C5248; border: 1px solid #D7E2DE; }
+.tone-purple { background: #F4EFEA; color: #6B5344; border: 1px solid #E5DCD2; }
 
 .qi-text {
   flex: 1;

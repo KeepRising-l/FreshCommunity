@@ -32,7 +32,9 @@
       </el-button>
 
       <div v-if="result" class="result" :class="result.ok ? 'is-ok' : 'is-bad'">
-        <span class="result-icon">{{ result.ok ? '✅' : '⚠️' }}</span>
+        <span class="result-icon" aria-hidden="true">
+          <el-icon><CircleCheckFilled v-if="result.ok" /><WarningFilled v-else /></el-icon>
+        </span>
         <div>
           <b>{{ result.title }}</b>
           <p>{{ result.detail }}</p>
@@ -256,9 +258,20 @@ onMounted(() => {
 }
 
 .result-icon {
-  font-size: 18px;
-  line-height: 1.35;
+  font-size: 19px;
+  line-height: 1;
+  display: inline-flex;
+  align-items: center;
+  margin-top: 2px;
   flex: none;
+}
+
+.result.is-ok .result-icon {
+  color: var(--fc-brand);
+}
+
+.result.is-bad .result-icon {
+  color: var(--fc-danger);
 }
 
 .result b {

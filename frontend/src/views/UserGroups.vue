@@ -2,7 +2,7 @@
   <div class="plaza">
     <section class="plaza-hero">
       <div class="hero-copy">
-        <span class="eyebrow">🏡 熟人社区团购 · 当日新鲜直达</span>
+        <span class="eyebrow"><i class="eyebrow-dot" />熟人社区团购 · 当日新鲜直达</span>
         <h2>{{ all.length > 0 ? `今日社区 · ${all.length} 场生鲜热拼中` : '和邻居一起，团点新鲜' }}</h2>
         <p>从原产地直达家门口提货点，按户去重成团，支持 AI 好价订阅与 6 位安全自提码核销。</p>
         <div class="hero-tags">
@@ -64,7 +64,8 @@
         :aria-pressed="filter === f.value"
         @click="filter = f.value"
       >
-        {{ f.label }}
+        <el-icon v-if="f.icon" class="chip-ic"><component :is="f.icon" /></el-icon>
+        <span>{{ f.label }}</span>
         <b v-if="f.count">{{ f.count }}</b>
       </button>
       <span class="spacer" />
@@ -129,7 +130,7 @@
     <section class="bottom-trio" aria-label="邻里闭环体验">
       <div class="trio-card">
         <div class="trio-head">
-          <span>🤖 AI 盯好价订阅</span>
+          <span class="trio-title"><el-icon><MagicStick /></el-icon>AI 盯好价订阅</span>
           <span class="badge-pine">智能盯盘</span>
         </div>
         <div class="wish-box">“想要 10 元以内的脆甜水果 / 苹果”</div>
@@ -141,7 +142,7 @@
 
       <div class="trio-card">
         <div class="trio-head">
-          <span>🎫 到店自提凭证</span>
+          <span class="trio-title"><el-icon><Ticket /></el-icon>到店自提凭证</span>
           <span class="badge-warm">{{ pendingPickupOrder ? pendingPickupOrder.orderNo : '6 位核销码' }}</span>
         </div>
         <div class="ticket-box">
@@ -163,8 +164,8 @@
 
       <div class="trio-card">
         <div class="trio-head">
-          <span>💬 邻里口碑与团长互动</span>
-          <span class="star-score">★ 真实口碑</span>
+          <span class="trio-title"><el-icon><ChatLineRound /></el-icon>邻里口碑与团长互动</span>
+          <span class="star-score">真实口碑</span>
         </div>
         <div class="review-quote">
           完成收货后可对商品与团长评分，系统自动提炼 #很新鲜、#甜度高 等邻里口碑标签。
@@ -213,7 +214,7 @@
         </div>
 
         <div class="join-note">
-          🛡️ 支付后订单进入「待成团」，截止前未达 {{ current.targetCount }} 人将自动解散并全额退款。
+          支付后订单进入「待成团」，截止前未达 {{ current.targetCount }} 人将自动解散并全额退款。
         </div>
       </div>
 
@@ -289,9 +290,9 @@ const urgentCount = computed(() => all.value.filter(isUrgent).length)
 const almostCount = computed(() => all.value.filter(isAlmost).length)
 
 const FILTERS = computed(() => [
-  { value: 'all', label: '全部', count: all.value.length },
-  { value: 'urgent', label: '⏰ 即将截止', count: urgentCount.value },
-  { value: 'almost', label: '🔥 马上成团', count: almostCount.value }
+  { value: 'all', label: '全部', icon: '', count: all.value.length },
+  { value: 'urgent', label: '即将截止', icon: 'Clock', count: urgentCount.value },
+  { value: 'almost', label: '马上成团', icon: 'TrendCharts', count: almostCount.value }
 ])
 
 const visible = computed(() => {
@@ -421,14 +422,22 @@ onMounted(() => {
 .eyebrow {
   display: inline-flex;
   align-items: center;
-  gap: 6px;
+  gap: 7px;
   background: var(--fc-brand-50);
   color: var(--fc-brand);
   font-size: 11.5px;
   font-weight: 700;
-  padding: 3px 10px;
+  padding: 4px 11px;
   border-radius: var(--fc-r-pill);
   margin-bottom: 8px;
+}
+
+.eyebrow-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--fc-brand);
+  display: inline-block;
 }
 
 .hero-copy h2 {
@@ -707,6 +716,22 @@ onMounted(() => {
   font-size: 13.5px;
   font-weight: 800;
   color: var(--fc-ink-900);
+}
+
+.trio-title {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+}
+
+.trio-title .el-icon {
+  color: var(--fc-brand);
+  font-size: 16px;
+}
+
+.chip-ic {
+  font-size: 14px;
+  opacity: .85;
 }
 
 .badge-pine {

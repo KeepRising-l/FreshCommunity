@@ -76,8 +76,8 @@
               <i :class="{ 'is-hot': left.urgent }" :style="{ width: percent + '%' }" />
             </div>
             <div class="prog-hint">
-              <template v-if="gap > 0">🔥 还差 <b>{{ gap }} 人</b>成团，邀请邻居一起拼更划算</template>
-              <template v-else>🎉 人数已达标，等待系统成团</template>
+              <template v-if="gap > 0">还差 <b>{{ gap }} 人</b>成团，邀请邻居一起拼更划算</template>
+              <template v-else>人数已达标，等待系统成团</template>
             </div>
           </div>
 

@@ -46,7 +46,7 @@
               :class="{ on: form.role === 'USER' }"
               @click="form.role = 'USER'"
             >
-              <span class="role-icon">🧺</span>
+              <span class="role-icon" aria-hidden="true"><el-icon><ShoppingBag /></el-icon></span>
               <b>普通用户</b>
               <small>浏览参团 · 下单自提</small>
             </button>
@@ -56,7 +56,7 @@
               :class="{ on: form.role === 'LEADER' }"
               @click="form.role = 'LEADER'"
             >
-              <span class="role-icon">🚩</span>
+              <span class="role-icon" aria-hidden="true"><el-icon><Shop /></el-icon></span>
               <b>团长</b>
               <small>发起团购 · 核销取货</small>
             </button>
@@ -253,9 +253,16 @@ h2 {
 }
 
 .role-icon {
-  font-size: 22px;
-  display: block;
-  margin-bottom: 7px;
+  width: 34px;
+  height: 34px;
+  border-radius: 10px;
+  display: grid;
+  place-items: center;
+  background: var(--fc-bg);
+  border: 1px solid var(--fc-line);
+  color: var(--fc-brand);
+  font-size: 17px;
+  margin-bottom: 9px;
 }
 
 .role-card b {

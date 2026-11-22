@@ -26,11 +26,11 @@ jwt:
   secret: ${JWT_SECRET:${random.uuid}${random.uuid}}
   expiration: 86400000
 
-# AI 导购使用环境变量配置；未设置密钥时订阅解析回落规则，即时推荐提示不可用。
+# AI 导购配置：支持环境变量覆盖，默认连接本机 OpenAI 兼容网关
 ai:
-  base-url: ${AI_BASE_URL:https://rayagent.cloud:2026/v1}
-  api-key: ${AI_API_KEY:}
-  model: ${AI_MODEL:deepseek-v4.1-flash}
+  base-url: ${AI_BASE_URL:http://127.0.0.1:3425/v1}
+  api-key: ${AI_API_KEY:magpie}
+  model: ${AI_MODEL:workbuddy-ai/deepseek-v4.1-flash-sg}
   timeout-seconds: ${AI_TIMEOUT:60}
   # DeepSeek 思考模式开关：false 时请求携带标准关闭参数
   # （chat_template_kwargs.thinking=false；思考内容在独立字段，不进入最终回答）

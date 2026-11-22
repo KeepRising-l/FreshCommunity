@@ -2,6 +2,7 @@ package com.freshcommunity.security;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.freshcommunity.common.Result;
+import jakarta.servlet.DispatcherType;
 import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -42,6 +43,8 @@ public class SecurityConfig {
             .csrf(AbstractHttpConfigurer::disable)
             .sessionManagement(s -> s.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
             .authorizeHttpRequests(auth -> auth
+                // SSE（SseEmitter.complete）触发 Tomcat ASYNC 内部派发，需放行异步与错误派发阶段
+                .dispatcherTypeMatchers(DispatcherType.ASYNC, DispatcherType.ERROR).permitAll()
                 .requestMatchers(
                     "/api/auth/**",
                     "/api/health",

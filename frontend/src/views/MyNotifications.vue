@@ -48,7 +48,9 @@
         :class="{ unread: n.isRead === 0 }"
         @click="readOne(n)"
       >
-        <div class="ic" :class="'tone-' + typeOf(n).tone">{{ typeOf(n).icon }}</div>
+        <div class="ic" :class="'tone-' + typeOf(n).tone" aria-hidden="true">
+          <el-icon><component :is="iconOf(n.type)" /></el-icon>
+        </div>
         <div class="body">
           <div class="r1">
             <h4>{{ n.title || typeOf(n).text }}</h4>
@@ -88,6 +90,16 @@ const loading = ref(true)
 const filter = ref('all')
 
 const typeOf = (n) => notificationType(n.type)
+
+const NOTIFICATION_ICON = {
+  GROUP_SUCCESS: 'CircleCheck',
+  GROUP_FAILED: 'RefreshLeft',
+  ORDER_TIMEOUT: 'Clock',
+  PICKUP_DONE: 'Finished',
+  REFUNDED: 'Wallet',
+  SUBSCRIPTION_MATCH: 'MagicStick'
+}
+const iconOf = (type) => NOTIFICATION_ICON[type] || 'Bell'
 
 /** 分类定义：把 6 类事件按用户关心的问题归成 4 组 */
 const GROUP_MAP = {
@@ -263,19 +275,19 @@ onUnmounted(() => offEvent && offEvent())
 .msg .ic {
   width: 40px;
   height: 40px;
-  border-radius: 12px;
+  border-radius: 11px;
   flex: none;
   display: grid;
   place-items: center;
-  font-size: 19px;
+  font-size: 18px;
 }
 
-.tone-green { background: var(--fc-brand-50); }
-.tone-orange { background: var(--fc-accent-50); }
-.tone-blue { background: var(--fc-info-50); }
-.tone-red { background: var(--fc-danger-50); }
-.tone-gray { background: #F1F4F2; }
-.tone-purple { background: var(--fc-purple-50); }
+.tone-green { background: #EBF3EE; color: #285A40; border: 1px solid #D3E4DA; }
+.tone-orange { background: #F9EFEA; color: #BA593B; border: 1px solid #EED8CE; }
+.tone-blue { background: #EDF2F0; color: #2C5248; border: 1px solid #D7E2DE; }
+.tone-red { background: #FDF0F0; color: #C24B38; border: 1px solid #F4D8D5; }
+.tone-gray { background: #F5F2EB; color: #5C5349; border: 1px solid #E4DDD1; }
+.tone-purple { background: #F4EFEA; color: #6B5344; border: 1px solid #E5DCD2; }
 
 .msg .body {
   flex: 1;

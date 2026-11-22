@@ -67,7 +67,9 @@
 
     <!-- 推荐结果 -->
     <section v-if="answer || recommendError" class="answer card" aria-live="polite">
-      <div class="answer-icon">{{ recommendError ? '⚠️' : '🤖' }}</div>
+      <div class="answer-icon" :class="{ 'is-err': recommendError }" aria-hidden="true">
+        <el-icon><Warning v-if="recommendError" /><MagicStick v-else /></el-icon>
+      </div>
       <div class="answer-body">
         <h3>{{ recommendError ? '这次没答上来' : 'AI 的推荐' }}</h3>
         <p v-if="recommendError" class="answer-text">{{ recommendError }}</p>
@@ -156,7 +158,7 @@
           </span>
         </div>
         <div class="order-note">
-          🛡️ 下单后进入「待支付」，30 分钟内完成支付即参团；截止前未成团自动全额退款。
+          下单后进入「待支付」，30 分钟内完成支付即参团；截止前未成团自动全额退款。
         </div>
       </div>
       <template #footer>
@@ -571,7 +573,23 @@ onMounted(loadSubscriptions)
 
 /* ---------- AI 回答区 ---------- */
 .answer { display: flex; align-items: flex-start; gap: 14px; padding: 20px 22px; border-color: #d8eee0; background: #fbfefc; }
-.answer-icon { display: grid; place-items: center; width: 36px; height: 36px; flex: none; border-radius: 50%; background: var(--fc-brand-50); font-size: 19px; }
+.answer-icon {
+  display: grid;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  flex: none;
+  border-radius: 10px;
+  background: var(--fc-brand-50);
+  border: 1px solid var(--fc-brand-100);
+  color: var(--fc-brand);
+  font-size: 18px;
+}
+.answer-icon.is-err {
+  background: var(--fc-accent-50);
+  border-color: #EED8CE;
+  color: var(--fc-accent);
+}
 .answer-body { flex: 1; min-width: 0; }
 .answer h3 { margin: 1px 0 7px; color: var(--fc-ink-900); font-size: 15px; }
 .answer-text { margin: 0 !important; white-space: pre-line; color: var(--fc-ink-800) !important; font-size: 13.5px !important; line-height: 1.9 !important; }

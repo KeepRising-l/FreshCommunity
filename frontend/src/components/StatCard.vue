@@ -1,6 +1,8 @@
 <template>
   <div class="stat-card">
-    <div v-if="icon" class="ic" :class="'tone-' + tone">{{ icon }}</div>
+    <div v-if="icon" class="ic" :class="'tone-' + tone" aria-hidden="true">
+      <el-icon><component :is="resolvedIcon" /></el-icon>
+    </div>
     <div class="body">
       <div class="value fc-num">{{ value }}</div>
       <div class="label">{{ label }}</div>
@@ -10,10 +12,26 @@
 </template>
 
 <script setup>
-defineProps({
+import { computed } from 'vue'
+
+const ICON_MAP = {
+  '🧺': 'ShoppingBag',
+  '📦': 'Box',
+  '✅': 'CircleCheck',
+  '💰': 'Wallet',
+  '📋': 'Document',
+  '🧾': 'Document',
+  '🔔': 'Bell',
+  '⏳': 'Timer',
+  '⏰': 'Clock',
+  '🎫': 'Ticket',
+  '📊': 'DataAnalysis'
+}
+
+const props = defineProps({
   label: { type: String, required: true },
   value: { type: [String, Number], default: 0 },
-  /** emoji 或短文本图标 */
+  /** 矢量图标名称或兼容旧 emoji */
   icon: { type: String, default: '' },
   /** green | orange | blue | purple | gray */
   tone: { type: String, default: 'green' },
@@ -22,6 +40,8 @@ defineProps({
   /** up | down | flat */
   trendDir: { type: String, default: 'up' }
 })
+
+const resolvedIcon = computed(() => ICON_MAP[props.icon] || props.icon || 'Document')
 </script>
 
 <style scoped>
@@ -44,18 +64,42 @@ defineProps({
 .ic {
   width: 44px;
   height: 44px;
-  border-radius: 13px;
+  border-radius: 12px;
   display: grid;
   place-items: center;
-  font-size: 21px;
+  font-size: 20px;
   flex: none;
 }
 
-.tone-green { background: var(--fc-brand-50); }
-.tone-orange { background: var(--fc-accent-50); }
-.tone-blue { background: var(--fc-info-50); }
-.tone-purple { background: var(--fc-purple-50); }
-.tone-gray { background: #F1F4F2; }
+.tone-green {
+  background: #EBF3EE;
+  color: #285A40;
+  border: 1px solid #D3E4DA;
+}
+
+.tone-orange {
+  background: #F9EFEA;
+  color: #BA593B;
+  border: 1px solid #EED8CE;
+}
+
+.tone-blue {
+  background: #EDF2F0;
+  color: #2C5248;
+  border: 1px solid #D7E2DE;
+}
+
+.tone-purple {
+  background: #F4EFEA;
+  color: #6B5344;
+  border: 1px solid #E5DCD2;
+}
+
+.tone-gray {
+  background: #F5F2EB;
+  color: #5C5349;
+  border: 1px solid #E4DDD1;
+}
 
 .body {
   min-width: 0;

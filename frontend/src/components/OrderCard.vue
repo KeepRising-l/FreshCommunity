@@ -140,19 +140,19 @@ const hint = computed(() => {
       if (left > 0) {
         const mins = Math.floor(left / 60000)
         const secs = Math.floor((left % 60000) / 1000)
-        return `⏰ 请在 ${mins} 分 ${String(secs).padStart(2, '0')} 秒内完成支付，超时订单将自动关闭`
+        return `请在 ${mins} 分 ${String(secs).padStart(2, '0')} 秒内完成支付，超时订单将自动关闭`
       }
-      return '⏰ 支付时间已过，订单即将被系统关闭'
+      return '支付时间已过，订单即将被系统关闭'
     }
-    return '⏰ 请尽快完成支付，超时订单将自动关闭'
+    return '请尽快完成支付，超时订单将自动关闭'
   }
 
-  if (s === 'PENDING_GROUP') return '⏳ 等待其他邻居参团，达标后自动成团'
-  if (s === 'SUCCESS') return '🎉 已成团，请凭取货码到提货点自提'
-  if (s === 'PENDING_PICKUP') return '✅ 已备货，请凭取货码到提货点自提'
-  if (s === 'COMPLETED') return props.order.reviewed ? '✅ 交易完成，感谢你的评价' : '✅ 交易完成，欢迎评价本次体验'
-  if (s === 'CANCELLED') return '💬 订单已取消'
-  if (s === 'REFUNDED') return '💬 团购未达标已解散，款项已全额退回'
+  if (s === 'PENDING_GROUP') return '等待其他邻居参团，达标后自动成团'
+  if (s === 'SUCCESS') return '已成团，请凭取货码到提货点自提'
+  if (s === 'PENDING_PICKUP') return '已备货，请凭取货码到提货点自提'
+  if (s === 'COMPLETED') return props.order.reviewed ? '交易完成，感谢你的评价' : '交易完成，欢迎评价本次体验'
+  if (s === 'CANCELLED') return '订单已取消'
+  if (s === 'REFUNDED') return '团购未达标已解散，款项已全额退回'
   return ''
 })
 </script>
