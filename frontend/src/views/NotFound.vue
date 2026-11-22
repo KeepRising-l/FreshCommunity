@@ -34,16 +34,17 @@ const router = useRouter()
 .code {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 2px;
   font-size: 76px;
   font-weight: 800;
-  color: var(--fc-brand-100);
+  color: #C3D0BD;
+  font-family: Georgia, serif;
   line-height: 1;
 }
 
 .code .leaf {
-  font-size: 58px;
-  filter: drop-shadow(0 6px 14px rgba(30, 158, 90, .25));
+  font-size: inherit;
+  color: var(--fc-accent);
 }
 
 h2 {
@@ -56,14 +57,11 @@ h2 {
 p {
   margin: 0 0 26px;
   font-size: 13.5px;
-  color: var(--fc-ink-400);
+  color: var(--fc-ink-500);
 }
 
 .actions {
   display: flex;
   gap: 10px;
 }
-.code { gap: 2px; color: #c3d0bd; font-family: Georgia, serif; }
-.code .leaf { font-size: inherit; color: #b36b4d; filter: none; }
-p { color: #657467; }
 </style>

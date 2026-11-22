@@ -1,12 +1,30 @@
 <template>
   <div class="plaza">
-    <section class="plaza-intro">
-      <div>
-        <span class="intro-label">邻里好物 · 社区自提</span>
-        <h2>和邻居一起，团点新鲜</h2>
-        <p>挑选喜欢的食材，成团后到社区提货点自提。</p>
+    <section class="plaza-hero">
+      <div class="hero-copy">
+        <span class="eyebrow">🏡 熟人社区团购 · 当日新鲜直达</span>
+        <h2>{{ all.length > 0 ? `今日社区 · ${all.length} 场生鲜热拼中` : '和邻居一起，团点新鲜' }}</h2>
+        <p>从原产地直达家门口提货点，按户去重成团，支持 AI 好价订阅与 6 位安全自提码核销。</p>
+        <div class="hero-tags">
+          <span class="hero-tag">✓ 满户成团即时通知</span>
+          <span class="hero-tag">✓ 未成团 60s 自动退</span>
+          <span class="hero-tag">✓ 邻里真实评价标签</span>
+        </div>
       </div>
-      <button type="button" class="order-link" @click="goOrders">查看我的订单 <span aria-hidden="true">→</span></button>
+
+      <div class="pickup-card">
+        <img class="pickup-photo" :src="activePickup.imageUrl" :alt="activePickup.name" />
+        <div class="pickup-info">
+          <h3>{{ activePickup.name }}</h3>
+          <p>团长 {{ activePickup.leaderName }} · {{ activePickup.address }}</p>
+          <div class="pickup-meta">
+            <span class="open-pill">冷鲜架有货 · 可直接提</span>
+            <button type="button" class="order-link" @click="goOrders">
+              我的自提单 <span aria-hidden="true">→</span>
+            </button>
+          </div>
+        </div>
+      </div>
     </section>
 
     <!-- 搜索与分类控制栏 -->
@@ -107,6 +125,59 @@
       </div>
     </template>
 
+    <!-- 邻里闭环体验三联卡 -->
+    <section class="bottom-trio" aria-label="邻里闭环体验">
+      <div class="trio-card">
+        <div class="trio-head">
+          <span>🤖 AI 盯好价订阅</span>
+          <span class="badge-pine">智能盯盘</span>
+        </div>
+        <div class="wish-box">“想要 10 元以内的脆甜水果 / 苹果”</div>
+        <p class="trio-text">AI 导购结合规则引擎持续盯盘，有合适新开团或降价立刻通过站内消息提醒您。</p>
+        <button type="button" class="trio-link" @click="router.push('/user/ai')">
+          去 AI 导购提问或订阅 →
+        </button>
+      </div>
+
+      <div class="trio-card">
+        <div class="trio-head">
+          <span>🎫 到店自提凭证</span>
+          <span class="badge-warm">{{ pendingPickupOrder ? pendingPickupOrder.orderNo : '6 位核销码' }}</span>
+        </div>
+        <div class="ticket-box">
+          <template v-if="pendingPickupOrder">
+            <div class="ticket-sub">{{ pendingPickupOrder.productName || '待自提生鲜' }} · 向团长出示自提码</div>
+            <div class="ticket-code">{{ splitCode(pendingPickupOrder.pickupCode).join(' ') }}</div>
+            <div class="ticket-sub">{{ pendingPickupOrder.pickupPointName || activePickup.name }}</div>
+          </template>
+          <template v-else>
+            <div class="ticket-sub">成团后自动生成 6 位唯一自提码</div>
+            <div class="ticket-code is-placeholder">· · · · · ·</div>
+            <div class="ticket-sub">已开启防暴限流 · 连续输错 5 次锁定 5 分钟</div>
+          </template>
+        </div>
+        <button type="button" class="trio-link" @click="goOrders">
+          查看我的订单凭证 →
+        </button>
+      </div>
+
+      <div class="trio-card">
+        <div class="trio-head">
+          <span>💬 邻里口碑与团长互动</span>
+          <span class="star-score">★ 真实口碑</span>
+        </div>
+        <div class="review-quote">
+          完成收货后可对商品与团长评分，系统自动提炼 #很新鲜、#甜度高 等邻里口碑标签。
+        </div>
+        <div class="leader-reply">
+          <strong>放心拼保障：</strong>同户去重统计成团人数，超时未成团 60 秒内自动原路退款。
+        </div>
+        <button type="button" class="trio-link" @click="router.push('/user/products')">
+          浏览全部鲜货与评价 →
+        </button>
+      </div>
+    </section>
+
     <!-- 参团下单 -->
     <el-dialog v-model="dialogVisible" title="参加团购" width="420px">
       <div v-if="current" class="join-body">
@@ -163,16 +234,20 @@ import GroupBuyCard from '../components/GroupBuyCard.vue'
 import SkeletonList from '../components/SkeletonList.vue'
 import EmptyState from '../components/EmptyState.vue'
 import { listGroupBuys } from '../api/groupBuy'
-import { createOrder } from '../api/order'
+import { createOrder, listMyOrders } from '../api/order'
+import { isPendingPickupStatus } from '../constants/status'
+import { useUserStore } from '../stores/user'
 import { useNow } from '../composables/useNow'
 import { productVisual } from '../utils/visual'
-import { formatMoney, remaining, progressPercent, remainingMembers } from '../utils/format'
+import { formatMoney, remaining, progressPercent, remainingMembers, splitCode } from '../utils/format'
 
 const router = useRouter()
 const now = useNow()
+const userStore = useUserStore()
 
 const all = ref([])
 const loading = ref(true)
+const pendingPickupOrder = ref(null)
 const filter = ref('all')
 const searchKeyword = ref('')
 const selectedCategory = ref('全部')
@@ -247,6 +322,24 @@ function resetFilters() {
 
 const joinVisual = computed(() => productVisual(current.value?.productName || current.value?.title || ''))
 
+const activePickup = computed(() => {
+  const firstWithPickup = all.value.find(g => g.pickupPointName || g.pickupPointImageUrl)
+  if (firstWithPickup) {
+    return {
+      name: firstWithPickup.pickupPointName || '幸福小区便利店 · 东门 101 号',
+      address: firstWithPickup.pickupPointAddress || '团长每日现场收货，支持凭码当面验鲜',
+      leaderName: firstWithPickup.leaderName || 'leader1',
+      imageUrl: firstWithPickup.pickupPointImageUrl || '/images/pickup/pickup1.jpg'
+    }
+  }
+  return {
+    name: '幸福小区便利店 · 东门 101 号',
+    address: '团长每日现场收货，支持凭码当面验鲜',
+    leaderName: 'leader1',
+    imageUrl: '/images/pickup/pickup1.jpg'
+  }
+})
+
 async function load() {
   loading.value = true
   try {
@@ -256,6 +349,17 @@ async function load() {
     all.value = []
   } finally {
     loading.value = false
+  }
+}
+
+async function loadMyPickupOrder() {
+  if (!userStore.token) return
+  try {
+    const res = await listMyOrders({ skipErrorToast: true })
+    const orders = res.data || []
+    pendingPickupOrder.value = orders.find(o => isPendingPickupStatus(o.status) && o.pickupCode) || null
+  } catch (e) {
+    pendingPickupOrder.value = null
   }
 }
 
@@ -288,7 +392,10 @@ async function submit() {
   }
 }
 
-onMounted(load)
+onMounted(() => {
+  load()
+  loadMyPickupOrder()
+})
 </script>
 
 <style scoped>
@@ -298,41 +405,145 @@ onMounted(load)
   gap: 20px;
 }
 
-/* 首页标题保留足够的空间，让商品与团购状态成为主角。 */
-.plaza-intro {
-  display: flex;
-  align-items: end;
-  justify-content: space-between;
-  gap: 24px;
-  padding: 8px 0 6px;
+/* 顶部：熟人社区头图 + 提货点实景卡片 */
+.plaza-hero {
+  background: var(--fc-card);
+  border: 1px solid var(--fc-line);
+  border-radius: var(--fc-r-xl);
+  padding: 18px 22px;
+  box-shadow: var(--fc-sh-1);
+  display: grid;
+  grid-template-columns: minmax(0, 1.35fr) minmax(0, 1fr);
+  gap: 18px;
+  align-items: center;
 }
-.intro-label {
-  color: var(--fc-accent-600);
-  font-size: 12px;
+
+.eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: var(--fc-brand-50);
+  color: var(--fc-brand);
+  font-size: 11.5px;
   font-weight: 700;
-  letter-spacing: .14em;
+  padding: 3px 10px;
+  border-radius: var(--fc-r-pill);
+  margin-bottom: 8px;
 }
-.plaza-intro h2 {
-  margin: 8px 0 6px;
+
+.hero-copy h2 {
+  margin: 0;
   color: var(--fc-ink-900);
-  font-family: "Songti SC", "Microsoft YaHei", serif;
-  font-size: clamp(23px, 2.4vw, 31px);
+  font-size: clamp(20px, 2.2vw, 24px);
+  font-weight: 800;
   line-height: 1.3;
+  letter-spacing: -0.3px;
 }
-.plaza-intro p { margin: 0; color: var(--fc-ink-500); font-size: 14px; }
+
+.hero-copy p {
+  margin: 6px 0 0;
+  color: var(--fc-ink-500);
+  font-size: 13px;
+}
+
+.hero-tags {
+  display: flex;
+  gap: 8px;
+  margin-top: 11px;
+  flex-wrap: wrap;
+}
+
+.hero-tag {
+  font-size: 11.5px;
+  background: var(--fc-bg);
+  border: 1px solid var(--fc-line);
+  padding: 4px 10px;
+  border-radius: var(--fc-r-pill);
+  color: var(--fc-ink-800);
+  font-weight: 600;
+}
+
+.pickup-card {
+  background: var(--fc-card-2);
+  border: 1px solid var(--fc-line);
+  border-radius: var(--fc-r-lg);
+  padding: 11px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.pickup-photo {
+  width: 96px;
+  height: 76px;
+  border-radius: 10px;
+  object-fit: cover;
+  flex-shrink: 0;
+  border: 1px solid var(--fc-line);
+}
+
+.pickup-info {
+  min-width: 0;
+  flex: 1;
+}
+
+.pickup-info h3 {
+  margin: 0;
+  font-size: 13.5px;
+  font-weight: 800;
+  color: var(--fc-ink-900);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.pickup-info p {
+  margin: 3px 0 0;
+  font-size: 11.5px;
+  color: var(--fc-ink-500);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.pickup-meta {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-top: 7px;
+  flex-wrap: wrap;
+}
+
+.open-pill {
+  color: var(--fc-brand);
+  background: var(--fc-brand-50);
+  padding: 2px 8px;
+  border-radius: var(--fc-r-pill);
+  font-size: 11px;
+  font-weight: 700;
+}
+
 .order-link {
   flex: none;
   border: 1px solid var(--fc-line);
   border-radius: var(--fc-r-sm);
   background: var(--fc-card);
-  color: var(--fc-brand-700);
-  padding: 10px 15px;
+  color: var(--fc-brand);
+  padding: 4px 10px;
   font: inherit;
-  font-weight: 600;
+  font-size: 11.5px;
+  font-weight: 700;
   cursor: pointer;
 }
-.order-link:hover { background: var(--fc-brand-50); }
-.order-link span { margin-left: 8px; }
+
+.order-link:hover {
+  background: var(--fc-brand-50);
+}
+
+.order-link span {
+  margin-left: 4px;
+}
 
 /* ---------- 搜索与分类控制栏 ---------- */
 .plaza-controls {
@@ -374,7 +585,7 @@ onMounted(load)
   background: var(--fc-brand);
   border-color: var(--fc-brand);
   font-weight: 600;
-  box-shadow: 0 2px 6px rgba(30, 158, 90, .25);
+  box-shadow: 0 2px 6px rgba(40, 90, 64, .18);
 }
 
 /* ---------- 筛选 ---------- */
@@ -413,7 +624,7 @@ onMounted(load)
   border-color: var(--fc-brand);
   color: #fff;
   font-weight: 600;
-  box-shadow: 0 2px 8px rgba(30, 158, 90, .26);
+  box-shadow: 0 2px 8px rgba(40, 90, 64, .18);
 }
 
 .chip b {
@@ -456,10 +667,10 @@ onMounted(load)
   background: var(--fc-brand-50);
 }
 
-/* 一张主图与旁侧团购列表呼应社区生活的方向。 */
+/* 一张主图与旁侧团购列表呼应温暖邻里生活方向。 */
 .featured-groups {
   display: grid;
-  grid-template-columns: minmax(0, .95fr) minmax(0, 1.05fr);
+  grid-template-columns: minmax(0, 1.12fr) minmax(0, 1fr);
   gap: 16px;
   align-items: stretch;
 }
@@ -469,6 +680,131 @@ onMounted(load)
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
   gap: 16px;
+}
+
+/* 底部邻里闭环体验三联卡 */
+.bottom-trio {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.trio-card {
+  background: var(--fc-card);
+  border: 1px solid var(--fc-line);
+  border-radius: var(--fc-r-lg);
+  padding: 15px 16px;
+  box-shadow: var(--fc-sh-1);
+  display: flex;
+  flex-direction: column;
+  gap: 9px;
+}
+
+.trio-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 13.5px;
+  font-weight: 800;
+  color: var(--fc-ink-900);
+}
+
+.badge-pine {
+  background: var(--fc-brand-50);
+  color: var(--fc-brand);
+  font-size: 11px;
+  font-weight: 700;
+  padding: 2px 8px;
+  border-radius: var(--fc-r-pill);
+}
+
+.badge-warm {
+  background: var(--fc-accent);
+  color: #fff;
+  font-size: 11px;
+  font-weight: 700;
+  padding: 2px 8px;
+  border-radius: var(--fc-r-pill);
+}
+
+.star-score {
+  color: #C47A1E;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.wish-box {
+  background: var(--fc-accent-50);
+  border: 1px dashed #DF9B86;
+  border-radius: var(--fc-r-sm);
+  padding: 9px 11px;
+  font-size: 12px;
+  color: #7D331D;
+  font-weight: 700;
+}
+
+.trio-text {
+  margin: 0;
+  font-size: 12px;
+  color: var(--fc-ink-500);
+}
+
+.ticket-box {
+  background: var(--fc-card-2);
+  border: 1.5px dashed var(--fc-brand);
+  border-radius: var(--fc-r-sm);
+  padding: 10px 12px;
+  text-align: center;
+}
+
+.ticket-code {
+  font-size: 20px;
+  font-weight: 800;
+  letter-spacing: 3px;
+  color: var(--fc-brand);
+  margin: 4px 0;
+  font-variant-numeric: tabular-nums;
+}
+
+.ticket-code.is-placeholder {
+  color: var(--fc-ink-400);
+}
+
+.ticket-sub {
+  font-size: 11px;
+  color: var(--fc-ink-500);
+}
+
+.review-quote {
+  background: var(--fc-bg);
+  border-radius: var(--fc-r-sm);
+  padding: 9px 11px;
+  font-size: 12px;
+  color: var(--fc-ink-800);
+}
+
+.leader-reply {
+  border-left: 3px solid var(--fc-accent);
+  padding-left: 9px;
+  font-size: 11.5px;
+  color: var(--fc-ink-500);
+}
+
+.trio-link {
+  margin-top: auto;
+  align-self: flex-start;
+  border: none;
+  background: none;
+  padding: 0;
+  font: inherit;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--fc-brand);
+  cursor: pointer;
+}
+
+.trio-link:hover {
+  color: var(--fc-accent);
 }
 
 /* ---------- 参团弹窗 ---------- */
@@ -548,14 +884,16 @@ onMounted(load)
 }
 
 @media (max-width: 1000px) {
+  .plaza-hero { grid-template-columns: 1fr; }
   .featured-groups { grid-template-columns: 1fr; }
   .featured-list { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .bottom-trio { grid-template-columns: 1fr; }
 }
 @media (max-width: 700px) {
   .plaza { gap: 15px; }
-  .plaza-intro { align-items: flex-start; }
-  .plaza-intro h2 { font-size: 23px; }
-  /* 手机底部导航已有订单入口，避免标题被挤成单字换行。 */
+  .plaza-hero { padding: 14px; gap: 12px; }
+  .hero-copy h2 { font-size: 19px; }
+  .pickup-photo { width: 76px; height: 64px; }
   .order-link { display: none; }
   .featured-list { grid-template-columns: 1fr; }
   .grid { grid-template-columns: 1fr; }

@@ -10,21 +10,21 @@
 
 /* ---------- 1. 品牌 token ---------- */
 :root {
-  /* 品牌主色 · 邻里深绿 */
-  --fc-brand: #315E43;
-  --fc-brand-600: #28543B;
-  --fc-brand-700: #224A34;
-  --fc-brand-800: #1B3929;
-  --fc-brand-100: #DDE8D9;
-  --fc-brand-50: #EDF2E8;
+  /* 品牌主色 · 温暖邻里松木绿 */
+  --fc-brand: #285A40;
+  --fc-brand-600: #224D37;
+  --fc-brand-700: #1C402D;
+  --fc-brand-800: #153123;
+  --fc-brand-100: #CFE3D8;
+  --fc-brand-50: #E8F1EC;
 
-  /* 强调色 · 陶土橙（价格 / 倒计时 / 优惠） */
-  --fc-accent: #BC5E3E;
-  --fc-accent-600: #A94F33;
-  --fc-accent-50: #F8EAE1;
+  /* 强调色 · 陶土橘（价格 / 倒计时 / 优惠） */
+  --fc-accent: #BA593B;
+  --fc-accent-600: #A34A2E;
+  --fc-accent-50: #F9EAE4;
 
   /* 语义色 */
-  --fc-success: #315E43;
+  --fc-success: #285A40;
   --fc-warning: #A76527;
   --fc-warning-50: #F8EEDC;
   --fc-danger: #E5484D;
@@ -34,18 +34,18 @@
   --fc-purple: #7C5CFA;
   --fc-purple-50: #EDE9FD;
 
-  /* 中性色（暖米白与柔和绿灰） */
-  --fc-ink-900: #24382D;
-  --fc-ink-800: #304337;
-  --fc-ink-700: #45584A;
-  --fc-ink-500: #667568;
-  --fc-ink-400: #78877A;
-  --fc-ink-300: #A9B2A5;
-  --fc-line: #E5E1D5;
-  --fc-line-soft: #F0EDE3;
-  --fc-bg: #F3F0E7;
-  --fc-card: #FFFDF8;
-  --fc-card-2: #FAF8F1;
+  /* 中性色（宣纸米白与暖胡桃灰） */
+  --fc-ink-900: #2A221B;
+  --fc-ink-800: #3A3027;
+  --fc-ink-700: #4A3E33;
+  --fc-ink-500: #6E6154;
+  --fc-ink-400: #857769;
+  --fc-ink-300: #B0A496;
+  --fc-line: #E6DDD0;
+  --fc-line-soft: #EFE7DA;
+  --fc-bg: #F4EFE4;
+  --fc-card: #FFFDF9;
+  --fc-card-2: #FAF5EC;
 
   /* 圆角 */
   --fc-r-xl: 20px;
@@ -55,9 +55,9 @@
   --fc-r-pill: 999px;
 
   /* 阴影 */
-  --fc-sh-1: 0 1px 2px rgba(15, 26, 20, .05), 0 4px 12px rgba(15, 26, 20, .05);
-  --fc-sh-2: 0 8px 24px rgba(15, 26, 20, .10);
-  --fc-sh-3: 0 16px 48px rgba(15, 26, 20, .14);
+  --fc-sh-1: 0 1px 2px rgba(74, 53, 36, .04), 0 4px 14px rgba(74, 53, 36, .05);
+  --fc-sh-2: 0 8px 24px rgba(74, 53, 36, .09);
+  --fc-sh-3: 0 16px 48px rgba(74, 53, 36, .13);
 
   /* 布局 */
   --fc-side-w: 236px;
@@ -70,45 +70,45 @@
 /* ---------- 2. Element Plus 变量覆盖 ---------- */
 :root {
   /* 主色及其派生梯度（Element Plus 用 light-3/5/7/8/9 与 dark-2 生成 hover/disabled/边框等） */
-  --el-color-primary: #315E43;
-  --el-color-primary-light-3: #6A9B79;
-  --el-color-primary-light-5: #93B79B;
-  --el-color-primary-light-7: #C2D8C3;
-  --el-color-primary-light-8: #DDE8D9;
-  --el-color-primary-light-9: #EDF2E8;
-  --el-color-primary-dark-2: #28543B;
+  --el-color-primary: #285A40;
+  --el-color-primary-light-3: #5B8970;
+  --el-color-primary-light-5: #84A994;
+  --el-color-primary-light-7: #B5CCC0;
+  --el-color-primary-light-8: #CFE3D8;
+  --el-color-primary-light-9: #E8F1EC;
+  --el-color-primary-dark-2: #1C402D;
 
-  --el-color-success: #315E43;
-  --el-color-success-light-9: #EDF2E8;
+  --el-color-success: #285A40;
+  --el-color-success-light-9: #E8F1EC;
   --el-color-warning: #A76527;
   --el-color-warning-light-9: #F8EEDC;
   --el-color-danger: #E5484D;
   --el-color-danger-light-9: #FDECEC;
   --el-color-error: #E5484D;
   --el-color-error-light-9: #FDECEC;
-  --el-color-info: #78877A;
-  --el-color-info-light-9: #F3F0E7;
+  --el-color-info: #857769;
+  --el-color-info-light-9: #F4EFE4;
 
   /* 文本与边框 */
-  --el-text-color-primary: #24382D;
-  --el-text-color-regular: #45584A;
-  --el-text-color-secondary: #667568;
-  --el-text-color-placeholder: #78877A;
-  --el-text-color-disabled: #A9B2A5;
+  --el-text-color-primary: #2A221B;
+  --el-text-color-regular: #4A3E33;
+  --el-text-color-secondary: #6E6154;
+  --el-text-color-placeholder: #857769;
+  --el-text-color-disabled: #B0A496;
 
-  --el-border-color: #E5E1D5;
-  --el-border-color-light: #F0EDE3;
-  --el-border-color-lighter: #F0EDE3;
-  --el-border-color-extra-light: #F3F0E7;
-  --el-border-color-hover: #A9B2A5;
+  --el-border-color: #E6DDD0;
+  --el-border-color-light: #EFE7DA;
+  --el-border-color-lighter: #EFE7DA;
+  --el-border-color-extra-light: #F4EFE4;
+  --el-border-color-hover: #B0A496;
 
-  --el-fill-color: #F3F0E7;
-  --el-fill-color-light: #F8F6EE;
-  --el-fill-color-lighter: #FAF8F1;
-  --el-fill-color-blank: #FFFDF8;
-  --el-bg-color: #FFFDF8;
-  --el-bg-color-page: #F3F0E7;
-  --el-bg-color-overlay: #FFFDF8;
+  --el-fill-color: #F4EFE4;
+  --el-fill-color-light: #F7F2E8;
+  --el-fill-color-lighter: #FAF5EC;
+  --el-fill-color-blank: #FFFDF9;
+  --el-bg-color: #FFFDF9;
+  --el-bg-color-page: #F4EFE4;
+  --el-bg-color-overlay: #FFFDF9;
 
   /* 圆角与字体 */
   --el-border-radius-base: 9px;
@@ -214,7 +214,7 @@ body {
 .fc-progress {
   height: 7px;
   border-radius: var(--fc-r-pill);
-  background: #EAECE3;
+  background: var(--fc-line-soft);
   overflow: hidden;
 }
 
@@ -222,12 +222,12 @@ body {
   display: block;
   height: 100%;
   border-radius: var(--fc-r-pill);
-  background: linear-gradient(90deg, #8AAA87, #527C5D);
+  background: linear-gradient(90deg, #548C6E, var(--fc-brand));
   transition: width .4s ease;
 }
 
 .fc-progress > i.is-hot {
-  background: linear-gradient(90deg, #DAA17E, #BC5E3E);
+  background: linear-gradient(90deg, #D98569, var(--fc-accent));
 }
 
 /* ---------- Element Plus 细节打磨 ---------- */

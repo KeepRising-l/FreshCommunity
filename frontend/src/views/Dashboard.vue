@@ -3,10 +3,10 @@
     <!-- ============ 侧边导航 ============ -->
     <aside class="app-side">
       <div class="side-logo">
-        <div class="mark"><el-icon><Goods /></el-icon></div>
+        <div class="mark seal" aria-hidden="true">邻</div>
         <div class="brand-text">
           <b>FreshCommunity</b>
-          <small>社区生鲜团购</small>
+          <small>幸福里 · 社区生鲜团购</small>
         </div>
       </div>
 
@@ -251,7 +251,7 @@ watch(() => route.path, () => unreadStore.refresh())
 .app-side {
   width: var(--fc-side-w);
   flex: none;
-  background: #F9F7EF;
+  background: #FAF5EC;
   border-right: 1px solid var(--fc-line);
   display: flex;
   flex-direction: column;
@@ -264,19 +264,20 @@ watch(() => route.path, () => unreadStore.refresh())
   align-items: center;
   gap: 10px;
   padding: 0 18px;
-  border-bottom: 1px solid var(--fc-line-soft);
+  border-bottom: 1px dashed var(--fc-line);
 }
 
 .side-logo .mark {
-  width: 32px;
-  height: 32px;
-  border-radius: 10px;
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
   flex: none;
   display: grid;
   place-items: center;
-  font-size: 17px;
-  background: var(--fc-brand);
-  color: #fff;
+  font-size: 14px;
+  font-weight: 800;
+  background: var(--fc-accent);
+  color: var(--fc-card);
 }
 
 .brand-text b {
@@ -335,9 +336,9 @@ watch(() => route.path, () => unreadStore.refresh())
 }
 
 .nav-item.on {
-  background: var(--fc-brand-50);
-  color: var(--fc-brand-700);
-  font-weight: 600;
+  background: var(--fc-accent-50);
+  color: var(--fc-accent);
+  font-weight: 650;
 }
 
 .nav-item.on::before {
@@ -349,7 +350,7 @@ watch(() => route.path, () => unreadStore.refresh())
   width: 3px;
   height: 18px;
   border-radius: 0 3px 3px 0;
-  background: var(--fc-brand);
+  background: var(--fc-accent);
 }
 
 .nav-item .el-icon {
@@ -475,7 +476,7 @@ watch(() => route.path, () => unreadStore.refresh())
 .app-top {
   height: var(--fc-top-h);
   flex: none;
-  background: #FAF8F1;
+  background: var(--fc-card);
   border-bottom: 1px solid var(--fc-line);
   display: flex;
   align-items: center;

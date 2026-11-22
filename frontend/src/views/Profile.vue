@@ -252,11 +252,11 @@ onMounted(loadMe)
   flex: none;
   display: grid;
   place-items: center;
-  background: linear-gradient(140deg, #7ED0A4, #1E9E5A);
+  background: linear-gradient(140deg, #3D7A5A, var(--fc-brand));
   color: #fff;
   font-size: 22px;
   font-weight: 700;
-  box-shadow: 0 4px 14px rgba(30, 158, 90, .3);
+  box-shadow: 0 4px 14px rgba(40, 90, 64, .22);
 }
 
 .avatar-img {

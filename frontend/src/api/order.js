@@ -12,8 +12,8 @@ export function cancelOrder(id) {
   return request.post('/orders/' + id + '/cancel')
 }
 
-export function listMyOrders() {
-  return request.get('/orders/mine')
+export function listMyOrders(options = {}) {
+  return request.get('/orders/mine', options)
 }
 
 /**

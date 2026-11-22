@@ -163,44 +163,17 @@ async function submit() {
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 24px;
-  overflow: hidden;
-  background: linear-gradient(150deg, #1E9E5A 0%, #12713F 62%, #0C5530 100%);
-}
-
-.register-page::before {
-  content: "";
-  position: absolute;
-  width: 560px;
-  height: 560px;
-  border-radius: 50%;
-  right: -180px;
-  top: -200px;
-  background: radial-gradient(circle, rgba(255, 255, 255, .16), transparent 68%);
-}
-
-.register-page::after {
-  content: "";
-  position: absolute;
-  width: 380px;
-  height: 380px;
-  border-radius: 50%;
-  left: -150px;
-  bottom: -170px;
-  background: radial-gradient(circle, rgba(255, 122, 26, .30), transparent 66%);
+  padding: 32px;
+  background: var(--fc-bg);
 }
 
 .register-card {
   position: relative;
   z-index: 2;
   width: 100%;
-  max-width: 420px;
-  padding: 34px 34px 28px;
-  background: #fff;
-  border-radius: var(--fc-r-xl);
-  box-shadow: 0 24px 60px rgba(0, 0, 0, .26);
-  max-height: 94vh;
-  overflow-y: auto;
+  padding: 40px 42px;
+  background: var(--fc-card);
+  align-self: center;
 }
 
 .brand {
@@ -218,8 +191,8 @@ async function submit() {
   display: grid;
   place-items: center;
   font-size: 20px;
-  background: linear-gradient(140deg, #2BB673, #12713F);
-  box-shadow: 0 4px 12px rgba(30, 158, 90, .3);
+  background: var(--fc-brand);
+  color: #fff;
 }
 
 .brand b {
@@ -276,7 +249,7 @@ h2 {
 .role-card.on {
   border-color: var(--fc-brand);
   background: var(--fc-brand-50);
-  box-shadow: 0 0 0 3px rgba(30, 158, 90, .1);
+  box-shadow: 0 0 0 3px rgba(40, 90, 64, .08);
 }
 
 .role-icon {
@@ -316,20 +289,14 @@ h2 {
   padding-bottom: 6px;
 }
 
-.register-page {
-  overflow: visible;
-  padding: 32px;
-  background: #f3f0e7;
-}
-.register-page::before, .register-page::after { display: none; }
 .auth-shell {
   width: min(1020px, 100%);
   display: grid;
   grid-template-columns: minmax(0, 1fr) minmax(400px, 460px);
   overflow: hidden;
-  border: 1px solid #e7e2d5;
+  border: 1px solid var(--fc-line);
   border-radius: 18px;
-  background: #fffdf8;
+  background: var(--fc-card);
   box-shadow: 0 18px 48px rgba(45, 54, 38, .09);
 }
 .auth-story {
@@ -344,10 +311,7 @@ h2 {
 .story-copy span { font-size: 12px; font-weight: 700; letter-spacing: .14em; color: #f3d8bb; }
 .story-copy h1 { margin: 14px 0 12px; font-size: clamp(26px, 3vw, 36px); line-height: 1.35; }
 .story-copy p { margin: 0; font-size: 14px; line-height: 1.7; color: #f4f2e9; }
-.register-card { max-width: none; max-height: none; padding: 40px 42px; overflow: visible; border-radius: 0; background: #fffdf8; box-shadow: none; align-self: center; }
-.brand .mark { background: #285a40; box-shadow: none; color: #fff; }
-.sub, .foot, .role-card small { color: #657467; }
-.role-card.on { box-shadow: 0 0 0 3px rgba(40, 90, 64, .08); }
+.sub, .foot, .role-card small { color: var(--fc-ink-500); }
 @media (max-width: 760px) {
   .register-page { padding: 18px; }
   .auth-shell { display: block; max-width: 480px; }

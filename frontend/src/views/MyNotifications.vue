@@ -219,7 +219,7 @@ onUnmounted(() => offEvent && offEvent())
   border-color: var(--fc-brand);
   color: #fff;
   font-weight: 600;
-  box-shadow: 0 2px 8px rgba(30, 158, 90, .26);
+  box-shadow: 0 2px 8px rgba(40, 90, 64, .20);
 }
 
 .chip b {

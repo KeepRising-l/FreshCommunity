@@ -91,46 +91,21 @@ async function login() {
 <style scoped>
 .login-page {
   position: relative;
-  height: 100vh;
+  min-height: 100vh;
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 24px;
-  overflow: hidden;
-  background: linear-gradient(150deg, #1E9E5A 0%, #12713F 62%, #0C5530 100%);
-}
-
-.login-page::before {
-  content: "";
-  position: absolute;
-  width: 560px;
-  height: 560px;
-  border-radius: 50%;
-  right: -180px;
-  top: -200px;
-  background: radial-gradient(circle, rgba(255, 255, 255, .16), transparent 68%);
-}
-
-.login-page::after {
-  content: "";
-  position: absolute;
-  width: 380px;
-  height: 380px;
-  border-radius: 50%;
-  left: -150px;
-  bottom: -170px;
-  background: radial-gradient(circle, rgba(255, 122, 26, .30), transparent 66%);
+  padding: 32px;
+  background: var(--fc-bg);
 }
 
 .login-card {
   position: relative;
   z-index: 2;
   width: 100%;
-  max-width: 400px;
-  padding: 34px 34px 28px;
-  background: #fff;
-  border-radius: var(--fc-r-xl);
-  box-shadow: 0 24px 60px rgba(0, 0, 0, .26);
+  padding: 46px 44px;
+  background: var(--fc-card);
+  align-self: center;
 }
 
 .brand {
@@ -148,8 +123,8 @@ async function login() {
   display: grid;
   place-items: center;
   font-size: 20px;
-  background: linear-gradient(140deg, #2BB673, #12713F);
-  box-shadow: 0 4px 12px rgba(30, 158, 90, .3);
+  background: var(--fc-brand);
+  color: #fff;
 }
 
 .brand b {
@@ -223,22 +198,14 @@ h2 {
 }
 
 /* 邻里生活：用真实商品照片和温暖的纸色承载登录表单。 */
-.login-page {
-  height: auto;
-  min-height: 100vh;
-  overflow: visible;
-  padding: 32px;
-  background: #f3f0e7;
-}
-.login-page::before, .login-page::after { display: none; }
 .auth-shell {
   width: min(1020px, 100%);
   display: grid;
   grid-template-columns: minmax(0, 1fr) minmax(380px, 450px);
   overflow: hidden;
-  border: 1px solid #e7e2d5;
+  border: 1px solid var(--fc-line);
   border-radius: 18px;
-  background: #fffdf8;
+  background: var(--fc-card);
   box-shadow: 0 18px 48px rgba(45, 54, 38, .09);
 }
 .auth-story {
@@ -253,11 +220,9 @@ h2 {
 .story-copy span { font-size: 12px; font-weight: 700; letter-spacing: .14em; color: #f3d8bb; }
 .story-copy h1 { margin: 14px 0 12px; font-size: clamp(26px, 3vw, 36px); line-height: 1.35; }
 .story-copy p { margin: 0; font-size: 14px; line-height: 1.7; color: #f4f2e9; }
-.login-card { max-width: none; padding: 46px 44px; border-radius: 0; background: #fffdf8; box-shadow: none; align-self: center; }
-.brand .mark { background: #285a40; box-shadow: none; color: #fff; }
-.sub, .foot { color: #657467; }
-.demo { background: #f6f3ea; border-color: #e7e1d5; font-size: 12px; }
-.demo code { background: #fffdf8; font-size: 12px; }
+.sub, .foot { color: var(--fc-ink-500); }
+.demo { background: var(--fc-card-2); border-color: var(--fc-line); font-size: 12px; }
+.demo code { background: var(--fc-card); font-size: 12px; }
 @media (max-width: 760px) {
   .login-page { padding: 18px; }
   .auth-shell { display: block; max-width: 480px; }

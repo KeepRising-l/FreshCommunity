@@ -7,8 +7,9 @@
         <h2>{{ heroTitle }}</h2>
         <p>{{ heroDesc }}</p>
       </div>
-      <div class="hero-photo" aria-hidden="true">
-        <img src="/images/products/p02.jpg" alt="" />
+      <div class="hero-photos" aria-hidden="true">
+        <img src="/images/pickup/pickup1.jpg" alt="社区提货点实景" />
+        <img src="/images/products/p02.jpg" alt="时令鲜货" />
       </div>
     </section>
 
@@ -117,6 +118,7 @@ const QUICK = {
   USER: [
     { label: '团购广场', desc: '看正在进行中的团', path: '/user/groups', icon: '🧺', tone: 'green' },
     { label: '商品浏览', desc: '按分类挑选生鲜', path: '/user/products', icon: '🥬', tone: 'blue' },
+    { label: 'AI 导购', desc: '问好价与到货订阅提醒', path: '/user/ai', icon: '🤖', tone: 'orange' },
     { label: '我的订单', desc: '取货码与订单状态', path: '/user/orders', icon: '🎫', tone: 'orange' },
     { label: '消息中心', desc: '成团与核销通知', path: '/notifications', icon: '🔔', tone: 'purple' }
   ],
@@ -173,66 +175,65 @@ onMounted(() => {
   position: relative;
   overflow: hidden;
   border-radius: var(--fc-r-xl);
-  padding: 26px 30px;
-  color: #fff;
-  background: linear-gradient(120deg, #1E9E5A 0%, #178A4E 55%, #0F6B3C 100%);
+  min-height: 186px;
+  padding: 28px 32px;
+  color: var(--fc-ink-900);
+  background: var(--fc-card);
+  border: 1px solid var(--fc-line);
+  box-shadow: var(--fc-sh-1);
   display: flex;
   align-items: center;
   gap: 20px;
 }
 
-.hero::before {
-  content: "";
-  position: absolute;
-  width: 380px;
-  height: 380px;
-  border-radius: 50%;
-  right: -110px;
-  top: -170px;
-  background: radial-gradient(circle, rgba(255, 255, 255, .14), transparent 68%);
-}
-
 .hero-text {
   position: relative;
   z-index: 2;
+  flex: 1;
   min-width: 0;
 }
 
 .hero-tag {
   display: inline-flex;
   align-items: center;
-  font-size: 12px;
-  font-weight: 600;
-  background: rgba(255, 255, 255, .17);
-  border: 1px solid rgba(255, 255, 255, .26);
+  font-size: 12.5px;
+  font-weight: 700;
+  color: var(--fc-accent);
+  background: var(--fc-accent-50);
   padding: 4px 12px;
   border-radius: var(--fc-r-pill);
-  margin-bottom: 12px;
+  margin-bottom: 10px;
 }
 
 .hero h2 {
   margin: 0 0 7px;
-  font-size: 24px;
-  font-weight: 750;
-  letter-spacing: -.5px;
+  font-size: clamp(22px, 2.5vw, 28px);
+  font-weight: 800;
+  letter-spacing: -.4px;
   line-height: 1.3;
 }
 
 .hero p {
   margin: 0;
   font-size: 13.5px;
-  opacity: .84;
+  color: var(--fc-ink-500);
   line-height: 1.6;
 }
 
-.hero-emoji {
-  position: relative;
-  z-index: 2;
-  margin-left: auto;
-  font-size: 58px;
+.hero-photos {
+  display: flex;
+  gap: 10px;
   flex: none;
-  opacity: .95;
-  filter: drop-shadow(0 8px 16px rgba(0, 0, 0, .18));
+  margin-left: auto;
+}
+
+.hero-photos img {
+  width: 142px;
+  height: 120px;
+  object-fit: cover;
+  border-radius: 12px;
+  border: 1px solid var(--fc-line);
+  display: block;
 }
 
 .grid {
@@ -309,51 +310,11 @@ onMounted(() => {
   color: var(--fc-ink-300);
 }
 
-@media (max-width: 700px) {
-  .hero {
-    padding: 20px 20px;
-  }
-
-  .hero-emoji {
-    display: none;
-  }
+@media (max-width: 760px) {
+  .hero { min-height: 0; padding: 20px 18px; }
+  .hero-photos img:last-child { display: none; }
+  .hero-photos img { width: 92px; height: 84px; }
+  .hero h2 { font-size: 21px; }
 }
-
-.hero {
-  min-height: 190px;
-  padding: 30px 34px;
-  color: var(--fc-ink-900);
-  background: #ebe9dc;
-  border: 1px solid #e3e0d3;
-}
-.hero::before { display: none; }
-.hero-text { flex: 1; }
-.hero-tag {
-  background: transparent;
-  border: 0;
-  padding: 0;
-  margin-bottom: 10px;
-  color: #8f523c;
-  font-size: 13px;
-}
-.hero h2 { font-size: clamp(22px, 2.5vw, 30px); }
-.hero p { color: #5e6f61; font-size: 14px; opacity: 1; }
-.hero-photo {
-  width: 210px;
-  height: 132px;
-  flex: none;
-  border-radius: 12px;
-  overflow: hidden;
-  margin-left: auto;
-}
-.hero-photo img { width: 100%; height: 100%; object-fit: cover; display: block; }
-.quick-item { box-shadow: none; background: #fffdf8; }
-.quick-item:hover { box-shadow: 0 8px 22px rgba(43, 65, 48, .07); }
-.qi-text small { color: #657467; font-size: 13px; }
-@media (max-width: 700px) {
-  .hero { min-height: 0; padding: 22px 20px; }
-  .hero-photo { width: 90px; height: 90px; }
-  .hero h2 { font-size: 22px; }
-}
-@media (max-width: 390px) { .hero-photo { display: none; } }
+@media (max-width: 420px) { .hero-photos { display: none; } }
 </style>

@@ -8,11 +8,18 @@
     </div>
 
     <div class="body">
+      <div v-if="layout === 'feature' && insightTags.length" class="word-ribbon">
+        大家都在说：{{ insightTags.join(' · ') }}
+      </div>
       <h4 class="title">{{ displayName }}</h4>
 
       <div v-if="pickupText" class="from">
         <el-icon><LocationInformation /></el-icon>
         <span>{{ pickupText }}</span>
+      </div>
+
+      <div v-if="layout !== 'feature' && insightTags.length" class="insight-tags">
+        <span v-for="t in insightTags" :key="t" class="insight-tag">#{{ t }}</span>
       </div>
 
       <div v-if="hasPrice" class="price-line">
@@ -82,6 +89,10 @@ const now = useNow()
  * 另外用于推导占位图 emoji。
  */
 const displayName = computed(() => props.group.title || props.group.productName || '')
+const insightTags = computed(() => {
+  const tags = props.group?.insightTags
+  return Array.isArray(tags) ? tags.filter(Boolean).slice(0, 3) : []
+})
 
 /** 图片与价格：props 优先，其次取 group 上的字段 */
 const resolvedImage = computed(() => props.imageUrl ?? props.group.imageUrl ?? '')
@@ -335,6 +346,36 @@ defineExpose({ left })
 
 .cd.urgent {
   color: var(--fc-danger);
+}
+
+.word-ribbon {
+  background: var(--fc-brand-50);
+  color: var(--fc-brand);
+  border-radius: 8px;
+  padding: 6px 10px;
+  font-size: 12px;
+  font-weight: 700;
+  margin-bottom: 8px;
+}
+
+.insight-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+  margin-bottom: 8px;
+}
+
+.insight-tag {
+  font-size: 11px;
+  background: var(--fc-line-soft);
+  color: var(--fc-ink-500);
+  padding: 2px 7px;
+  border-radius: 5px;
+  font-weight: 600;
+}
+
+.v-row .insight-tags {
+  margin-bottom: 5px;
 }
 
 .action {

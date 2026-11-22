@@ -573,7 +573,7 @@ watch(() => route.params.id, load)
   flex: none;
   display: grid;
   place-items: center;
-  background: linear-gradient(140deg, #7ED0A4, #1E9E5A);
+  background: linear-gradient(140deg, #3D7A5A, var(--fc-brand));
   color: #fff;
   font-size: 16px;
   font-weight: 650;
